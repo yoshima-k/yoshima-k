@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Y-zardry Dungeon & Tasks - Complete Edition</title>
+    <!-- ドット絵風フォントの読み込み -->
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+    <style>
+        /* =========================================
+           1. リセット & ベース設定
+        ========================================= */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --col-bg: #000000;
+            --col-text: #ffffff;
+            --col-border: #ffffff;
+            --col-green: #4ade80;
+            --col-red: #f87171;
+            --col-yellow: #facc15;
+            --col-blue: #60a5fa;
+            --col-gray: #9ca3af;
+            --col-darkgray: #374151;
+            --col-highlight: #332b00;
+        }
+
+        body {
+            font-family: 'DotGothic16', monospace;
+            background-color: var(--col-bg);
+            color: var(--col-text);
+            line-height: 1.5;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ブラウン管(CRT)スキャンラインエフェクト */
+        .crt-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.8;
+        }
+        .crt-overlay.disabled { display: none; }
+
+        /* =========================================
+           2. UIコンポーネント (レトロRPG風)
+        ========================================= */
+        .window {
+            border: 2px solid var(--col-border);
+            border-radius: 4px;
+            background-color: rgba(0, 0, 0, 0.95);
+            padding: 12px;
+            margin-bottom: 12px;
+            position: relative;
+            box-shadow: inset 0 0 15px rgba(255,255,255,0.1), 0 4px 6px rgba(0,0,0,0.5);
+        }
+        .window-title {
+            position: absolute;
+            top: -12px;
+            left: 10px;
+            background-color: var(--col-bg);
+            padding: 0 8px;
+            font-size: 0.9rem;
+            color: var(--col-gray);
+            border-left: 2px solid var(--col-border);
+            border-right: 2px solid var(--col-border);
+        }
+
+        button, input, select {
+            font-family: 'DotGothic16', monospace;
+            background-color: var(--col-bg);
+            color: var(--col-text);
+            border: 1px solid var(--col-border);
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            font-size: 1rem;
+            border-radius: 2px;
+        }
+        button:active { transform: translateY(2px); }
+        button:hover:not(:disabled) {
+            background-color: var(--col-text);
+            color: var(--col-bg);
+            box-shadow: 0 0 8px rgba(255,255,255,0.5);
+        }
+        button:disabled { border-color: var(--col-darkgray); color: var(--col-gray); cursor: not-allowed; }
+        
+        input, select { width: 100%; margin-bottom: 10px; background-color: #111; }
+        input:focus, select:focus { outline: none; border-color: var(--col-green); box-shadow: 0 0 5px var(--col-green); }
+        
+        select {
+            appearance: none; -webkit-appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat; background-position: right .7rem top 50%; background-size: .65rem auto; padding-right: 2rem;
+        }
+
+        /* ユーティリティ */
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .flex { display: flex; }
+        .flex-col { display: flex; flex-direction: column; }
+        .justify-between { justify-content: space-between; }
+        .items-center { align-items: center; }
+        .gap-2 { gap: 0.5rem; } .gap-4 { gap: 1rem; }
+        .grid { display: grid; }
+        .hidden { display: none !important; }
+        .text-green { color: var(--col-green); text-shadow: 0 0 3px var(--col-green); }
+        .text-red { color: var(--col-red); text-shadow: 0 0 3px var(--col-red); }
+        .text-yellow { color: var(--col-yellow); text-shadow: 0 0 3px var(--col-yellow); }
+        .text-blue { color: var(--col-blue); }
+        .text-gray { color: var(--col-gray); }
+        .text-xs { font-size: 0.75rem; } .text-sm { font-size: 0.875rem; }
+        .text-lg { font-size: 1.125rem; } .text-xl { font-size: 1.5rem; }
+        .w-full { width: 100%; } .h-full { height: 100%; }
+        .mt-2 { margin-top: 0.5rem; } .mt-4 { margin-top: 1rem; }
+        .mb-2 { margin-bottom: 0.5rem; } .mb-4 { margin-bottom: 1rem; }
+        .p-4 { padding: 1rem; }
+        .cursor-pointer { cursor: pointer; }
+
+        /* =========================================
+           3. レイアウト & シーン管理
+        ========================================= */
+        #app-container {
+            max-width: 900px; margin: 0 auto; padding: 15px;
+            min-height: 100vh; display: flex; flex-direction: column;
+        }
+        .scene { display: none; flex: 1; flex-direction: column; animation: fadeIn 0.3s; }
+        .scene.active { display: flex; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* AAロゴ */
+        .aa-logo {
+            font-size: 10px; line-height: 1.1; white-space: pre; overflow-x: auto;
+            margin: 0 auto 20px; color: #fff; text-shadow: 0 0 8px rgba(255,255,255,0.8);
+            text-align: center;
+        }
+
+        /* メイン画面レイアウト */
+        @media (min-width: 768px) {
+            #main-layout { display: flex; gap: 20px; height: calc(100vh - 40px); }
+            #left-col { flex: 1; display: flex; flex-direction: column; }
+            #right-col { flex: 1; display: flex; flex-direction: column; }
+            #tasks-pane { flex: 1; }
+            #calendar-pane { flex: 1; }
+        }
+
+        /* =========================================
+           4. 戦闘ビュー
+        ========================================= */
+        #battle-pane { flex: 0 0 auto; min-height: 200px; display: flex; gap: 15px; }
+        #battle-pane > div { flex: 1; }
+        #enemy-visual {
+            white-space: pre; text-align: center; font-size: 1.2rem; line-height: 1.2;
+            height: 110px; display: flex; align-items: center; justify-content: center;
+            transition: transform 0.1s;
+        }
+        
+        /* エフェクト */
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); }
+            20% { transform: translate(-4px, 2px); color: var(--col-red); }
+            40% { transform: translate(4px, -2px); }
+            60% { transform: translate(-4px, -2px); }
+            80% { transform: translate(4px, 2px); }
+        }
+        .anim-shake { animation: shake 0.4s; }
+        
+        @keyframes levelUpFlash {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: rgba(250, 204, 21, 0.3); }
+        }
+        .anim-levelup { animation: levelUpFlash 1s 3; }
+
+        /* HP・EXPバー */
+        .bar-container { width: 100%; background-color: #222; height: 10px; border: 1px solid #555; margin-top: 5px; position: relative; }
+        .hp-bar { height: 100%; background-color: var(--col-green); width: 0%; transition: width 0.3s, background-color 0.3s; }
+        .exp-bar { height: 100%; background-color: var(--col-blue); width: 0%; transition: width 0.5s; }
+        .bar-label { position: absolute; top: -14px; left: 0; font-size: 0.7rem; color: #aaa; }
+
+        /* 戦闘ログ */
+        #battle-log {
+            height: 140px; overflow-y: auto; font-size: 0.85rem;
+            display: flex; flex-direction: column-reverse;
+            background: rgba(0,0,0,0.5); padding: 5px; border: 1px solid #333;
+        }
+        #battle-log div { margin-bottom: 4px; padding-bottom: 4px; border-bottom: 1px dashed #222; }
+        #battle-log div:first-child { opacity: 1; font-weight: bold; }
+        #battle-log div:nth-child(n+2) { opacity: 0.8; }
+        #battle-log div:nth-child(n+5) { opacity: 0.5; }
+
+        /* =========================================
+           5. カレンダービュー
+        ========================================= */
+        #calendar-pane { flex: 0 0 auto; margin-top: 10px; touch-action: pan-y; }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .calendar-header button { padding: 5px 15px; }
+        .calendar-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;
+            background-color: var(--col-darkgray); border: 1px solid var(--col-darkgray);
+        }
+        .cal-day-header { background-color: #111; color: var(--col-gray); text-align: center; font-size: 0.8rem; padding: 4px 0; }
+        .cal-cell {
+            background-color: var(--col-bg); aspect-ratio: 1 / 1;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; position: relative; border: 1px solid transparent;
+            transition: background-color 0.2s;
+        }
+        .cal-cell:active { background-color: #333; }
+        .cal-cell.other-month { opacity: 0.4; background-color: #0a0a0a; }
+        .cal-cell.selected { border-color: var(--col-yellow); background-color: var(--col-highlight); box-shadow: inset 0 0 5px var(--col-yellow); z-index: 1; }
+        .cal-cell.today { text-decoration: underline; font-weight: bold; color: var(--col-yellow); }
+        .cal-floor { font-size: 0.65rem; color: var(--col-gray); position: absolute; top: 2px; left: 2px; }
+        .cal-date { font-size: 1.1rem; }
+        
+        .cal-task-indicators { display: flex; gap: 2px; position: absolute; bottom: 4px; flex-wrap: wrap; justify-content: center; width: 90%; }
+        .indicator { width: 6px; height: 6px; border-radius: 50%; background-color: var(--col-gray); }
+        .indicator.done { background-color: var(--col-green); box-shadow: 0 0 2px var(--col-green); }
+        .indicator.active { background-color: var(--col-yellow); box-shadow: 0 0 2px var(--col-yellow); }
+        .indicator.missed { background-color: var(--col-red); box-shadow: 0 0 2px var(--col-red); }
+
+        /* =========================================
+           6. タスクリスト
+        ========================================= */
+        #tasks-pane { flex: 1; margin-top: 10px; display: flex; flex-direction: column; min-height: 250px; }
+        .task-input-area { display: flex; gap: 5px; margin-bottom: 10px; align-items: stretch; }
+        .task-input-area input { margin: 0; flex: 1; }
+        .task-input-area select { margin: 0; width: 80px; padding: 0 5px; }
+        .task-input-area button { margin: 0; white-space: nowrap; }
+
+        #task-list-container { flex: 1; overflow-y: auto; padding-right: 5px; }
+        .task-item {
+            display: flex; align-items: center; padding: 10px 8px;
+            border-bottom: 1px dotted var(--col-darkgray); background: rgba(255,255,255,0.02);
+            transition: background 0.2s;
+        }
+        .task-item:hover { background: rgba(255,255,255,0.08); }
+        .task-item.selected { background: rgba(250, 204, 21, 0.1); border-left: 3px solid var(--col-yellow); }
+        
+        .task-status-btn {
+            background: none; border: 1px solid var(--col-gray); color: var(--col-gray);
+            padding: 4px 8px; font-size: 0.8rem; border-radius: 2px; min-width: 60px;
+        }
+        .task-status-btn.active { border-color: var(--col-yellow); color: var(--col-yellow); }
+        .task-status-btn.done { border-color: var(--col-green); color: var(--col-green); }
+        .task-status-btn.missed { border-color: var(--col-red); color: var(--col-red); }
+        
+        .task-name { flex: 1; margin: 0 10px; cursor: pointer; line-height: 1.2; word-break: break-all; }
+        .task-name.done { text-decoration: line-through; color: var(--col-gray); }
+        
+        .task-actions { display: flex; gap: 5px; }
+        .action-btn {
+            background: none; border: 1px solid transparent; padding: 4px;
+            font-size: 1rem; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center;
+        }
+        .action-btn:hover { background: #333; }
+        .btn-run { color: var(--col-blue); }
+        .btn-run:hover { border-color: var(--col-blue); }
+        .btn-del { color: var(--col-red); }
+        .btn-del:hover { border-color: var(--col-red); }
+        
+        /* =========================================
+           7. コマンドメニュー
+        ========================================= */
+        .command-menu {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px;
+        }
+        @media (max-width: 400px) {
+            .command-menu { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* =========================================
+           8. モーダル & その他
+        ========================================= */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(2px);
+            display: none; justify-content: center; align-items: center; z-index: 1000; padding: 15px;
+        }
+        .modal-content { width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; box-shadow: 0 0 30px rgba(0,0,0,0.8); }
+        
+        #radar-canvas { display: block; margin: 0 auto; background: transparent; }
+
+        /* ローディング・エフェクト */
+        .loading:after { content: '...'; animation: dots 1.5s steps(5, end) infinite; }
+        @keyframes dots { 0%, 20% { color: rgba(0,0,0,0); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); } 40% { color: white; text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); } 60% { text-shadow: .25em 0 0 white, .5em 0 0 rgba(0,0,0,0); } 80%, 100% { text-shadow: .25em 0 0 white, .5em 0 0 white; } }
+
+        /* 設定画面 */
+        .setting-group { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed var(--col-darkgray); }
+    </style>
+</head>
+<body>
+
+<!-- CRTエフェクトレイヤー -->
+<div id="crt-effect" class="crt-overlay"></div>
+
+<div id="app-container">
+
+    <!-- ==========================================
+         シーン1: タイトル画面
+    =========================================== -->
+    <div id="scene-title" class="scene active">
+        <div class="aa-logo mt-4">
+__  __               ___           _          
+\ \/ /              |_  |         | |         
+ \  /_____ ____ _ _ __| |_ __ _   | |     
+ /  \______|_  / _` | '__/ _` |   | |     
+/_/\_\     / / (_| | | | (_| |   | |____ 
+          /___\__,_|_|  \__,_|   \_____/
+     Dungeon & Tasks
+        </div>
+        
+        <div class="window text-center mt-4 p-4">
+            <p class="mb-4 text-gray">タスクを討伐し、己を磨け。</p>
+            <div class="flex-col gap-4 mt-4">
+                <button id="btn-new-game" class="w-full text-xl text-yellow">＞ 新たな冒険</button>
+                <button id="btn-continue" class="w-full text-xl hidden">＞ 冒険を再開する</button>
+                <button id="btn-open-import" class="w-full text-blue mt-2">＞ 冒険の書を読み込む (Import)</button>
+            </div>
+        </div>
+
+        <div class="window mt-4" style="font-size: 0.8rem; border-color: var(--col-darkgray);">
+            <p class="text-gray text-center">v2.0 Complete Edition</p>
+            <p class="text-center mt-2 text-xs">データは全て端末内にローカル保存されます。<br>Gemini API利用時のみ通信が発生します。</p>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         シーン2: キャラクター作成
+    =========================================== -->
+    <div id="scene-creation" class="scene">
+        <div class="window mt-4">
+            <h2 class="text-center text-xl mb-4 border-b border-white pb-2">冒険者の登録</h2>
+            
+            <label>名前 (Name)</label>
+            <input type="text" id="input-name" placeholder="Hero" maxlength="12">
+            
+            <label>性別 (Gender)</label>
+            <select id="input-gender">
+                <option value="male">男性 (Male)</option>
+                <option value="female">女性 (Female)</option>
+                <option value="other">その他 (Other)</option>
+            </select>
+
+            <div class="mt-4 p-2" style="background: rgba(255,255,255,0.05); border: 1px solid #333;">
+                <label class="text-sm text-yellow">Gemini API Key (推奨設定)</label>
+                <p class="text-xs text-gray mb-2">冒険譚や成長判定をより正確に行うためのAIキーです。<br>※環境から提供される場合は空欄でも動作します。</p>
+                <input type="password" id="input-apikey" placeholder="AIzaSy...">
+                <div class="text-right">
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-blue">キーを取得(Google AI Studio)</a>
+                </div>
+            </div>
+
+            <button id="btn-start-adventure" class="w-full text-xl mt-4 text-yellow">＞ ダンジョンへ向かう</button>
+            <button id="btn-cancel-creation" class="w-full mt-2" style="border:none;">戻る</button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         シーン3: メイン画面
+    =========================================== -->
+    <div id="scene-main" class="scene">
+        <div id="main-layout">
+            <!-- 左カラム -->
+            <div id="left-col">
+                <!-- 戦闘＆ステータスビュー -->
+                <div id="battle-pane" class="window">
+                    <span class="window-title" id="dungeon-name-display">深奥の森 B1F</span>
+                    
+                    <!-- 敵表示 -->
+                    <div class="flex-col items-center justify-center border-r border-gray-600 pr-2">
+                        <div id="enemy-visual" class="text-yellow">
+                            <span class="text-xs text-gray">平穏な空間</span>
+                        </div>
+                        <div id="enemy-name" class="text-center text-sm font-bold mt-2">-- 敵はいない --</div>
+                        <div class="w-full px-2">
+                            <div class="bar-container mt-4"><div class="bar-label">HP</div><div id="enemy-hp-bar" class="hp-bar"></div></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 戦闘ログ -->
+                    <div class="flex-col h-full relative w-full">
+                        <div class="absolute top-0 right-0 text-xs text-gray">
+                            LV.<span id="disp-lv">1</span> <span class="text-blue">EXP:</span><span id="disp-exp">0</span>/<span id="disp-next">10</span>
+                        </div>
+                        <div id="battle-log" class="mt-4 flex-1"></div>
+                    </div>
+                </div>
+
+                <!-- カレンダービュー -->
+                <div id="calendar-pane" class="window">
+                    <div class="calendar-header">
+                        <button id="btn-prev-month">◀</button>
+                        <span id="calendar-month-year" class="text-lg">2026年 05月</span>
+                        <button id="btn-next-month">▶</button>
+                    </div>
+                    <!-- スワイプ検知用のラッパー -->
+                    <div id="calendar-swipe-area">
+                        <div class="calendar-grid" id="calendar-grid">
+                            <div class="cal-day-header text-red">Sun</div><div class="cal-day-header">Mon</div><div class="cal-day-header">Tue</div><div class="cal-day-header">Wed</div><div class="cal-day-header">Thu</div><div class="cal-day-header">Fri</div><div class="cal-day-header text-blue">Sat</div>
+                            <!-- 日付セル -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右カラム -->
+            <div id="right-col">
+                <!-- タスクリスト -->
+                <div id="tasks-pane" class="window flex-1">
+                    <span class="window-title" id="task-date-display">2026-05-01 の任務</span>
+                    
+                    <div class="task-input-area">
+                        <input type="text" id="input-new-task" placeholder="魔物の名前(タスク)...">
+                        <select id="input-task-repeat">
+                            <option value="none">単発</option>
+                            <option value="daily">毎日</option>
+                            <option value="weekly">毎週</option>
+                            <option value="weekday">平日</option>
+                        </select>
+                        <button id="btn-add-task">遭遇</button>
+                    </div>
+
+                    <div id="task-list-container">
+                        <!-- タスクリスト -->
+                    </div>
+                </div>
+
+                <!-- コマンドメニュー -->
+                <div class="command-menu">
+                    <button id="cmd-status">Status</button>
+                    <button id="cmd-report">Report📜</button>
+                    <button id="cmd-oracle">Oracle🔮</button>
+                    <button id="cmd-system">System</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         シーン4: ステータス画面
+    =========================================== -->
+    <div id="scene-status" class="scene">
+        <div class="window mt-4 h-full">
+            <h2 class="text-center text-xl mb-4 border-b border-white pb-2">ステータス</h2>
+            
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <!-- 左：基本情報とチャート -->
+                <div class="flex-col items-center">
+                    <div id="status-aa" class="text-green mb-2" style="white-space: pre; font-size: 0.8rem;"></div>
+                    <div class="text-xl mb-2 text-yellow"><span id="st-name">Hero</span> <span class="text-sm text-white">Lv.<span id="st-lv">1</span></span></div>
+                    <div class="w-full px-4 mb-4">
+                        <div class="flex justify-between text-xs text-blue"><span>EXP</span><span><span id="st-exp">0</span> / <span id="st-next">10</span></span></div>
+                        <div class="bar-container mt-0" style="height:6px;"><div id="st-exp-bar" class="exp-bar"></div></div>
+                    </div>
+                    <!-- レーダーチャート -->
+                    <canvas id="radar-canvas" width="180" height="180"></canvas>
+                </div>
+                
+                <!-- 右：パラメータと装備 -->
+                <div class="flex-col gap-2">
+                    <div class="window" style="font-size: 0.95rem; margin-bottom: 0;">
+                        <span class="window-title text-yellow">能力値</span>
+                        <div class="flex justify-between border-b border-gray-800 py-1"><span>STR(筋力):</span><span id="st-str">10</span></div>
+                        <div class="flex justify-between border-b border-gray-800 py-1"><span>INT(知力):</span><span id="st-int">10</span></div>
+                        <div class="flex justify-between border-b border-gray-800 py-1"><span>DEX(器用):</span><span id="st-dex">10</span></div>
+                        <div class="flex justify-between border-b border-gray-800 py-1"><span>AGI(敏捷):</span><span id="st-agi">10</span></div>
+                        <div class="flex justify-between border-b border-gray-800 py-1"><span>VIT(耐久):</span><span id="st-vit">10</span></div>
+                        <div class="flex justify-between py-1"><span>LUK(幸運):</span><span id="st-luk">10</span></div>
+                    </div>
+                    
+                    <div class="window" style="font-size: 0.9rem; margin-bottom: 0;">
+                        <span class="window-title text-yellow">装備品</span>
+                        <div class="py-1">武: <span id="eq-weapon" class="text-white">ひのきの棒</span></div>
+                        <div class="py-1">防: <span id="eq-armor" class="text-white">布の服</span></div>
+                        <div class="py-1">飾: <span id="eq-acc" class="text-white">---</span></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 text-center">
+                <button id="btn-close-status" class="w-full text-xl py-3">＞ 戻る</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         シーン5: システム/セーブ画面
+    =========================================== -->
+    <div id="scene-system" class="scene">
+        <div class="window mt-4 h-full">
+            <h2 class="text-center text-xl mb-4 border-b border-white pb-2">システム (冒険の書)</h2>
+            
+            <div class="setting-group">
+                <h3 class="text-yellow mb-2">手動セーブ / バックアップ</h3>
+                <p class="text-xs text-gray mb-2">※データは自動でローカル保存されますが、念のためファイルとして書き出す(エクスポート)ことができます。</p>
+                <div class="flex gap-2">
+                    <button id="btn-manual-save" class="flex-1 text-green border-green">上書き保存</button>
+                    <button id="btn-export-file" class="flex-1 text-blue border-blue">ファイル出力</button>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <h3 class="text-yellow mb-2">設定</h3>
+                <div class="flex justify-between items-center mb-2">
+                    <span>CRTエフェクト(走査線)</span>
+                    <button id="btn-toggle-crt" style="padding: 4px 10px;">ON</button>
+                </div>
+                <div class="flex-col gap-1 mt-4">
+                    <label class="text-xs text-gray">Gemini API Key 更新</label>
+                    <div class="flex gap-2">
+                        <input type="password" id="sys-apikey" placeholder="未設定" style="margin:0;">
+                        <button id="btn-update-apikey">更新</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-group" style="border:none;">
+                <h3 class="text-red mb-2">危険領域</h3>
+                <button id="btn-reset-data" class="w-full text-red border-red">冒険の書を消去する (リセット)</button>
+            </div>
+
+            <div class="mt-auto text-center">
+                <button id="btn-close-system" class="w-full text-xl py-3">＞ 戻る</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ==========================================
+     汎用モーダル群
+=========================================== -->
+
+<!-- 情報表示モーダル -->
+<div id="modal-overlay" class="modal-overlay">
+    <div id="modal-content" class="window modal-content">
+        <h3 id="modal-title" class="text-yellow text-center text-xl mb-2 border-b border-gray-500 pb-2">Title</h3>
+        <div id="modal-body" class="mb-4" style="font-size: 0.95rem; white-space: pre-wrap; line-height: 1.6;"></div>
+        <div class="text-center">
+            <button id="btn-modal-close" class="px-8 py-2 w-full text-lg">閉じる</button>
+        </div>
+    </div>
+</div>
+
+<!-- アクション選択モーダル (削除/延期) -->
+<div id="action-modal-overlay" class="modal-overlay">
+    <div class="window modal-content">
+        <h3 class="text-yellow text-center text-xl mb-4 border-b border-gray-500 pb-2">魔物への対処</h3>
+        <p id="action-task-name" class="text-center mb-4 text-lg"></p>
+        
+        <div class="flex-col gap-3">
+            <button id="btn-action-postpone" class="w-full p-3 border-blue text-blue">＞ 逃げる (翌日へ延期)</button>
+            <button id="btn-action-del-single" class="w-full p-3 border-red text-red">＞ 消滅させる (この日のみ消去)</button>
+            <button id="btn-action-del-all" class="w-full p-3 border-red text-red hidden">＞ 根絶やしにする (以降の全繰り返しを消去)</button>
+            <button id="btn-action-cancel" class="w-full mt-2" style="border:none;">キャンセル</button>
+        </div>
+    </div>
+</div>
+
+<!-- インポート用隠しファイル入力 -->
+<input type="file" id="file-import" accept=".json" style="display: none;">
+
+<script>
+/**
+ * Y-zardry Dungeon & Tasks - Complete Edition
+ * 100% Local Storage & Robust Architecture
+ */
+
+// ==========================================
+// 1. 定数・初期設定
+// ==========================================
+const API_KEY_ENV = ""; // 環境から提供される場合のAPIキー
+const STORAGE_KEY = 'yzardry_save_data_v2';
+const APP_VERSION = 2.0;
+
+const DUNGEON_NAMES = [
+    "静寂の平原", "深奥の森", "カラッカラ砂漠", "底なしの廃坑",
+    "忘却の雪原", "瘴気の沼", "狂気の魔塔", "嘆きの洞窟",
+    "幻影の城", "灼熱の火山", "星の降る頂", "虚無の奈落"
+];
+
+// 敵AA (30種)
+const ENEMY_AAS = [
+`   ___\n  /   \\\n ( o.o )\n  > ^ <`, `  /\\_/\\\n ( o.o )\n  > ^ <`, `   ___\n  /   \\\n |O   O|\n  \\_^_/`, `  \\|/\n - O -\n  /|\\`, `  ___ \n (o,o)\n /)  )\n  " "`, ` ,_._.,\n/ _ _ \\\n|(_)(_)|\n \\_  _/`, `  ()()\n  (..)\n  /\\/\\`, `    _\n   / \\\n  /  /\n  \\_\\_`, ` /\\   /\\\n  \\/-\\/ \n   (o o)\n   \\_^_/`, `  \\ /\n (o o)\n | | |\n /_|_\\`, `   ___\n  / * \\\n | o o |\n  \\_-_/`, `  [+ +]\n  /| |\\\n  \\|_|/\n   | |`, `  /---\\\n  |o o|\n  |---|\n  /   \\`, `  /\\_/\\\n ( 'x' )\n (  "  )`, `   ( )\n  (   )\n ( o o )\n  \\ - /`, `   /\\\n  /  \\\n (o  o)\n  \\__/`, `   ( )\n  / | \\\n (  |  )\n  \\/ \\/`, `  ^   ^\n /o   o\\\n \\_ V _/\n  |   |`, `  [___]\n  |o o|\n  [___]`, `   \\ /\n  (o o)\n  /(_)\\\n   / \\`, `  _   _\n | |_| |\n | o o |\n |_|-|_|`, `   /\\\n  /  \\\n  |()|\n  \\__/`, ` [___]\n [o o]\n [___]`, `  /\\_/\\\n ( õ_õ )\n > ^ <`, `   ___\n  / o \\\n  \\___/`, `  ()_()\n  \\ o /\n  /___\\`, `   ___\n  /o o\\\n  |___|\n  /   \\`, `  [+ +]\n  /| |\\\n   | |`, `  .--.\n | o o |\n |  ^  |\n  '--'`, `  \\|/\n (o o)\n  \\-/\n  / \\`
+];
+
+const HERO_AA = {
+    male: `   _O_\n  / | \\\n   / \\`, female: `   _O_\n  / | \\\n  /   \\`, other: `   _O_\n  / | \\\n  \\_|_/`
+};
+
+// ==========================================
+// 2. 状態管理 (State)
+// ==========================================
+let state = {
+    user: null,
+    calendarData: {},
+    currentDate: new Date(),
+    selectedDateStr: '',
+    selectedTask: null,
+    settings: { crtEffect: true }
+};
+
+let actionTargetTask = null; // モーダル操作対象
+
+// ==========================================
+// 3. ユーティリティ
+// ==========================================
+const $ = (id) => document.getElementById(id);
+const formatDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const getMonthStr = (dateStr) => dateStr.substring(0, 7);
+const generateId = () => Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+const getHash = (str) => {
+    let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    return Math.abs(hash);
+};
+const getRequiredExp = (lv) => Math.floor(10 * Math.pow(1.5, lv - 1)); // 次のレベルに必要な累計EXP
+
+// 今日の日付文字列を基準に、日付が過去かどうか判定
+const isPastDate = (dateStr) => {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const target = new Date(dateStr);
+    target.setHours(0,0,0,0);
+    return target < today;
+};
+
+// ==========================================
+// 4. データ保存 (Storage & File I/O)
+// ==========================================
+const StorageManager = {
+    // ローカルストレージへのセーブ（オートセーブ対応）
+    save: (silent = true) => {
+        if(!state.user) return false;
+        try {
+            const data = { version: APP_VERSION, user: state.user, calendarData: state.calendarData, settings: state.settings, lastUpdate: Date.now() };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            if(!silent) addLog("▶ 冒険の書に記録した。(Save Complete)", "text-blue");
+            return true;
+        } catch(e) {
+            console.error("Save Error:", e);
+            if(!silent) alert("セーブ容量が不足しているか、エラーが発生しました。");
+            return false;
+        }
+    },
+    // ロード
+    load: () => {
+        try {
+            const dataStr = localStorage.getItem(STORAGE_KEY);
+            if (dataStr) {
+                const data = JSON.parse(dataStr);
+                state.user = data.user;
+                state.calendarData = data.calendarData || {};
+                state.settings = data.settings || { crtEffect: true };
+                
+                // バージョンアップに伴うデータ補正
+                if(!state.user.stats.EXP) state.user.stats.EXP = 0;
+                
+                return true;
+            }
+        } catch(e) { console.error("Load Error:", e); }
+        return false;
+    },
+    // ファイルとしてエクスポート
+    exportFile: () => {
+        if(!state.user) return;
+        StorageManager.save(true);
+        const dataStr = localStorage.getItem(STORAGE_KEY);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const date = formatDate(new Date()).replace(/-/g, '');
+        a.download = `yzardry_save_${date}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert("冒険の書(ファイル)をダウンロードしました。");
+    },
+    // ファイルからインポート
+    importFile: (file) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if(data && data.user) {
+                    localStorage.setItem(STORAGE_KEY, e.target.result);
+                    alert("冒険の書を読み込みました！再読み込みします。");
+                    location.reload();
+                } else { throw new Error("Invalid format"); }
+            } catch(err) {
+                alert("ファイルの読み込みに失敗しました。形式が間違っています。");
+            }
+        };
+        reader.readAsText(file);
+    },
+    reset: () => {
+        if(confirm("本当に全ての記録を消去しますか？\n（復元はできません）")) {
+            localStorage.removeItem(STORAGE_KEY);
+            location.reload();
+        }
+    }
+};
+
+// ==========================================
+// 5. 初期化 & シーン遷移
+// ==========================================
+function initApp() {
+    const hasData = StorageManager.load();
+    if (hasData) {
+        $('btn-continue').classList.remove('hidden');
+        applySettings();
+    }
+    
+    // イベントバインディング (Title / Creation)
+    $('btn-new-game').addEventListener('click', () => switchScene('scene-creation'));
+    $('btn-continue').addEventListener('click', () => {
+        state.selectedDateStr = formatDate(new Date());
+        state.currentDate = new Date(state.selectedDateStr);
+        switchScene('scene-main');
+        renderCalendar(); renderTasks(); updateBattlePane();
+    });
+    $('btn-open-import').addEventListener('click', () => $('file-import').click());
+    $('file-import').addEventListener('change', (e) => { if(e.target.files[0]) StorageManager.importFile(e.target.files[0]); });
+    
+    $('btn-start-adventure').addEventListener('click', handleCreateUser);
+    $('btn-cancel-creation').addEventListener('click', () => switchScene('scene-title'));
+
+    // メインUI
+    $('btn-prev-month').addEventListener('click', () => changeMonth(-1));
+    $('btn-next-month').addEventListener('click', () => changeMonth(1));
+    $('btn-add-task').addEventListener('click', handleAddTask);
+    $('input-new-task').addEventListener('keypress', (e) => { if(e.key === 'Enter') handleAddTask(); });
+
+    // スワイプイベント登録 (カレンダー)
+    initSwipe();
+
+    // メニュー遷移
+    $('cmd-status').addEventListener('click', () => { renderStatus(); switchScene('scene-status'); });
+    $('btn-close-status').addEventListener('click', () => switchScene('scene-main'));
+    $('cmd-system').addEventListener('click', () => { renderSystem(); switchScene('scene-system'); });
+    $('btn-close-system').addEventListener('click', () => switchScene('scene-main'));
+    
+    // システム系アクション
+    $('btn-manual-save').addEventListener('click', () => StorageManager.save(false));
+    $('btn-export-file').addEventListener('click', StorageManager.exportFile);
+    $('btn-toggle-crt').addEventListener('click', toggleCRT);
+    $('btn-update-apikey').addEventListener('click', updateApiKey);
+    $('btn-reset-data').addEventListener('click', StorageManager.reset);
+
+    // AI系アクション
+    $('cmd-report').addEventListener('click', handleReport);
+    $('cmd-oracle').addEventListener('click', handleOracle);
+
+    // モーダル
+    $('btn-modal-close').addEventListener('click', () => { $('modal-overlay').style.display = 'none'; });
+    
+    // アクションモーダル（削除/延期）
+    $('btn-action-postpone').addEventListener('click', handlePostponeTask);
+    $('btn-action-del-single').addEventListener('click', () => {
+        if(actionTargetTask) removeTask(state.selectedDateStr, actionTargetTask.id);
+        closeActionModal();
+    });
+    $('btn-action-del-all').addEventListener('click', () => {
+        if(actionTargetTask && actionTargetTask.groupId) deleteAllTasks(actionTargetTask.groupId, state.selectedDateStr);
+        closeActionModal();
+    });
+    $('btn-action-cancel').addEventListener('click', closeActionModal);
+
+    switchScene('scene-title');
+}
+
+function switchScene(sceneId) {
+    document.querySelectorAll('.scene').forEach(el => el.classList.remove('active'));
+    $(sceneId).classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+function handleCreateUser() {
+    const name = $('input-name').value.trim() || 'Hero';
+    const gender = $('input-gender').value;
+    const userApiKey = $('input-apikey').value.trim();
+
+    state.user = {
+        name, gender, geminiApiKey: userApiKey,
+        stats: { LV: 1, EXP: 0, STR: 10, INT: 10, DEX: 10, AGI: 10, VIT: 10, LUK: 10 },
+        equipment: { weapon: 'ひのきの棒', armor: '布の服', acc: '---' }
+    };
+    state.calendarData = {};
+    state.selectedDateStr = formatDate(new Date());
+    state.currentDate = new Date(state.selectedDateStr);
+    
+    StorageManager.save(true);
+    applySettings();
+    switchScene('scene-main');
+    renderCalendar(); renderTasks(); updateBattlePane();
+    addLog(`▶ 冒険者 ${name} はダンジョンに足を踏み入れた。`, "text-yellow");
+}
+
+function applySettings() {
+    if (state.settings.crtEffect) $('crt-effect').classList.remove('disabled');
+    else $('crt-effect').classList.add('disabled');
+}
+
+function toggleCRT() {
+    state.settings.crtEffect = !state.settings.crtEffect;
+    applySettings();
+    StorageManager.save(true);
+    renderSystem();
+}
+
+function updateApiKey() {
+    const val = $('sys-apikey').value.trim();
+    state.user.geminiApiKey = val;
+    StorageManager.save(false);
+    alert("APIキーを更新しました。");
+    $('sys-apikey').value = '';
+}
+
+function renderSystem() {
+    $('btn-toggle-crt').innerText = state.settings.crtEffect ? "ON" : "OFF";
+    $('btn-toggle-crt').className = state.settings.crtEffect ? "text-green border-green" : "text-gray";
+}
+
+// ==========================================
+// 6. カレンダー描画・操作系
+// ==========================================
+function getDungeonIdForMonth(year, month) { return (year * 100 + month) % DUNGEON_NAMES.length; }
+
+function changeMonth(delta) {
+    state.currentDate.setMonth(state.currentDate.getMonth() + delta);
+    renderCalendar();
+}
+
+function renderCalendar() {
+    const year = state.currentDate.getFullYear();
+    const month = state.currentDate.getMonth(); // 0-11
+    
+    $('calendar-month-year').innerText = `${year}年 ${String(month + 1).padStart(2,'0')}月`;
+    
+    const grid = $('calendar-grid');
+    // 曜日のヘッダーを残してクリア
+    while (grid.children.length > 7) grid.removeChild(grid.lastChild);
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const todayStr = formatDate(new Date());
+    
+    // 前月のはみ出し分
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+    for (let i = firstDay.getDay() - 1; i >= 0; i--) {
+        const d = prevMonthLastDay - i;
+        const tempDate = new Date(year, month - 1, d);
+        grid.appendChild(createCalCell(tempDate, true));
+    }
+
+    // 当月
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+        const tempDate = new Date(year, month, d);
+        grid.appendChild(createCalCell(tempDate, false, todayStr));
+    }
+    
+    // 次月のはみ出し分 (合計42セルになるように調整)
+    const totalCells = grid.children.length - 7;
+    const remaining = 42 - totalCells;
+    for (let d = 1; d <= remaining; d++) {
+        const tempDate = new Date(year, month + 1, d);
+        grid.appendChild(createCalCell(tempDate, true));
+    }
+}
+
+function createCalCell(dateObj, isOtherMonth, todayStr = "") {
+    const dateStr = formatDate(dateObj);
+    const monthStr = getMonthStr(dateStr);
+    const cell = document.createElement('div');
+    
+    let cls = 'cal-cell';
+    if(isOtherMonth) cls += ' other-month';
+    if(dateStr === todayStr) cls += ' today';
+    if(dateStr === state.selectedDateStr) cls += ' selected';
+    cell.className = cls;
+    
+    // フロア(日付)
+    const floorSpan = document.createElement('span');
+    floorSpan.className = 'cal-floor'; floorSpan.innerText = `B${dateObj.getDate()}F`;
+    
+    // 日付数字
+    const dateSpan = document.createElement('span');
+    dateSpan.className = 'cal-date'; dateSpan.innerText = dateObj.getDate();
+
+    // タスクインジケーター
+    const indicators = document.createElement('div');
+    indicators.className = 'cal-task-indicators';
+    const tasksForDay = state.calendarData[monthStr]?.[dateStr] || [];
+    
+    const isPast = isPastDate(dateStr);
+    
+    tasksForDay.forEach(t => {
+        const ind = document.createElement('div');
+        let iCls = 'indicator';
+        if (t.status === 'completed') iCls += ' done';
+        else if (t.status === 'in_progress') iCls += ' active';
+        else if (isPast && t.status === 'pending') iCls += ' missed'; // 過去の未完了
+        ind.className = iCls;
+        indicators.appendChild(ind);
+    });
+
+    cell.appendChild(floorSpan); cell.appendChild(dateSpan); cell.appendChild(indicators);
+    
+    cell.addEventListener('click', () => {
+        state.selectedDateStr = dateStr;
+        // もし別月をタップしたらカレンダーごと移動
+        if(isOtherMonth) {
+            state.currentDate = new Date(dateObj);
+            renderCalendar();
+        } else {
+            // クラスの再割り当てだけで軽く済ます
+            document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
+            cell.classList.add('selected');
+        }
+        
+        // 選択された日のタスクで、未完了のものがあれば自動選択
+        const mStr = getMonthStr(dateStr);
+        const dayTasks = state.calendarData[mStr]?.[dateStr] || [];
+        state.selectedTask = dayTasks.find(t => t.status !== 'completed') || dayTasks[0] || null;
+
+        renderTasks(); updateBattlePane();
+    });
+    return cell;
+}
+
+// スワイプ処理
+function initSwipe() {
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const area = $('calendar-swipe-area');
+    
+    area.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+    area.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, {passive: true});
+    
+    function handleSwipe() {
+        const diff = touchEndX - touchStartX;
+        if (Math.abs(diff) > 50) { // 50px以上のスワイプで判定
+            if (diff > 0) changeMonth(-1); // 右スワイプ -> 先月
+            else changeMonth(1); // 左スワイプ -> 来月
+        }
+    }
+}
+
+// ==========================================
+// 7. タスク(魔物)処理
+// ==========================================
+function renderTasks() {
+    const d = new Date(state.selectedDateStr);
+    $('task-date-display').innerText = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} B${d.getDate()}F の任務`;
+    
+    const container = $('task-list-container');
+    container.innerHTML = '';
+    const monthStr = getMonthStr(state.selectedDateStr);
+    const tasks = state.calendarData[monthStr]?.[state.selectedDateStr] || [];
+    const isPast = isPastDate(state.selectedDateStr);
+
+    if (tasks.length === 0) {
+        container.innerHTML = '<div class="text-center text-gray pt-8">魔物の気配はない...</div>';
+        state.selectedTask = null;
+        updateBattlePane();
+        return;
+    }
+
+    tasks.forEach((task) => {
+        const div = document.createElement('div');
+        div.className = `task-item ${state.selectedTask?.id === task.id ? 'selected' : ''}`;
+        
+        // ステータスボタン
+        const statBtn = document.createElement('button');
+        let sCls = 'task-status-btn';
+        let sText = '未着手';
+        if (task.status === 'completed') { sCls += ' done'; sText = '討伐済'; }
+        else if (task.status === 'in_progress') { sCls += ' active'; sText = '交戦中'; }
+        else if (isPast) { sCls += ' missed'; sText = '徘徊中'; } // 過去の未完了
+        
+        statBtn.className = sCls; statBtn.innerText = sText;
+        statBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleTaskStatus(task.id); });
+
+        // タスク名
+        const nameSpan = document.createElement('span');
+        nameSpan.className = `task-name ${task.status === 'completed' ? 'done' : ''}`;
+        nameSpan.innerText = task.title + (task.groupId ? ' 🔄' : '');
+        
+        // アクション群
+        const actionDiv = document.createElement('div');
+        actionDiv.className = 'task-actions';
+        
+        const optBtn = document.createElement('button');
+        optBtn.className = 'action-btn btn-run'; optBtn.innerText = '🏃/🗑️';
+        optBtn.addEventListener('click', (e) => { e.stopPropagation(); openActionModal(task.id); });
+
+        actionDiv.appendChild(optBtn);
+        
+        div.appendChild(statBtn); div.appendChild(nameSpan); div.appendChild(actionDiv);
+        div.addEventListener('click', () => {
+            state.selectedTask = task;
+            renderTasks(); // 選択状態の再描画
+            updateBattlePane();
+        });
+        container.appendChild(div);
+    });
+
+    updateBattlePane();
+}
+
+function handleAddTask() {
+    const title = $('input-new-task').value.trim();
+    if (!title) return;
+    const repeatType = $('input-task-repeat').value;
+    const groupId = repeatType !== 'none' ? generateId() : null;
+    let targetDateObj = new Date(state.selectedDateStr);
+    let addedCount = 0;
+    
+    // 生成期間
+    const maxDays = repeatType === 'none' ? 1 : 90;
+    const startDayOfWeek = targetDateObj.getDay();
+
+    for (let i = 0; i < maxDays; i++) {
+        const dStr = formatDate(targetDateObj);
+        const mStr = getMonthStr(dStr);
+        const dayOfWeek = targetDateObj.getDay();
+        
+        let shouldAdd = false;
+        if (repeatType === 'none' && i === 0) shouldAdd = true;
+        else if (repeatType === 'daily') shouldAdd = true;
+        else if (repeatType === 'weekly' && dayOfWeek === startDayOfWeek) shouldAdd = true;
+        else if (repeatType === 'weekday' && dayOfWeek !== 0 && dayOfWeek !== 6) shouldAdd = true;
+        
+        if (shouldAdd) {
+            if (!state.calendarData[mStr]) state.calendarData[mStr] = {};
+            if (!state.calendarData[mStr][dStr]) state.calendarData[mStr][dStr] = [];
+            
+            const newTask = {
+                id: generateId(), groupId: groupId, title: title,
+                status: 'pending', hp: 3, maxHp: 3,
+                enemyType: getHash(title) % ENEMY_AAS.length
+            };
+            state.calendarData[mStr][dStr].push(newTask);
+            if (i === 0) state.selectedTask = newTask;
+            addedCount++;
+        }
+        if (repeatType === 'none') break;
+        targetDateObj.setDate(targetDateObj.getDate() + 1);
+    }
+    
+    $('input-new-task').value = '';
+    if (addedCount > 1) addLog(`▶ 魔物「${title}」の群れが配置された！(${addedCount}体)`);
+    else addLog(`▶ 魔物「${title}」が現れた！`);
+    
+    StorageManager.save(); renderTasks(); renderCalendar();
+}
+
+function toggleTaskStatus(taskId) {
+    const mStr = getMonthStr(state.selectedDateStr);
+    const tasks = state.calendarData[mStr][state.selectedDateStr];
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    state.selectedTask = task;
+
+    if (task.status === 'pending') {
+        task.status = 'in_progress'; task.hp = 1;
+        addLog(`▶ 「${task.title}」に攻撃！ Hit!`);
+        shakeEnemy();
+    } else if (task.status === 'in_progress') {
+        task.status = 'completed'; task.hp = 0;
+        addLog(`▶ 「${task.title}」を討伐した！`, "text-green");
+        shakeEnemy();
+        handleLevelUp(task.title); // 経験値＆成長判定へ
+    } else {
+        task.status = 'pending'; task.hp = task.maxHp;
+        addLog(`▶ 魔物「${task.title}」が蘇生した...`, "text-red");
+    }
+    StorageManager.save(); renderTasks(); renderCalendar(); updateBattlePane();
+}
+
+// 延期・削除アクション
+function openActionModal(taskId) {
+    const mStr = getMonthStr(state.selectedDateStr);
+    const task = state.calendarData[mStr][state.selectedDateStr].find(t => t.id === taskId);
+    if (!task) return;
+    actionTargetTask = task;
+    $('action-task-name').innerText = `対象: ${task.title}`;
+    $('btn-action-del-all').classList.toggle('hidden', !task.groupId);
+    $('action-modal-overlay').style.display = 'flex';
+}
+function closeActionModal() {
+    $('action-modal-overlay').style.display = 'none';
+    actionTargetTask = null;
+}
+
+// 翌日へ延期（逃げる）
+function handlePostponeTask() {
+    if(!actionTargetTask) return;
+    const task = actionTargetTask;
+    
+    // 現在の日から削除
+    removeTask(state.selectedDateStr, task.id, false);
+    
+    // 翌日へ追加
+    const nextDateObj = new Date(state.selectedDateStr);
+    nextDateObj.setDate(nextDateObj.getDate() + 1);
+    const nextDateStr = formatDate(nextDateObj);
+    const nextMStr = getMonthStr(nextDateStr);
+    
+    if (!state.calendarData[nextMStr]) state.calendarData[nextMStr] = {};
+    if (!state.calendarData[nextMStr][nextDateStr]) state.calendarData[nextMStr][nextDateStr] = [];
+    
+    // IDを新しくして追加
+    const clonedTask = { ...task, id: generateId(), status: 'pending', hp: task.maxHp };
+    state.calendarData[nextMStr][nextDateStr].push(clonedTask);
+    
+    addLog(`▶ 一時撤退！「${task.title}」を翌日に回した。`, "text-blue");
+    
+    closeActionModal();
+    StorageManager.save(); renderTasks(); renderCalendar();
+}
+
+function removeTask(dateStr, taskId, showLog = true) {
+    const mStr = getMonthStr(dateStr);
+    const tasks = state.calendarData[mStr]?.[dateStr];
+    if(!tasks) return;
+    const idx = tasks.findIndex(t => t.id === taskId);
+    if (idx > -1) {
+        const t = tasks[idx];
+        tasks.splice(idx, 1);
+        if(showLog) addLog(`▶ 「${t.title}」を予定から消し去った。`);
+        if(state.selectedTask?.id === taskId) state.selectedTask = null;
+        StorageManager.save(); renderTasks(); renderCalendar();
+    }
+}
+
+function deleteAllTasks(groupId, fromDateStr) {
+    const fromDate = new Date(fromDateStr);
+    let count = 0;
+    for (const [mStr, days] of Object.entries(state.calendarData)) {
+        for (const [dStr, tasks] of Object.entries(days)) {
+            if (new Date(dStr) >= fromDate) {
+                const initialLen = tasks.length;
+                state.calendarData[mStr][dStr] = tasks.filter(t => t.groupId !== groupId);
+                count += initialLen - state.calendarData[mStr][dStr].length;
+            }
+        }
+    }
+    addLog(`▶ 対象の群れ（${count}体）を根絶やしにした。`);
+    if(state.selectedTask?.groupId === groupId) state.selectedTask = null;
+    StorageManager.save(); renderTasks(); renderCalendar();
+}
+
+// ==========================================
+// 8. 戦闘画面更新 & RPGロジック
+// ==========================================
+function updateBattlePane() {
+    const d = new Date(state.selectedDateStr);
+    const dungeonId = getDungeonIdForMonth(d.getFullYear(), d.getMonth());
+    $('dungeon-name-display').innerText = `${DUNGEON_NAMES[dungeonId]} B${d.getDate()}F`;
+
+    const vElem = $('enemy-visual');
+    const nElem = $('enemy-name');
+    const hpBar = $('enemy-hp-bar');
+
+    // プレイヤーEXP情報更新
+    const lv = state.user.stats.LV;
+    const exp = state.user.stats.EXP;
+    const reqExp = getRequiredExp(lv);
+    $('disp-lv').innerText = lv;
+    $('disp-exp').innerText = exp;
+    $('disp-next').innerText = reqExp;
+
+    if (!state.selectedTask) {
+        vElem.innerHTML = '<span class="text-xs text-gray">平穏な空間</span>';
+        nElem.innerText = '-- 敵はいない --';
+        hpBar.style.width = '0%';
+        return;
+    }
+
+    const t = state.selectedTask;
+    if (t.status === 'completed') {
+        vElem.innerHTML = '<span class="text-gray">_|_<br> RIP</span>';
+        nElem.innerText = `[討伐済] ${t.title}`;
+        hpBar.style.width = '0%';
+    } else {
+        vElem.innerText = ENEMY_AAS[t.enemyType];
+        nElem.innerText = `Lv.? ${t.title}`;
+        const pct = (t.hp / t.maxHp) * 100;
+        hpBar.style.width = `${pct}%`;
+        hpBar.style.backgroundColor = pct > 50 ? 'var(--col-green)' : (pct > 20 ? 'var(--col-yellow)' : 'var(--col-red)');
+    }
+}
+
+function shakeEnemy() {
+    const el = $('enemy-visual');
+    el.classList.remove('anim-shake');
+    void el.offsetWidth; // reflow
+    el.classList.add('anim-shake');
+}
+
+function addLog(text, colorClass = '') {
+    const logDiv = document.createElement('div');
+    if(colorClass) logDiv.className = colorClass;
+    logDiv.innerText = text;
+    const logContainer = $('battle-log');
+    logContainer.prepend(logDiv);
+    if(logContainer.children.length > 20) logContainer.removeChild(logContainer.lastChild);
+}
+
+// レベルアップと成長
+async function handleLevelUp(taskName) {
+    // 1. EXP加算
+    const gainExp = Math.floor(Math.random() * 3) + 2; // 2〜4のEXP
+    state.user.stats.EXP += gainExp;
+    addLog(`▶ ${gainExp} EXP 獲得！`);
+
+    let reqExp = getRequiredExp(state.user.stats.LV);
+    
+    // 2. レベルアップ判定
+    if (state.user.stats.EXP >= reqExp) {
+        state.user.stats.LV++;
+        addLog(`★★★ LEVEL UP! LV${state.user.stats.LV} になった！ ★★★`, "text-yellow");
+        
+        // 画面フラッシュエフェクト
+        const pane = $('battle-pane');
+        pane.classList.remove('anim-levelup');
+        void pane.offsetWidth;
+        pane.classList.add('anim-levelup');
+        
+        // レベルアップ時の基本ステータス上昇 (ランダム)
+        const stats = ['STR', 'INT', 'DEX', 'AGI', 'VIT', 'LUK'];
+        const upCount = 3; // 3項目上がる
+        for(let i=0; i<upCount; i++) {
+            const tgt = stats[Math.floor(Math.random() * stats.length)];
+            const val = Math.floor(Math.random() * 3) + 1; // 1〜3
+            state.user.stats[tgt] += val;
+            addLog(`  ${tgt} が ${val} 上がった！`, "text-green");
+        }
+    }
+
+    updateBattlePane();
+
+    // 3. (オプション) Geminiによる詳細な成長判定 (APIキーがある場合のみ)
+    if (state.user.geminiApiKey) {
+        addLog(`...神々の眼がタスクを評価中...`, "text-gray");
+        const prompt = `タスク「${taskName}」を完了しました。`;
+        const sysInst = `あなたはRPGのシステムです。タスク名から判断し、JSON形式でステータス変動を出力せよ。
+        成長(プラス1〜3)を1つ、疲労(マイナス1)を1つ選ぶこと。出力例: {"STR": 2, "VIT": -1}`;
+        
+        try {
+            const growth = await callGeminiAPI(prompt, sysInst, true);
+            if(growth) {
+                let hasGrowth = false;
+                for (const [key, val] of Object.entries(growth)) {
+                    if (typeof val === 'number' && val !== 0 && state.user.stats[key] !== undefined) {
+                        state.user.stats[key] = Math.max(1, Math.min(999, state.user.stats[key] + val));
+                        if (val > 0) addLog(`  [タスク影響] ${key} +${val}`, "text-green");
+                        else addLog(`  [タスク影響] ${key} ${val}`, "text-red");
+                        hasGrowth = true;
+                    }
+                }
+            }
+        } catch (e) { console.warn("Gemini growth check skipped."); }
+    }
+    
+    StorageManager.save();
+}
+
+// ==========================================
+// 9. API連携 (Gemini)
+// ==========================================
+async function callGeminiAPI(prompt, systemInstruction, jsonMode = false) {
+    const customKey = state.user?.geminiApiKey;
+    const keyToUse = customKey || API_KEY_ENV;
+    if(!keyToUse) throw new Error("No API Key");
+    
+    // カスタムキーがある場合は安定版、ない環境変数の場合はPreviewを使用
+    const modelName = customKey ? "gemini-2.5-flash" : "gemini-2.5-flash-preview-09-2025";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${keyToUse}`;
+    
+    const payload = {
+        contents: [{ parts: [{ text: prompt }] }],
+        systemInstruction: { parts: [{ text: systemInstruction }] }
+    };
+
+    if (jsonMode) {
+        payload.generationConfig = {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: "OBJECT",
+                properties: { STR: { type: "INTEGER" }, INT: { type: "INTEGER" }, DEX: { type: "INTEGER" }, AGI: { type: "INTEGER" }, VIT: { type: "INTEGER" }, LUK: { type: "INTEGER" } }
+            }
+        };
+    }
+
+    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    if (!response.ok) throw new Error(`API Error: ${response.status}`);
+    const result = await response.json();
+    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error("Empty response");
+    return jsonMode ? JSON.parse(text) : text;
+}
+
+function showModal(title, contentHTML) {
+    $('modal-title').innerText = title;
+    $('modal-body').innerHTML = contentHTML;
+    $('modal-overlay').style.display = 'flex';
+}
+
+async function handleReport() {
+    const tasks = state.calendarData[getMonthStr(state.selectedDateStr)]?.[state.selectedDateStr] || [];
+    const completed = tasks.filter(t => t.status === 'completed').map(t => t.title);
+    
+    if (completed.length === 0) return showModal("本日の冒険録", "未だ目立った戦果は挙がっていない。\nさらなる精進が必要だ。");
+    if (!state.user.geminiApiKey && !API_KEY_ENV) return showModal("本日の冒険録", `以下の魔物を討伐した！\n・${completed.join('\n・')}`);
+
+    showModal("冒険録の執筆中...", '<div class="text-center"><span class="loading">神の筆記者が綴っています</span></div>');
+    const d = new Date(state.selectedDateStr);
+    const dungeonName = DUNGEON_NAMES[getDungeonIdForMonth(d.getFullYear(), d.getMonth())];
+    const prompt = `ダンジョン「${dungeonName}」の B${d.getDate()}F にて、以下の魔物(タスク)を討伐しました。\n・${completed.join('\n・')}`;
+    const sysInst = `あなたはウィザードリィ風ダークファンタジーRPGのナレーターです。ユーザーの討伐リストを元に、古の英雄の叙事詩のような、重厚でシリアスな200文字程度のテキストを生成してください。`;
+
+    try {
+        const text = await callGeminiAPI(prompt, sysInst);
+        showModal(`${state.selectedDateStr} の冒険録`, text);
+    } catch (e) { showModal("通信エラー", "冒険録の生成に失敗しました。(APIキーを確認してください)"); }
+}
+
+async function handleOracle() {
+    if (!state.user.geminiApiKey && !API_KEY_ENV) return showModal("女神の御告げ", "声が届かない...（APIキーを設定すると御告げが聞けます）");
+    showModal("女神の御告げ", '<div class="text-center"><span class="loading">女神が星の導きを視ています</span></div>');
+    const s = state.user.stats;
+    const prompt = `現在のステータス: LV:${s.LV}, STR:${s.STR}, INT:${s.INT}, DEX:${s.DEX}, AGI:${s.AGI}, VIT:${s.VIT}, LUK:${s.LUK}`;
+    const sysInst = `あなたはRPGの神殿にいる女神です。冒険者のステータスを見て、女神のような慈愛と威厳のある口調で、今後の成長に関するアドバイスや励ましの言葉を200文字程度で送ってください。`;
+
+    try {
+        const text = await callGeminiAPI(prompt, sysInst);
+        showModal("女神の御告げ", text);
+    } catch (e) { showModal("通信エラー", "女神からの声が届きません..."); }
+}
+
+// ==========================================
+// 10. ステータス & レーダーチャート
+// ==========================================
+function renderStatus() {
+    $('st-name').innerText = state.user.name;
+    const s = state.user.stats;
+    $('st-lv').innerText = s.LV;
+    $('st-exp').innerText = s.EXP;
+    $('st-next').innerText = getRequiredExp(s.LV);
+    
+    // EXPバー
+    const prevReq = s.LV === 1 ? 0 : getRequiredExp(s.LV - 1);
+    const currReq = getRequiredExp(s.LV);
+    const range = currReq - prevReq;
+    const current = s.EXP - prevReq;
+    $('st-exp-bar').style.width = `${(current / range) * 100}%`;
+
+    ['str','int','dex','agi','vit','luk'].forEach(k => $(`st-${k}`).innerText = s[k.toUpperCase()]);
+    ['weapon','armor','acc'].forEach(k => $(`eq-${k}`).innerText = state.user.equipment[k]);
+    $('status-aa').innerText = HERO_AA[state.user.gender] || HERO_AA['other'];
+    drawRadarChart('radar-canvas', s);
+}
+
+function drawRadarChart(canvasId, stats) {
+    const canvas = $(canvasId); if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width; const h = canvas.height;
+    const cx = w / 2; const cy = h / 2;
+    const radius = Math.min(w, h) / 2 - 25;
+    ctx.clearRect(0, 0, w, h);
+
+    const statVals = [stats.STR, stats.INT, stats.DEX, stats.AGI, stats.VIT, stats.LUK];
+    const maxVal = Math.max(...statVals, 20); // 最低20を基準
+    const minVal = Math.min(...statVals);
+    const chartMin = Math.max(0, minVal - 10);
+    const chartMax = maxVal + 10;
+    const range = chartMax - chartMin;
+
+    const labels = ['STR', 'INT', 'DEX', 'AGI', 'VIT', 'LUK'];
+    const angles = Array.from({length: 6}, (_, i) => i * Math.PI * 2 / 6 - Math.PI / 2);
+
+    // 背景のクモの巣
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
+    for(let step=1; step<=4; step++) {
+        const r = radius * (step/4);
+        ctx.beginPath();
+        for(let i=0; i<6; i++) {
+            const x = cx + r * Math.cos(angles[i]);
+            const y = cy + r * Math.sin(angles[i]);
+            if(i===0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath(); ctx.stroke();
+    }
+
+    // ラベルと放射線
+    ctx.fillStyle = '#aaa'; ctx.font = '11px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for(let i=0; i<6; i++) {
+        const x = cx + radius * Math.cos(angles[i]);
+        const y = cy + radius * Math.sin(angles[i]);
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke();
+        
+        const lx = cx + (radius + 15) * Math.cos(angles[i]);
+        const ly = cy + (radius + 15) * Math.sin(angles[i]);
+        ctx.fillText(labels[i], lx, ly);
+    }
+
+    // データ領域描画
+    ctx.beginPath(); ctx.strokeStyle = 'rgba(74, 222, 128, 0.9)'; ctx.fillStyle = 'rgba(74, 222, 128, 0.4)'; ctx.lineWidth = 2;
+    for(let i=0; i<6; i++) {
+        const val = Math.max(0, statVals[i] - chartMin);
+        const ratio = val / range;
+        const r = radius * ratio;
+        const x = cx + r * Math.cos(angles[i]);
+        const y = cy + r * Math.sin(angles[i]);
+        if(i===0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    
+    // 頂点の点
+    ctx.fillStyle = '#fff';
+    for(let i=0; i<6; i++) {
+        const val = Math.max(0, statVals[i] - chartMin);
+        const r = radius * (val / range);
+        ctx.beginPath();
+        ctx.arc(cx + r * Math.cos(angles[i]), cy + r * Math.sin(angles[i]), 3, 0, Math.PI*2);
+        ctx.fill();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', initApp);
+</script>
+</body>
+</html>
