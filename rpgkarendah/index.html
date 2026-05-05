@@ -79,7 +79,7 @@
             transition: border-color 0.5s ease, background-color 0.5s ease;
         }
 
-        button, input, select {
+        button, input, select, textarea {
             font-family: 'DotGothic16', monospace;
             background-color: var(--col-bg);
             color: var(--col-text);
@@ -98,8 +98,9 @@
         }
         button:disabled { border-color: var(--col-darkgray); color: var(--col-gray); cursor: not-allowed; }
         
-        input, select { width: 100%; margin-bottom: 10px; background-color: rgba(0,0,0,0.5); }
-        input:focus, select:focus { outline: none; border-color: var(--col-green); box-shadow: 0 0 5px var(--col-green); }
+        input, select, textarea { width: 100%; margin-bottom: 10px; background-color: rgba(0,0,0,0.5); }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--col-green); box-shadow: 0 0 5px var(--col-green); }
+        textarea { resize: vertical; min-height: 80px; }
         
         select {
             appearance: none; -webkit-appearance: none;
@@ -114,7 +115,7 @@
         .flex-col { display: flex; flex-direction: column; }
         .justify-between { justify-content: space-between; }
         .items-center { align-items: center; }
-        .gap-2 { gap: 0.5rem; } .gap-4 { gap: 1rem; }
+        .gap-2 { gap: 0.5rem; } .gap-3 { gap: 0.75rem; } .gap-4 { gap: 1rem; }
         .grid { display: grid; }
         .hidden { display: none !important; }
         .text-green { color: var(--col-green); text-shadow: 0 0 3px var(--col-green); }
@@ -174,8 +175,17 @@
             border-left: 1px solid var(--col-border);
             border-bottom: 1px solid var(--col-border);
             z-index: 10;
-            transition: border-color 0.5s ease, background-color 0.5s ease;
+            transition: all 0.3s ease;
+            min-width: 130px;
         }
+        #hero-mini-status.minimized {
+            padding: 4px 8px;
+            min-width: auto;
+        }
+        #hero-mini-status.minimized #mini-status-content { display: none; }
+        #btn-toggle-mini { padding: 0 4px; font-size: 0.7rem; border: none; background: transparent; color: var(--col-gray); }
+        #btn-toggle-mini:hover { color: var(--col-text); background: transparent; box-shadow: none; }
+        #hero-mini-status.minimized #btn-toggle-mini { transform: rotate(180deg); }
 
         #enemy-visual {
             white-space: pre; text-align: center; font-size: 1.2rem; line-height: 1.2;
@@ -264,16 +274,18 @@
         
         .task-status-btn {
             background: none; border: 1px solid var(--col-gray); color: var(--col-gray);
-            padding: 4px 8px; font-size: 0.8rem; border-radius: 2px; min-width: 60px;
+            padding: 4px 8px; font-size: 0.8rem; border-radius: 2px; min-width: 60px; flex-shrink: 0;
         }
         .task-status-btn.active { border-color: var(--col-yellow); color: var(--col-yellow); }
         .task-status-btn.done { border-color: var(--col-green); color: var(--col-green); }
         .task-status-btn.missed { border-color: var(--col-red); color: var(--col-red); }
         
-        .task-name { flex: 1; margin: 0 10px; cursor: pointer; line-height: 1.2; word-break: break-all; }
+        .task-details { display: flex; flex-direction: column; flex: 1; margin: 0 10px; cursor: pointer; overflow: hidden; }
+        .task-name { line-height: 1.2; word-break: break-all; }
         .task-name.done { text-decoration: line-through; color: var(--col-gray); }
+        .task-desc-text { font-size: 0.75rem; color: var(--col-gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
         
-        .task-actions { display: flex; gap: 5px; }
+        .task-actions { display: flex; gap: 5px; flex-shrink: 0; }
         .action-btn {
             background: none; border: 1px solid transparent; padding: 4px;
             font-size: 1rem; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center;
@@ -329,7 +341,7 @@ __  __               ___           _
             </div>
         </div>
         <div class="window mt-4" style="font-size: 0.8rem;">
-            <p class="text-gray text-center">v2.1 Complete Edition (Unlimited Growth)</p>
+            <p class="text-gray text-center">v2.2 Complete Edition (Infinite Tasks)</p>
         </div>
     </div>
 
@@ -366,10 +378,15 @@ __  __               ___           _
                     
                     <!-- 主人公ミニステータス -->
                     <div id="hero-mini-status">
-                        <div class="text-yellow mb-1" style="font-size: 0.9rem; font-weight: bold;"><span id="disp-h-name">Hero</span> LV.<span id="disp-lv">1</span></div>
-                        <div id="disp-h-wpn" class="text-xs mb-1">⚔️ひのきの棒</div>
-                        <div id="disp-h-amr" class="text-xs mb-1">🛡️布の服</div>
-                        <div class="mt-1 text-gray text-xs"><span class="text-blue">EXP:</span><span id="disp-exp">0</span>/<span id="disp-next">10</span></div>
+                        <div class="flex justify-between items-center mb-1">
+                            <div class="text-yellow" style="font-size: 0.9rem; font-weight: bold;"><span id="disp-h-name">Hero</span> LV.<span id="disp-lv">1</span></div>
+                            <button id="btn-toggle-mini">▼</button>
+                        </div>
+                        <div id="mini-status-content">
+                            <div id="disp-h-wpn" class="text-xs mb-1">⚔️ひのきの棒</div>
+                            <div id="disp-h-amr" class="text-xs mb-1">🛡️布の服</div>
+                            <div class="mt-1 text-gray text-xs"><span class="text-blue">EXP:</span><span id="disp-exp">0</span>/<span id="disp-next">10</span></div>
+                        </div>
                     </div>
 
                     <!-- 敵表示 -->
@@ -532,19 +549,34 @@ __  __               ___           _
     </div>
 </div>
 
+<div id="edit-task-modal-overlay" class="modal-overlay">
+    <div class="window modal-content">
+        <h3 class="text-yellow text-center text-xl mb-4 border-b border-gray-500 pb-2">タスクの編集</h3>
+        <label class="text-xs text-gray">魔物の名前 (タスク名)</label>
+        <input type="text" id="edit-task-title" placeholder="タスク名...">
+        <label class="text-xs text-gray mt-2">詳細・メモ</label>
+        <textarea id="edit-task-desc" placeholder="詳細な内容やメモ..."></textarea>
+        
+        <div class="flex gap-3 mt-4">
+            <button id="btn-save-edit-task" class="flex-1 border-green text-green">保存する</button>
+            <button id="btn-cancel-edit-task" class="flex-1" style="border:none;">キャンセル</button>
+        </div>
+    </div>
+</div>
+
 <input type="file" id="file-import" accept=".json" style="display: none;">
 
 <script>
 /**
- * Y-zardry Dungeon & Tasks - Unlimited Growth Edition v2.1
+ * Y-zardry Dungeon & Tasks - Complete Edition v2.2
  */
 
 const API_KEY_ENV = ""; 
 const STORAGE_KEY = 'yzardry_save_data_v2';
-const APP_VERSION = 2.1;
+const APP_VERSION = 2.2;
 
 // ==========================================
-// 1. ダンジョン & 装備 データ (24種 / 30種)
+// 1. ダンジョン & 装備 & 敵 データ
 // ==========================================
 const DUNGEONS = [
     { name: "静寂の平原", bg: "#050505", border: "#a3e635" },
@@ -573,34 +605,47 @@ const DUNGEONS = [
     { name: "終焉の深淵", bg: "#050000", border: "#dc2626" }
 ];
 
+// 各50種 (0~9:白, 10~19:緑, 20~29:青, 30~39:黄, 40~47:赤, 48~49:紫)
 const WEAPONS = [
     { name: "ひのきの棒", color: "#ffffff" }, { name: "こんぼう", color: "#ffffff" }, { name: "錆びた短剣", color: "#ffffff" },
     { name: "銅の剣", color: "#ffffff" }, { name: "鉄の槍", color: "#ffffff" }, { name: "狩人の弓", color: "#ffffff" },
+    { name: "木の枝", color: "#ffffff" }, { name: "石の斧", color: "#ffffff" }, { name: "見習いの剣", color: "#ffffff" }, { name: "スリングショット", color: "#ffffff" },
     { name: "鋼の長剣", color: "#4ade80" }, { name: "青銅の斧", color: "#4ade80" }, { name: "魔法の杖", color: "#4ade80" },
     { name: "銀のレイピア", color: "#4ade80" }, { name: "大地のハンマー", color: "#4ade80" }, { name: "疾風の短剣", color: "#4ade80" },
+    { name: "鉄の斧", color: "#4ade80" }, { name: "狩人の槍", color: "#4ade80" }, { name: "オークの杖", color: "#4ade80" }, { name: "ボーンダガー", color: "#4ade80" },
     { name: "騎士の大剣", color: "#60a5fa" }, { name: "氷結の槍", color: "#60a5fa" }, { name: "炎の杖", color: "#60a5fa" },
     { name: "雷鳴の弓", color: "#60a5fa" }, { name: "毒牙のダガー", color: "#60a5fa" }, { name: "破砕のメイス", color: "#60a5fa" },
+    { name: "鋼のハルバード", color: "#60a5fa" }, { name: "ミスリルの剣", color: "#60a5fa" }, { name: "水晶の杖", color: "#60a5fa" }, { name: "風切り羽の弓", color: "#60a5fa" },
     { name: "竜殺しの大剣", color: "#facc15" }, { name: "聖騎士の槍", color: "#facc15" }, { name: "賢者の杖", color: "#facc15" },
     { name: "精霊の弓", color: "#facc15" }, { name: "暗殺者の刃", color: "#facc15" }, { name: "太陽のメイス", color: "#facc15" },
+    { name: "雷神の槌", color: "#facc15" }, { name: "聖者のメイス", color: "#facc15" }, { name: "妖精の弓", color: "#facc15" }, { name: "暗黒騎士の槍", color: "#facc15" },
     { name: "魔剣ダインスレイヴ", color: "#f87171" }, { name: "聖剣エクスカリバー", color: "#f87171" }, { name: "神杖カドゥケウス", color: "#f87171" },
-    { name: "魔弓フェイルノート", color: "#f87171" }, { name: "妖刀・村正", color: "#f87171" }, { name: "創世の神武", color: "#c084fc" }
+    { name: "魔弓フェイルノート", color: "#f87171" }, { name: "妖刀・村正", color: "#f87171" }, { name: "血塗られた魔剣", color: "#f87171" }, { name: "竜王の大斧", color: "#f87171" }, { name: "星砕きの戦鎚", color: "#f87171" },
+    { name: "創世の神武", color: "#c084fc" }, { name: "終焉の魔杖", color: "#c084fc" }
 ];
 
 const ARMORS = [
     { name: "布の服", color: "#ffffff" }, { name: "旅人の服", color: "#ffffff" }, { name: "革の鎧", color: "#ffffff" },
     { name: "銅の胸当て", color: "#ffffff" }, { name: "鉄の鎧", color: "#ffffff" }, { name: "狩人の外套", color: "#ffffff" },
+    { name: "古びたマント", color: "#ffffff" }, { name: "木の盾と服", color: "#ffffff" }, { name: "獣皮の鎧", color: "#ffffff" }, { name: "兵士の鎧", color: "#ffffff" },
     { name: "鋼の鎧", color: "#4ade80" }, { name: "青銅の盾と鎧", color: "#4ade80" }, { name: "魔術師のローブ", color: "#4ade80" },
     { name: "銀の胸当て", color: "#4ade80" }, { name: "大地の衣", color: "#4ade80" }, { name: "盗賊の軽鎧", color: "#4ade80" },
+    { name: "鉄の重鎧", color: "#4ade80" }, { name: "狩人のチェスト", color: "#4ade80" }, { name: "オークの胸当て", color: "#4ade80" }, { name: "ボーンアーマー", color: "#4ade80" },
     { name: "騎士の重鎧", color: "#60a5fa" }, { name: "氷結のローブ", color: "#60a5fa" }, { name: "炎の衣", color: "#60a5fa" },
     { name: "雷鳴の外套", color: "#60a5fa" }, { name: "暗黒の軽鎧", color: "#60a5fa" }, { name: "破砕の防具", color: "#60a5fa" },
+    { name: "鋼のチェスト", color: "#60a5fa" }, { name: "ミスリルチェイン", color: "#60a5fa" }, { name: "水晶のローブ", color: "#60a5fa" }, { name: "風防ぎの外套", color: "#60a5fa" },
     { name: "竜鱗の鎧", color: "#facc15" }, { name: "聖騎士の鎧", color: "#facc15" }, { name: "賢者のローブ", color: "#facc15" },
     { name: "精霊の衣", color: "#facc15" }, { name: "影の装束", color: "#facc15" }, { name: "太陽の鎧", color: "#facc15" },
+    { name: "雷神の鎧", color: "#facc15" }, { name: "聖者のローブ", color: "#facc15" }, { name: "妖精のクローク", color: "#facc15" }, { name: "暗黒騎士の鎧", color: "#facc15" },
     { name: "魔鎧オメガ", color: "#f87171" }, { name: "聖鎧アイギス", color: "#f87171" }, { name: "神衣ヴァルキリー", color: "#f87171" },
-    { name: "幻影のクローク", color: "#f87171" }, { name: "鬼神の胴着", color: "#f87171" }, { name: "創世の神鎧", color: "#c084fc" }
+    { name: "幻影のクローク", color: "#f87171" }, { name: "鬼神の胴着", color: "#f87171" }, { name: "血塗られた魔鎧", color: "#f87171" }, { name: "竜王の重鎧", color: "#f87171" }, { name: "星守の法衣", color: "#f87171" },
+    { name: "創世の神鎧", color: "#c084fc" }, { name: "終焉の魔鎧", color: "#c084fc" }
 ];
 
+// 合計50種のアスキーアート敵
 const ENEMY_AAS = [
-`   ___\n  /   \\\n ( o.o )\n  > ^ <`, `  /\\_/\\\n ( o.o )\n  > ^ <`, `   ___\n  /   \\\n |O   O|\n  \\_^_/`, `  \\|/\n - O -\n  /|\\`, `  ___ \n (o,o)\n /)  )\n  " "`, ` ,_._.,\n/ _ _ \\\n|(_)(_)|\n \\_  _/`, `  ()()\n  (..)\n  /\\/\\`, `    _\n   / \\\n  /  /\n  \\_\\_`, ` /\\   /\\\n  \\/-\\/ \n   (o o)\n   \\_^_/`, `  \\ /\n (o o)\n | | |\n /_|_\\`, `   ___\n  / * \\\n | o o |\n  \\_-_/`, `  [+ +]\n  /| |\\\n  \\|_|/\n   | |`, `  /---\\\n  |o o|\n  |---|\n  /   \\`, `  /\\_/\\\n ( 'x' )\n (  "  )`, `   ( )\n  (   )\n ( o o )\n  \\ - /`, `   /\\\n  /  \\\n (o  o)\n  \\__/`, `   ( )\n  / | \\\n (  |  )\n  \\/ \\/`, `  ^   ^\n /o   o\\\n \\_ V _/\n  |   |`, `  [___]\n  |o o|\n  [___]`, `   \\ /\n  (o o)\n  /(_)\\\n   / \\`, `  _   _\n | |_| |\n | o o |\n |_|-|_|`, `   /\\\n  /  \\\n  |()|\n  \\__/`, ` [___]\n [o o]\n [___]`, `  /\\_/\\\n ( õ_õ )\n > ^ <`, `   ___\n  / o \\\n  \\___/`, `  ()_()\n  \\ o /\n  /___\\`, `   ___\n  /o o\\\n  |___|\n  /   \\`, `  [+ +]\n  /| |\\\n   | |`, `  .--.\n | o o |\n |  ^  |\n  '--'`, `  \\|/\n (o o)\n  \\-/\n  / \\`
+`   ___\n  /   \\\n ( o.o )\n  > ^ <`, `  /\\_/\\\n ( o.o )\n  > ^ <`, `   ___\n  /   \\\n |O   O|\n  \\_^_/`, `  \\|/\n - O -\n  /|\\`, `  ___ \n (o,o)\n /)  )\n  " "`, ` ,_._.,\n/ _ _ \\\n|(_)(_)|\n \\_  _/`, `  ()()\n  (..)\n  /\\/\\`, `    _\n   / \\\n  /  /\n  \\_\\_`, ` /\\   /\\\n  \\/-\\/ \n   (o o)\n   \\_^_/`, `  \\ /\n (o o)\n | | |\n /_|_\\`, `   ___\n  / * \\\n | o o |\n  \\_-_/`, `  [+ +]\n  /| |\\\n  \\|_|/\n   | |`, `  /---\\\n  |o o|\n  |---|\n  /   \\`, `  /\\_/\\\n ( 'x' )\n (  "  )`, `   ( )\n  (   )\n ( o o )\n  \\ - /`, `   /\\\n  /  \\\n (o  o)\n  \\__/`, `   ( )\n  / | \\\n (  |  )\n  \\/ \\/`, `  ^   ^\n /o   o\\\n \\_ V _/\n  |   |`, `  [___]\n  |o o|\n  [___]`, `   \\ /\n  (o o)\n  /(_)\\\n   / \\`, `  _   _\n | |_| |\n | o o |\n |_|-|_|`, `   /\\\n  /  \\\n  |()|\n  \\__/`, ` [___]\n [o o]\n [___]`, `  /\\_/\\\n ( õ_õ )\n > ^ <`, `   ___\n  / o \\\n  \\___/`, `  ()_()\n  \\ o /\n  /___\\`, `   ___\n  /o o\\\n  |___|\n  /   \\`, `  [+ +]\n  /| |\\\n   | |`, `  .--.\n | o o |\n |  ^  |\n  '--'`, `  \\|/\n (o o)\n  \\-/\n  / \\`,
+`  /\\_\\ \n (ಠ_ಠ)\n /_\\_\\`, `  , , \n (o,o)\n (   )\n  "-"`, `  \\  / \n (><)\n /  \\`, `  _  _ \n (o)(o)\n  \\__/\n  |__|`, `  .--.\n /_  _\\\n |()()|\n  \\__/`, `  (O_O)\n  /| |\\\n   | |`, `  /vvv\\\n  |o o|\n  \\^^^/`, `  /| |\\\n ( * * )\n  \\___/`, `  _-_ \n / o \\\n \\_o_/`, `  [+_+]\n  /| |\\\n  \\_|_/`, `  \\___/\n  (o.o)\n  /___\\`, `  /\\_/\\\n (=^.^=)\n  (")_(")`, `  _  _ \n (O)(O)\n  \\==/\n  /||\\`, `  /~~\\\n ( - -)\n  \\~~/`, `  /|/|\n ( o.o)\n  )  (\n  "  "`, `  ____ \n /o  o\\\n \\_()_/\n  /  \\`, `  [--]\n  |oo|\n  [--]`, `   /\\ \n  /  \\ \n ( oo )\n  \\__/\n   /\\`, `  /\\_/\\\n ( x_x )\n > ^ <`, `  (OoO)\n  /|_|\\\n   | |`
 ];
 
 const HERO_AA = { male: `   _O_\n  / | \\\n   / \\`, female: `   _O_\n  / | \\\n  /   \\`, other: `   _O_\n  / | \\\n  \\_|_/` };
@@ -609,7 +654,8 @@ const HERO_AA = { male: `   _O_\n  / | \\\n   / \\`, female: `   _O_\n  / | \\\n
 // 2. 状態管理 (State)
 // ==========================================
 let state = {
-    user: null, calendarData: {}, currentDate: new Date(), selectedDateStr: '', selectedTask: null, settings: { crtEffect: true }
+    user: null, calendarData: {}, currentDate: new Date(), selectedDateStr: '', selectedTask: null, 
+    settings: { crtEffect: true, showMiniStatus: true }
 };
 let actionTargetTask = null;
 
@@ -621,10 +667,7 @@ const formatDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStar
 const getMonthStr = (dateStr) => dateStr.substring(0, 7);
 const generateId = () => Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
 const getHash = (str) => { let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash); return Math.abs(hash); };
-
-// EXP計算 (2次関数ベースで緩やかに上昇)
 const getRequiredExp = (lv) => 10 + 5 * (lv - 1) + 2 * Math.pow(lv - 1, 2);
-
 const isPastDate = (dateStr) => {
     const today = new Date(); today.setHours(0,0,0,0);
     const target = new Date(dateStr); target.setHours(0,0,0,0);
@@ -651,9 +694,9 @@ const StorageManager = {
                 const data = JSON.parse(dataStr);
                 state.user = data.user;
                 state.calendarData = data.calendarData || {};
-                state.settings = data.settings || { crtEffect: true };
+                state.settings = data.settings || { crtEffect: true, showMiniStatus: true };
+                if(state.settings.showMiniStatus === undefined) state.settings.showMiniStatus = true;
                 
-                // バージョンアップ補正 (EXPと装備オブジェクト化)
                 if(state.user.stats.EXP === undefined) state.user.stats.EXP = 0;
                 if(typeof state.user.equipment.weapon === 'string') {
                     state.user.equipment.weapon = { name: state.user.equipment.weapon, color: '#ffffff' };
@@ -666,8 +709,7 @@ const StorageManager = {
         return false;
     },
     exportFile: () => {
-        if(!state.user) return;
-        StorageManager.save(true);
+        if(!state.user) return; StorageManager.save(true);
         const dataStr = localStorage.getItem(STORAGE_KEY);
         const blob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -689,7 +731,7 @@ const StorageManager = {
 };
 
 // ==========================================
-// 5. 初期化 & シーン遷移
+// 5. 初期化 & UI制御
 // ==========================================
 function initApp() {
     if (StorageManager.load()) { $('btn-continue').classList.remove('hidden'); applySettings(); }
@@ -709,6 +751,7 @@ function initApp() {
     $('btn-next-month').addEventListener('click', () => changeMonth(1));
     $('btn-add-task').addEventListener('click', handleAddTask);
     $('input-new-task').addEventListener('keypress', (e) => { if(e.key === 'Enter') handleAddTask(); });
+    $('btn-toggle-mini').addEventListener('click', toggleMiniStatus);
 
     initSwipe();
 
@@ -731,6 +774,9 @@ function initApp() {
     $('btn-action-del-single').addEventListener('click', () => { if(actionTargetTask) removeTask(state.selectedDateStr, actionTargetTask.id); closeActionModal(); });
     $('btn-action-del-all').addEventListener('click', () => { if(actionTargetTask && actionTargetTask.groupId) deleteAllTasks(actionTargetTask.groupId, state.selectedDateStr); closeActionModal(); });
     $('btn-action-cancel').addEventListener('click', closeActionModal);
+    
+    $('btn-save-edit-task').addEventListener('click', saveEditTask);
+    $('btn-cancel-edit-task').addEventListener('click', closeEditModal);
 
     switchScene('scene-title');
 }
@@ -758,10 +804,27 @@ function handleCreateUser() {
     addLog(`▶ 冒険者 ${name} はダンジョンに足を踏み入れた。`, "text-yellow");
 }
 
-function applySettings() { $('crt-effect').className = state.settings.crtEffect ? "crt-overlay" : "crt-overlay disabled"; }
+function applySettings() { 
+    $('crt-effect').className = state.settings.crtEffect ? "crt-overlay" : "crt-overlay disabled";
+    updateMiniStatusToggle();
+}
+
 function toggleCRT() { state.settings.crtEffect = !state.settings.crtEffect; applySettings(); StorageManager.save(true); renderSystem(); }
 function updateApiKey() { state.user.geminiApiKey = $('sys-apikey').value.trim(); StorageManager.save(false); alert("更新しました。"); $('sys-apikey').value = ''; }
 function renderSystem() { $('btn-toggle-crt').innerText = state.settings.crtEffect ? "ON" : "OFF"; $('btn-toggle-crt').className = state.settings.crtEffect ? "text-green border-green" : "text-gray"; }
+
+function toggleMiniStatus() {
+    state.settings.showMiniStatus = !state.settings.showMiniStatus;
+    updateMiniStatusToggle();
+    StorageManager.save(true);
+}
+
+function updateMiniStatusToggle() {
+    const el = $('hero-mini-status');
+    const btn = $('btn-toggle-mini');
+    if (state.settings.showMiniStatus) { el.classList.remove('minimized'); btn.innerText = '▼'; } 
+    else { el.classList.add('minimized'); btn.innerText = '▲'; }
+}
 
 // ==========================================
 // 6. カレンダー & テーマ描画
@@ -771,11 +834,7 @@ function applyDungeonTheme(dungeonId) {
     const root = document.documentElement;
     root.style.setProperty('--col-bg', d.bg);
     root.style.setProperty('--col-border', d.border);
-    
-    // ウィンドウの背景をダンジョン色に少し寄せる
-    const r = parseInt(d.bg.slice(1,3), 16) || 0;
-    const g = parseInt(d.bg.slice(3,5), 16) || 0;
-    const b = parseInt(d.bg.slice(5,7), 16) || 0;
+    const r = parseInt(d.bg.slice(1,3), 16) || 0; const g = parseInt(d.bg.slice(3,5), 16) || 0; const b = parseInt(d.bg.slice(5,7), 16) || 0;
     root.style.setProperty('--col-window-bg', `rgba(${Math.min(r+10,255)}, ${Math.min(g+10,255)}, ${Math.min(b+10,255)}, 0.95)`);
 }
 
@@ -850,10 +909,19 @@ function renderTasks() {
         let sCls = 'task-status-btn', sText = '未着手';
         if (task.status === 'completed') { sCls += ' done'; sText = '討伐済'; } else if (task.status === 'in_progress') { sCls += ' active'; sText = '交戦中'; } else if (isPast) { sCls += ' missed'; sText = '徘徊中'; }
         
+        let descHtml = '';
+        if (task.description) descHtml = `<div class="task-desc-text">${task.description}</div>`;
+        
         div.innerHTML = `
             <button class="${sCls}" onclick="event.stopPropagation(); toggleTaskStatus('${task.id}')">${sText}</button>
-            <span class="task-name ${task.status==='completed'?'done':''}">${task.title}${task.groupId?' 🔄':''}</span>
-            <div class="task-actions"><button class="action-btn btn-run" onclick="event.stopPropagation(); openActionModal('${task.id}')">🏃/🗑️</button></div>
+            <div class="task-details">
+                <span class="task-name ${task.status==='completed'?'done':''}">${task.title}${task.groupId?' 🔄':''}</span>
+                ${descHtml}
+            </div>
+            <div class="task-actions">
+                <button class="action-btn" title="詳細・編集" onclick="event.stopPropagation(); openEditModal('${task.id}')">✏️</button>
+                <button class="action-btn btn-run" title="逃げる・消去" onclick="event.stopPropagation(); openActionModal('${task.id}')">🏃/🗑️</button>
+            </div>
         `;
         div.addEventListener('click', () => { state.selectedTask = task; renderTasks(); updateBattlePane(); });
         container.appendChild(div);
@@ -873,7 +941,7 @@ function handleAddTask() {
         
         if (add) {
             if (!state.calendarData[mStr]) state.calendarData[mStr] = {}; if (!state.calendarData[mStr][dStr]) state.calendarData[mStr][dStr] = [];
-            const task = { id: generateId(), groupId, title, status: 'pending', hp: 3, maxHp: 3, enemyType: getHash(title) % ENEMY_AAS.length };
+            const task = { id: generateId(), groupId, title, description: "", status: 'pending', hp: 3, maxHp: 3, enemyType: getHash(title) % ENEMY_AAS.length };
             state.calendarData[mStr][dStr].push(task);
             if (i === 0) state.selectedTask = task; count++;
         }
@@ -900,6 +968,30 @@ function toggleTaskStatus(taskId) {
     StorageManager.save(); renderTasks(); renderCalendar(); updateBattlePane();
 }
 
+// 編集・詳細モーダル
+function openEditModal(taskId) {
+    const task = state.calendarData[getMonthStr(state.selectedDateStr)][state.selectedDateStr].find(t => t.id === taskId);
+    if (!task) return;
+    actionTargetTask = task;
+    $('edit-task-title').value = task.title;
+    $('edit-task-desc').value = task.description || '';
+    $('edit-task-modal-overlay').style.display = 'flex';
+}
+function closeEditModal() { $('edit-task-modal-overlay').style.display = 'none'; actionTargetTask = null; }
+
+function saveEditTask() {
+    if (!actionTargetTask) return;
+    const newTitle = $('edit-task-title').value.trim();
+    if (!newTitle) { alert("タスク名を入力してください。"); return; }
+    
+    actionTargetTask.title = newTitle;
+    actionTargetTask.description = $('edit-task-desc').value.trim();
+    actionTargetTask.enemyType = getHash(newTitle) % ENEMY_AAS.length;
+    
+    StorageManager.save(); closeEditModal(); renderTasks(); updateBattlePane();
+}
+
+// 削除・延期アクションモーダル
 function openActionModal(id) {
     actionTargetTask = state.calendarData[getMonthStr(state.selectedDateStr)][state.selectedDateStr].find(t => t.id === id);
     if (!actionTargetTask) return;
@@ -991,11 +1083,12 @@ function handleDrop() {
         let roll = Math.random() + (lvBonus * 0.4); 
         
         let idx = 0;
-        if (roll > 1.2) idx = Math.floor(Math.random() * 6) + 24; 
-        else if (roll > 0.95) idx = Math.floor(Math.random() * 6) + 18;
-        else if (roll > 0.7) idx = Math.floor(Math.random() * 6) + 12;
-        else if (roll > 0.4) idx = Math.floor(Math.random() * 6) + 6;  
-        else idx = Math.floor(Math.random() * 6); 
+        if (roll > 1.2) idx = Math.floor(Math.random() * 2) + 48; // 紫(48~49)
+        else if (roll > 1.0) idx = Math.floor(Math.random() * 8) + 40; // 赤(40~47)
+        else if (roll > 0.8) idx = Math.floor(Math.random() * 10) + 30; // 黄(30~39)
+        else if (roll > 0.5) idx = Math.floor(Math.random() * 10) + 20; // 青(20~29)
+        else if (roll > 0.3) idx = Math.floor(Math.random() * 10) + 10; // 緑(10~19)
+        else idx = Math.floor(Math.random() * 10); // 白(0~9)
         
         idx = Math.min(idx, list.length - 1);
         const item = list[idx];
@@ -1175,3 +1268,4 @@ document.addEventListener('DOMContentLoaded', initApp);
 </script>
 </body>
 </html>
+
