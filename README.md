@@ -5,4 +5,4 @@
 
 [試作1:AI議事録](onsei-yo-yaku)
 [試作2:RPGカレンダー](rpgkarendah)
-[試作2ver.2:RPGカレンダーver.2]()
+[試作2ver.2:RPGカレンダーver.2](rpgkarendah(ver.2))
