@@ -1,0 +1,2822 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Y-zardry Dungeon - Silent Plains Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --col-bg: #050505;
+            --col-window-bg: rgba(0, 0, 0, 0.95);
+            --col-border: #a3e635;
+            --col-text: #ffffff;
+            --col-green: #4ade80;
+            --col-red: #f87171;
+            --col-yellow: #facc15;
+            --col-blue: #60a5fa;
+            --col-gray: #9ca3af;
+            --col-darkgray: #374151;
+            --col-highlight: rgba(250, 204, 21, 0.15);
+            --col-dim: rgba(255, 255, 255, 0.06);
+        }
+
+        body {
+            font-family: 'DotGothic16', monospace;
+            background-color: var(--col-bg);
+            color: var(--col-text);
+            line-height: 1.5;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.5s ease;
+        }
+
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background:
+                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.8;
+        }
+
+        .crt-overlay.disabled { display: none; }
+
+        .window {
+            border: 2px solid var(--col-border);
+            border-radius: 4px;
+            background-color: var(--col-window-bg);
+            padding: 12px;
+            margin-bottom: 12px;
+            position: relative;
+            box-shadow: inset 0 0 15px rgba(255,255,255,0.05), 0 4px 6px rgba(0,0,0,0.5);
+            transition: border-color 0.5s ease, background-color 0.5s ease;
+        }
+
+        .window-title {
+            position: absolute;
+            top: -12px;
+            left: 10px;
+            background-color: var(--col-bg);
+            padding: 0 8px;
+            font-size: 0.9rem;
+            color: var(--col-gray);
+            border-left: 2px solid var(--col-border);
+            border-right: 2px solid var(--col-border);
+            transition: border-color 0.5s ease, background-color 0.5s ease;
+        }
+
+        .inner-panel {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        button, input, select, textarea {
+            font-family: 'DotGothic16', monospace;
+            background-color: var(--col-bg);
+            color: var(--col-text);
+            border: 1px solid var(--col-border);
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            font-size: 1rem;
+            border-radius: 2px;
+        }
+
+        button:active { transform: translateY(2px); }
+
+        button:hover:not(:disabled) {
+            background-color: var(--col-text);
+            color: #000;
+            box-shadow: 0 0 8px rgba(255,255,255,0.5);
+        }
+
+        button:disabled {
+            border-color: var(--col-darkgray);
+            color: var(--col-gray);
+            cursor: not-allowed;
+            opacity: 0.65;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            margin-bottom: 10px;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--col-green);
+            box-shadow: 0 0 5px var(--col-green);
+        }
+
+        textarea { resize: vertical; min-height: 80px; }
+
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .flex { display: flex; }
+        .flex-col { display: flex; flex-direction: column; }
+        .justify-between { justify-content: space-between; }
+        .items-center { align-items: center; }
+        .gap-1 { gap: 0.25rem; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-3 { gap: 0.75rem; }
+        .gap-4 { gap: 1rem; }
+        .grid { display: grid; }
+        .hidden { display: none !important; }
+        .text-green { color: var(--col-green); text-shadow: 0 0 3px var(--col-green); }
+        .text-red { color: var(--col-red); text-shadow: 0 0 3px var(--col-red); }
+        .text-yellow { color: var(--col-yellow); text-shadow: 0 0 3px var(--col-yellow); }
+        .text-blue { color: var(--col-blue); }
+        .text-gray { color: var(--col-gray); }
+        .text-xs { font-size: 0.75rem; }
+        .text-sm { font-size: 0.875rem; }
+        .text-lg { font-size: 1.125rem; }
+        .text-xl { font-size: 1.5rem; }
+        .w-full { width: 100%; }
+        .h-full { height: 100%; }
+        .flex-1 { flex: 1; }
+        .font-bold { font-weight: bold; }
+        .mt-1 { margin-top: 0.25rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-4 { margin-top: 1rem; }
+        .mt-auto { margin-top: auto; }
+        .mb-1 { margin-bottom: 0.25rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .pt-2 { padding-top: 0.5rem; }
+        .pt-8 { padding-top: 2rem; }
+        .pr-2 { padding-right: 0.5rem; }
+        .pb-2 { padding-bottom: 0.5rem; }
+        .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+        .px-8 { padding-left: 2rem; padding-right: 2rem; }
+        .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+        .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+        .p-4 { padding: 1rem; }
+        .cursor-pointer { cursor: pointer; }
+        .border-green { border-color: var(--col-green); }
+        .border-blue { border-color: var(--col-blue); }
+        .border-red { border-color: var(--col-red); }
+        .border-b { border-bottom-width: 1px; border-bottom-style: solid; }
+        .border-white { border-color: #ffffff; }
+        .border-gray-500 { border-color: #6b7280; }
+        .border-gray-800 { border-color: #1f2937; }
+
+        #app-container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 15px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .scene {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            animation: fadeIn 0.3s;
+        }
+
+        .scene.active { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .aa-logo {
+            font-size: 10px;
+            line-height: 1.1;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 0 auto 20px;
+            color: #fff;
+            text-shadow: 0 0 8px rgba(255,255,255,0.8);
+            text-align: center;
+        }
+
+        .title-copy {
+            letter-spacing: 0.08em;
+            color: #d9f99d;
+        }
+
+        @media (min-width: 768px) {
+            #main-layout { display: flex; gap: 20px; min-height: calc(100vh - 40px); }
+            #left-col { flex: 1.05; display: flex; flex-direction: column; }
+            #right-col { flex: 0.95; display: flex; flex-direction: column; }
+        }
+
+        #battle-pane {
+            flex: 0 0 auto;
+            min-height: 250px;
+            display: flex;
+            gap: 15px;
+            position: relative;
+        }
+
+        #battle-pane > div.battle-content { flex: 1; }
+
+        #hero-mini-status {
+            position: absolute;
+            top: 0;
+            right: 0;
+            text-align: right;
+            background-color: var(--col-bg);
+            padding: 8px 10px;
+            border-bottom-left-radius: 8px;
+            border-left: 1px solid var(--col-border);
+            border-bottom: 1px solid var(--col-border);
+            z-index: 10;
+            transition: all 0.3s ease;
+            min-width: 170px;
+        }
+
+        #hero-mini-status.minimized { padding: 4px 8px; min-width: auto; }
+        #hero-mini-status.minimized #mini-status-content { display: none; }
+
+        #btn-toggle-mini {
+            padding: 0 4px;
+            font-size: 0.7rem;
+            border: none;
+            background: transparent;
+            color: var(--col-gray);
+        }
+
+        #btn-toggle-mini:hover {
+            color: var(--col-text);
+            background: transparent;
+            box-shadow: none;
+        }
+
+        #enemy-visual {
+            white-space: pre;
+            text-align: center;
+            font-size: 1.05rem;
+            line-height: 1.15;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s;
+            padding-top: 0.5rem;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); }
+            20% { transform: translate(-4px, 2px); color: var(--col-red); }
+            40% { transform: translate(4px, -2px); }
+            60% { transform: translate(-4px, -2px); }
+            80% { transform: translate(4px, 2px); }
+        }
+
+        .anim-shake { animation: shake 0.4s; }
+
+        @keyframes levelUpFlash {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: rgba(250, 204, 21, 0.2); }
+        }
+
+        .anim-levelup { animation: levelUpFlash 1s 3; }
+
+        .bar-container {
+            width: 100%;
+            background-color: rgba(255,255,255,0.1);
+            height: 10px;
+            border: 1px solid #555;
+            margin-top: 5px;
+            position: relative;
+        }
+
+        .hp-bar, .mp-bar, .exp-bar {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s, background-color 0.3s;
+        }
+
+        .hp-bar { background-color: var(--col-green); }
+        .mp-bar { background-color: var(--col-blue); }
+        .exp-bar { background-color: var(--col-yellow); }
+
+        .bar-label {
+            position: absolute;
+            top: -14px;
+            left: 0;
+            font-size: 0.7rem;
+            color: #aaa;
+        }
+
+        #battle-log {
+            height: 185px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column-reverse;
+            background: rgba(0,0,0,0.5);
+            padding: 5px;
+            border: 1px dotted #555;
+            margin-top: 10px;
+        }
+
+        #battle-log div {
+            margin-bottom: 4px;
+            padding-bottom: 4px;
+            border-bottom: 1px dashed rgba(255,255,255,0.1);
+        }
+
+        #battle-log div:first-child { opacity: 1; font-weight: bold; }
+        #battle-log div:nth-child(n+2) { opacity: 0.86; }
+        #battle-log div:nth-child(n+5) { opacity: 0.56; }
+
+        #map-pane {
+            flex: 1;
+            margin-top: 10px;
+        }
+
+        .map-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .map-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 3px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 6px;
+        }
+
+        .map-cell {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            background: rgba(255,255,255,0.03);
+            min-height: 34px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.85rem;
+            transition: background-color 0.25s ease, transform 0.15s ease;
+        }
+
+        .map-cell.hidden-room {
+            background: rgba(255,255,255,0.01);
+            color: rgba(255,255,255,0.12);
+        }
+
+        .map-cell.seen-room {
+            background: rgba(255,255,255,0.06);
+        }
+
+        .map-cell.visited-room {
+            background: rgba(163, 230, 53, 0.14);
+        }
+
+        .map-cell.current-room {
+            background: rgba(250, 204, 21, 0.18);
+            box-shadow: inset 0 0 10px rgba(250, 204, 21, 0.4);
+            transform: scale(1.02);
+        }
+
+        .map-cell.treasure-room { color: var(--col-yellow); }
+        .map-cell.fountain-room { color: #7dd3fc; }
+        .map-cell.stairs-room { color: #d1fae5; }
+        .map-cell.boss-room { color: #fca5a5; }
+
+        .map-icon {
+            font-size: 0.8rem;
+            text-shadow: 0 0 4px currentColor;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .info-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 8px;
+            font-size: 0.78rem;
+            border-radius: 4px;
+        }
+
+        .record-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 6px;
+        }
+
+        .record-chip {
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.04);
+            padding: 8px;
+            font-size: 0.78rem;
+            border-radius: 4px;
+        }
+
+        #command-pane {
+            flex: 1;
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            min-height: 290px;
+        }
+
+        .resource-box {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .resource-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.14);
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .inventory-list {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .inventory-line {
+            font-size: 0.82rem;
+            color: var(--col-gray);
+            border-bottom: 1px dotted rgba(255,255,255,0.18);
+            padding-bottom: 4px;
+        }
+
+        .command-menu {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .command-menu button {
+            min-height: 54px;
+            white-space: pre-line;
+            font-size: 0.88rem;
+        }
+
+        .meta-menu {
+            grid-template-columns: repeat(4, 1fr);
+            margin-top: 0;
+        }
+
+        @media (max-width: 767px) {
+            .map-grid {
+                grid-template-columns: repeat(7, minmax(0, 1fr));
+            }
+
+            .command-menu,
+            .meta-menu {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .action-hint {
+            font-size: 0.8rem;
+            color: var(--col-gray);
+            min-height: 40px;
+            padding: 8px;
+            background: rgba(255,255,255,0.04);
+            border: 1px dashed rgba(255,255,255,0.16);
+            border-radius: 4px;
+        }
+
+        .status-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+            justify-content: center;
+        }
+
+        .status-badge {
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.04);
+            padding: 4px 8px;
+            font-size: 0.72rem;
+            border-radius: 999px;
+        }
+
+        .setting-group {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed rgba(255,255,255,0.2);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(2px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 15px;
+        }
+
+        .modal-content {
+            width: 100%;
+            max-width: 560px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+
+        .loading:after { content: '...'; animation: dots 1.5s steps(5, end) infinite; }
+
+        @keyframes dots {
+            0%, 20% { color: rgba(0,0,0,0); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
+            40% { color: white; text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0); }
+            60% { text-shadow: .25em 0 0 white, .5em 0 0 rgba(0,0,0,0); }
+            80%, 100% { text-shadow: .25em 0 0 white, .5em 0 0 white; }
+        }
+
+        #radar-canvas {
+            display: block;
+            margin: 0 auto;
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+
+<div id="crt-effect" class="crt-overlay"></div>
+
+<div id="app-container">
+    <div id="scene-title" class="scene active">
+        <div class="aa-logo mt-4">
+__  __               ___           _
+\ \/ /              |_  |         | |
+ \  /_____ ____ _ _ __| |_ __ _   | |
+ /  \______|_  / _` | '__/ _` |   | |
+/_/\_\     / / (_| | | | (_| |   | |____
+          /___\__,_|_|  \__,_|   \_____/
+      Silent Plains
+        </div>
+        <div class="window text-center mt-4 p-4">
+            <p class="mb-2 title-copy">沈黙の迷宮へ降り、育てた英雄で踏破せよ。</p>
+            <p class="mb-4 text-gray text-sm">外観と装備感はそのままに、純粋なダンジョン攻略RPGへ再構築。</p>
+            <div class="flex-col gap-4 mt-4">
+                <button id="btn-new-game" class="w-full text-xl text-yellow">＞ 新たな冒険</button>
+                <button id="btn-continue" class="w-full text-xl hidden">＞ 冒険を再開する</button>
+                <button id="btn-open-import" class="w-full text-blue mt-2">＞ 冒険の書を読み込む (Import)</button>
+            </div>
+        </div>
+        <div class="window mt-4" style="font-size: 0.8rem;">
+            <p class="text-gray text-center">v3.0 Silent Plains Dungeon Crawler</p>
+        </div>
+    </div>
+
+    <div id="scene-creation" class="scene">
+        <div class="window mt-4">
+            <h2 class="text-center text-xl mb-4 border-b border-white pb-2">冒険者の登録</h2>
+            <label>名前 (Name)</label>
+            <input type="text" id="input-name" placeholder="Hero" maxlength="12">
+            <label>性別 (Gender)</label>
+            <select id="input-gender">
+                <option value="male">男性 (Male)</option>
+                <option value="female">女性 (Female)</option>
+                <option value="other">その他 (Other)</option>
+            </select>
+            <div class="mt-4 p-2 inner-panel">
+                <p class="text-sm text-yellow">探索開始時の支給品</p>
+                <p class="text-xs text-gray">薬草 x3 / 術酒 x1 / 爆薬 x1 / 野営具 x1 / 帰還の翼 x1</p>
+            </div>
+            <button id="btn-start-adventure" class="w-full text-xl mt-4 text-yellow">＞ 静寂の平原へ降りる</button>
+            <button id="btn-cancel-creation" class="w-full mt-2" style="border:none;">戻る</button>
+        </div>
+    </div>
+
+    <div id="scene-main" class="scene">
+        <div id="main-layout">
+            <div id="left-col">
+                <div id="battle-pane" class="window">
+                    <span class="window-title" id="dungeon-name-display">静寂の平原 B1F</span>
+
+                    <div id="hero-mini-status">
+                        <div class="flex justify-between items-center mb-1">
+                            <div class="text-yellow" style="font-size: 0.9rem; font-weight: bold;"><span id="disp-h-name">Hero</span> LV.<span id="disp-lv">1</span></div>
+                            <button id="btn-toggle-mini">▼</button>
+                        </div>
+                        <div id="mini-status-content">
+                            <div class="text-xs mb-1">HP <span id="disp-hp-text">0 / 0</span></div>
+                            <div class="bar-container mt-0"><div id="disp-hp-bar" class="hp-bar"></div></div>
+                            <div class="text-xs mb-1 mt-2">MP <span id="disp-mp-text">0 / 0</span></div>
+                            <div class="bar-container mt-0"><div id="disp-mp-bar" class="mp-bar"></div></div>
+                            <div id="disp-h-wpn" class="text-xs mb-1 mt-2">⚔️ひのきの棒</div>
+                            <div id="disp-h-amr" class="text-xs mb-1">🛡️布の服</div>
+                            <div id="disp-h-acc" class="text-xs mb-1">💍---</div>
+                            <div class="mt-1 text-gray text-xs"><span class="text-blue">EXP:</span><span id="disp-exp">0</span>/<span id="disp-next">10</span></div>
+                        </div>
+                    </div>
+
+                    <div class="battle-content flex-col items-center justify-center pr-2 pt-2" style="border-right:1px solid rgba(255,255,255,0.2);">
+                        <div id="enemy-visual" class="text-yellow">
+                            <span class="text-xs text-gray">探索準備完了</span>
+                        </div>
+                        <div id="enemy-name" class="text-center text-sm font-bold mt-2">-- 探索中 --</div>
+                        <div id="enemy-subtitle" class="text-center text-xs text-gray mt-1">静かな空気が辺りを満たしている。</div>
+                        <div class="w-full px-2">
+                            <div class="bar-container mt-2"><div class="bar-label">ENEMY HP</div><div id="enemy-hp-bar" class="hp-bar"></div></div>
+                        </div>
+                    </div>
+
+                    <div class="battle-content flex-col h-full w-full pt-12">
+                        <div id="battle-log" class="flex-1"></div>
+                    </div>
+                </div>
+
+                <div id="map-pane" class="window">
+                    <span class="window-title">踏破図</span>
+                    <div class="map-layout">
+                        <div id="map-grid" class="map-grid"></div>
+                        <div class="info-grid">
+                            <div class="info-card" id="location-summary"></div>
+                            <div class="info-card" id="passage-summary"></div>
+                        </div>
+                        <div class="inner-panel text-sm" id="room-description"></div>
+                        <div class="record-grid" id="progress-summary"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="right-col">
+                <div id="command-pane" class="window flex-1">
+                    <span class="window-title" id="command-title">探索行動</span>
+
+                    <div class="resource-box">
+                        <div class="resource-card">
+                            <div class="text-xs text-gray">生命力</div>
+                            <div class="text-lg text-green" id="cmd-hp-text">0 / 0</div>
+                            <div class="bar-container mt-1"><div id="cmd-hp-bar" class="hp-bar"></div></div>
+                        </div>
+                        <div class="resource-card">
+                            <div class="text-xs text-gray">精神力</div>
+                            <div class="text-lg text-blue" id="cmd-mp-text">0 / 0</div>
+                            <div class="bar-container mt-1"><div id="cmd-mp-bar" class="mp-bar"></div></div>
+                        </div>
+                    </div>
+
+                    <div class="resource-box">
+                        <div class="resource-card">
+                            <div class="text-xs text-gray">所持金</div>
+                            <div class="text-lg text-yellow"><span id="cmd-gold">0</span> G</div>
+                        </div>
+                        <div class="resource-card">
+                            <div class="text-xs text-gray">深達階層</div>
+                            <div class="text-lg"><span id="cmd-depth">B1F</span></div>
+                        </div>
+                    </div>
+
+                    <div id="battle-status" class="inner-panel text-sm mb-2"></div>
+
+                    <div class="inventory-list" id="inventory-summary"></div>
+                    <div id="action-hint" class="action-hint"></div>
+
+                    <div id="dynamic-actions" class="command-menu"></div>
+                </div>
+
+                <div class="command-menu meta-menu">
+                    <button id="cmd-status">Status</button>
+                    <button id="cmd-journal">Journal</button>
+                    <button id="cmd-camp">Camp</button>
+                    <button id="cmd-system">System</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="scene-status" class="scene">
+        <div class="window mt-4 h-full">
+            <h2 class="text-center text-xl mb-4 border-b border-white pb-2">ステータス</h2>
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px;">
+                <div class="flex-col items-center">
+                    <div id="status-aa" class="mb-2" style="font-size: 1.1rem; font-weight: bold; line-height: 1.2;"></div>
+                    <div class="text-xl mb-2 text-yellow"><span id="st-name">Hero</span> <span class="text-sm text-white">Lv.<span id="st-lv">1</span></span></div>
+                    <div class="w-full px-4 mb-2">
+                        <div class="flex justify-between text-xs text-green"><span>HP</span><span><span id="st-hp">0</span> / <span id="st-hp-max">0</span></span></div>
+                        <div class="bar-container mt-0" style="height:6px;"><div id="st-hp-bar" class="hp-bar"></div></div>
+                    </div>
+                    <div class="w-full px-4 mb-4">
+                        <div class="flex justify-between text-xs text-blue"><span>MP</span><span><span id="st-mp">0</span> / <span id="st-mp-max">0</span></span></div>
+                        <div class="bar-container mt-0" style="height:6px;"><div id="st-mp-bar" class="mp-bar"></div></div>
+                    </div>
+                    <div class="w-full px-4 mb-4">
+                        <div class="flex justify-between text-xs text-yellow"><span>EXP</span><span><span id="st-exp">0</span> / <span id="st-next">10</span></span></div>
+                        <div class="bar-container mt-0" style="height:6px;"><div id="st-exp-bar" class="exp-bar"></div></div>
+                    </div>
+                    <canvas id="radar-canvas" width="180" height="180"></canvas>
+                </div>
+                <div class="flex-col gap-2">
+                    <div class="window" style="font-size: 0.95rem; margin-bottom: 0;">
+                        <span class="window-title text-yellow">能力値</span>
+                        <div class="flex justify-between border-b border-gray-800 py-1"><span>STR(筋力):</span><span id="st-str">10</span></div>
+                        <div class="flex justify-between border-b border-gray-800 py-1"><span>INT(知力):</span><span id="st-int">10</span></div>
+                        <div class="flex justify-between border-b border-gray-800 py-1"><span>DEX(器用):</span><span id="st-dex">10</span></div>
+                        <div class="flex justify-between border-b border-gray-800 py-1"><span>AGI(敏捷):</span><span id="st-agi">10</span></div>
+                        <div class="flex justify-between border-b border-gray-800 py-1"><span>VIT(耐久):</span><span id="st-vit">10</span></div>
+                        <div class="flex justify-between py-1"><span>LUK(幸運):</span><span id="st-luk">10</span></div>
+                    </div>
+                    <div class="window" style="font-size: 0.9rem; margin-bottom: 0;">
+                        <span class="window-title text-yellow">装備品</span>
+                        <div class="py-1">武: <span id="eq-weapon" class="font-bold">ひのきの棒</span></div>
+                        <div class="py-1">防: <span id="eq-armor" class="font-bold">布の服</span></div>
+                        <div class="py-1 text-gray">飾: <span id="eq-acc">---</span></div>
+                    </div>
+                    <div class="window" style="font-size: 0.9rem; margin-bottom: 0;">
+                        <span class="window-title text-yellow">探索記録</span>
+                        <div class="py-1">現在地: <span id="st-floor">B1F</span></div>
+                        <div class="py-1">到達深度: <span id="st-depth">B1F</span></div>
+                        <div class="py-1">総歩数: <span id="st-steps">0</span></div>
+                        <div class="py-1">撃破数: <span id="st-clears">0</span></div>
+                        <div class="py-1">宝箱: <span id="st-treasures">0</span></div>
+                        <div class="py-1">所持金: <span id="st-gold">0</span> G</div>
+                    </div>
+                </div>
+            </div>
+            <div class="status-badges" id="status-badges"></div>
+            <div class="mt-4 text-center">
+                <button id="btn-close-status" class="w-full text-xl py-3">＞ 戻る</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scene-system" class="scene">
+        <div class="window mt-4 h-full">
+            <h2 class="text-center text-xl mb-4 border-b border-white pb-2">システム (冒険の書)</h2>
+            <div class="setting-group">
+                <h3 class="text-yellow mb-2">手動セーブ / バックアップ</h3>
+                <p class="text-xs text-gray mb-2">ローカル保存に加え、完全な冒険データをファイル化できます。</p>
+                <div class="flex gap-2">
+                    <button id="btn-manual-save" class="flex-1 text-green border-green">上書き保存</button>
+                    <button id="btn-export-file" class="flex-1 text-blue border-blue">ファイル出力</button>
+                </div>
+                <div class="flex gap-2 mt-2">
+                    <button id="btn-import-save" class="flex-1 text-blue border-blue">冒険の書を読込</button>
+                </div>
+            </div>
+            <div class="setting-group">
+                <h3 class="text-yellow mb-2">キャラクター管理</h3>
+                <p class="text-xs text-gray mb-2">見た目・能力値・装備だけを別ファイルへ書き出し、別作品の冒険者も読み込めます。</p>
+                <div id="sys-character-summary" class="text-xs text-gray mb-2">現在の冒険者: Hero</div>
+                <div class="flex gap-2 mb-2">
+                    <button id="btn-export-character" class="flex-1 text-blue border-blue">キャラ出力</button>
+                    <button id="btn-import-character" class="flex-1 text-green border-green">キャラ読込</button>
+                </div>
+                <label class="text-xs text-gray">キャラクター名変更</label>
+                <div class="flex gap-2">
+                    <input type="text" id="sys-character-name" maxlength="12" placeholder="Hero" style="margin:0;">
+                    <button id="btn-update-name">変更</button>
+                </div>
+                <p class="text-xs text-gray mt-2">読込時は能力値・見た目・装備を継承し、現在の攻略進行は維持されます。</p>
+            </div>
+            <div class="setting-group">
+                <h3 class="text-yellow mb-2">設定</h3>
+                <div class="flex justify-between items-center mb-2">
+                    <span>CRTエフェクト(走査線)</span>
+                    <button id="btn-toggle-crt" style="padding: 4px 10px;">ON</button>
+                </div>
+            </div>
+            <div class="setting-group" style="border:none;">
+                <h3 class="text-red mb-2">危険領域</h3>
+                <button id="btn-reset-data" class="w-full text-red border-red">冒険の書を消去する (リセット)</button>
+            </div>
+            <div class="mt-auto text-center">
+                <button id="btn-close-system" class="w-full text-xl py-3">＞ 戻る</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-overlay" class="modal-overlay">
+    <div id="modal-content" class="window modal-content">
+        <h3 id="modal-title" class="text-yellow text-center text-xl mb-2 border-b border-gray-500 pb-2">Title</h3>
+        <div id="modal-body" class="mb-4" style="font-size: 0.95rem; white-space: pre-wrap; line-height: 1.6;"></div>
+        <div class="text-center">
+            <button id="btn-modal-close" class="px-8 py-2 w-full text-lg">閉じる</button>
+        </div>
+    </div>
+</div>
+
+<input type="file" id="file-import" accept=".json" style="display: none;">
+<input type="file" id="file-import-character" accept=".json" style="display: none;">
+
+<script>
+const STORAGE_KEY = 'yzardry_save_data_v2';
+const APP_VERSION = 3.0;
+const APP_MODE = 'dungeon_rpg';
+const CHARACTER_EXPORT_TYPE = 'yzardry_character_data';
+const CHARACTER_EXPORT_VERSION = 1;
+const VALID_GENDERS = ['male', 'female', 'other'];
+const MAX_FLOOR = 10;
+const FACING_ORDER = ['N', 'E', 'S', 'W'];
+const FACING_JA = { N: '北', E: '東', S: '南', W: '西' };
+const DUNGEON = Object.freeze({ name: '静寂の平原', bg: '#050505', border: '#a3e635' });
+const DEFAULT_SETTINGS = Object.freeze({ crtEffect: true, showMiniStatus: true });
+const DEFAULT_STATS = Object.freeze({ LV: 1, EXP: 0, STR: 10, INT: 10, DEX: 10, AGI: 10, VIT: 10, LUK: 10 });
+const DEFAULT_EQUIPMENT = Object.freeze({
+    weapon: Object.freeze({ name: 'ひのきの棒', color: '#ffffff' }),
+    armor: Object.freeze({ name: '布の服', color: '#ffffff' }),
+    acc: Object.freeze({ name: '---', color: '#ffffff' })
+});
+const DEFAULT_INVENTORY = Object.freeze({ herbs: 3, ethers: 1, bombs: 1, campKits: 1, warpWings: 1, elixirs: 0 });
+const DEFAULT_ROOM_AA = `   ____\n _/ __ \\\n|  /  \\ |\n| |    | |\n|  \\__/ /\n \\_____/`;
+const STAIRS_AA = `    ||\n  __||__\n /_    _\\\\\n   |  |\n   |__|`;
+const TREASURE_AA = `  ______\n / ____ \\\\\n|| [] [] ||\n||______||\n \\______/`;
+const FOUNTAIN_AA = `    _\n _ ( ) _\n(_     _)\n  |___|\n   |_|`;
+const BOSS_ROOM_AA = `  /^^^^\\\\\n /  ..  \\\\\n|  ----  |\n| |====| |\n \\______/'`;
+
+const WEAPONS = [
+    { name: 'ひのきの棒', color: '#ffffff' }, { name: 'こんぼう', color: '#ffffff' }, { name: '錆びた短剣', color: '#ffffff' },
+    { name: '銅の剣', color: '#ffffff' }, { name: '鉄の槍', color: '#ffffff' }, { name: '狩人の弓', color: '#ffffff' },
+    { name: '木の枝', color: '#ffffff' }, { name: '石の斧', color: '#ffffff' }, { name: '見習いの剣', color: '#ffffff' }, { name: 'スリングショット', color: '#ffffff' },
+    { name: '鋼の長剣', color: '#4ade80' }, { name: '青銅の斧', color: '#4ade80' }, { name: '魔法の杖', color: '#4ade80' },
+    { name: '銀のレイピア', color: '#4ade80' }, { name: '大地のハンマー', color: '#4ade80' }, { name: '疾風の短剣', color: '#4ade80' },
+    { name: '鉄の斧', color: '#4ade80' }, { name: '狩人の槍', color: '#4ade80' }, { name: 'オークの杖', color: '#4ade80' }, { name: 'ボーンダガー', color: '#4ade80' },
+    { name: '騎士の大剣', color: '#60a5fa' }, { name: '氷結の槍', color: '#60a5fa' }, { name: '炎の杖', color: '#60a5fa' },
+    { name: '雷鳴の弓', color: '#60a5fa' }, { name: '毒牙のダガー', color: '#60a5fa' }, { name: '破砕のメイス', color: '#60a5fa' },
+    { name: '鋼のハルバード', color: '#60a5fa' }, { name: 'ミスリルの剣', color: '#60a5fa' }, { name: '水晶の杖', color: '#60a5fa' }, { name: '風切り羽の弓', color: '#60a5fa' },
+    { name: '竜殺しの大剣', color: '#facc15' }, { name: '聖騎士の槍', color: '#facc15' }, { name: '賢者の杖', color: '#facc15' },
+    { name: '精霊の弓', color: '#facc15' }, { name: '暗殺者の刃', color: '#facc15' }, { name: '太陽のメイス', color: '#facc15' },
+    { name: '雷神の槌', color: '#facc15' }, { name: '聖者のメイス', color: '#facc15' }, { name: '妖精の弓', color: '#facc15' }, { name: '暗黒騎士の槍', color: '#facc15' },
+    { name: '魔剣ダインスレイヴ', color: '#f87171' }, { name: '聖剣エクスカリバー', color: '#f87171' }, { name: '神杖カドゥケウス', color: '#f87171' },
+    { name: '魔弓フェイルノート', color: '#f87171' }, { name: '妖刀・村正', color: '#f87171' }, { name: '血塗られた魔剣', color: '#f87171' }, { name: '竜王の大斧', color: '#f87171' }, { name: '星砕きの戦鎚', color: '#f87171' },
+    { name: '創世の神武', color: '#c084fc' }, { name: '終焉の魔杖', color: '#c084fc' }
+];
+
+const ARMORS = [
+    { name: '布の服', color: '#ffffff' }, { name: '旅人の服', color: '#ffffff' }, { name: '革の鎧', color: '#ffffff' },
+    { name: '銅の胸当て', color: '#ffffff' }, { name: '鉄の鎧', color: '#ffffff' }, { name: '狩人の外套', color: '#ffffff' },
+    { name: '古びたマント', color: '#ffffff' }, { name: '木の盾と服', color: '#ffffff' }, { name: '獣皮の鎧', color: '#ffffff' }, { name: '兵士の鎧', color: '#ffffff' },
+    { name: '鋼の鎧', color: '#4ade80' }, { name: '青銅の盾と鎧', color: '#4ade80' }, { name: '魔術師のローブ', color: '#4ade80' },
+    { name: '銀の胸当て', color: '#4ade80' }, { name: '大地の衣', color: '#4ade80' }, { name: '盗賊の軽鎧', color: '#4ade80' },
+    { name: '鉄の重鎧', color: '#4ade80' }, { name: '狩人のチェスト', color: '#4ade80' }, { name: 'オークの胸当て', color: '#4ade80' }, { name: 'ボーンアーマー', color: '#4ade80' },
+    { name: '騎士の重鎧', color: '#60a5fa' }, { name: '氷結のローブ', color: '#60a5fa' }, { name: '炎の衣', color: '#60a5fa' },
+    { name: '雷鳴の外套', color: '#60a5fa' }, { name: '暗黒の軽鎧', color: '#60a5fa' }, { name: '破砕の防具', color: '#60a5fa' },
+    { name: '鋼のチェスト', color: '#60a5fa' }, { name: 'ミスリルチェイン', color: '#60a5fa' }, { name: '水晶のローブ', color: '#60a5fa' }, { name: '風防ぎの外套', color: '#60a5fa' },
+    { name: '竜鱗の鎧', color: '#facc15' }, { name: '聖騎士の鎧', color: '#facc15' }, { name: '賢者のローブ', color: '#facc15' },
+    { name: '精霊の衣', color: '#facc15' }, { name: '影の装束', color: '#facc15' }, { name: '太陽の鎧', color: '#facc15' },
+    { name: '雷神の鎧', color: '#facc15' }, { name: '聖者のローブ', color: '#facc15' }, { name: '妖精のクローク', color: '#facc15' }, { name: '暗黒騎士の鎧', color: '#facc15' },
+    { name: '魔鎧オメガ', color: '#f87171' }, { name: '聖鎧アイギス', color: '#f87171' }, { name: '神衣ヴァルキリー', color: '#f87171' },
+    { name: '幻影のクローク', color: '#f87171' }, { name: '鬼神の胴着', color: '#f87171' }, { name: '血塗られた魔鎧', color: '#f87171' }, { name: '竜王の重鎧', color: '#f87171' }, { name: '星守の法衣', color: '#f87171' },
+    { name: '創世の神鎧', color: '#c084fc' }, { name: '終焉の魔鎧', color: '#c084fc' }
+];
+
+const ACCESSORIES = [
+    { name: '旅人のマント', color: '#ffffff' }, { name: '革の帽子', color: '#ffffff' }, { name: '銅の指輪', color: '#ffffff' }, { name: '木の兜', color: '#ffffff' }, { name: 'ボロの鉢巻き', color: '#ffffff' }, { name: 'ガラスの指輪', color: '#ffffff' }, { name: '鉄の指輪', color: '#ffffff' }, { name: '骨の首飾り', color: '#ffffff' }, { name: '石のお守り', color: '#ffffff' }, { name: '布のリボン', color: '#ffffff' },
+    { name: '銀の指輪', color: '#4ade80' }, { name: '魔除けの護符', color: '#4ade80' }, { name: '狩人の帽子', color: '#4ade80' }, { name: '青銅の兜', color: '#4ade80' }, { name: '風のブーツ', color: '#4ade80' }, { name: '守りの指輪', color: '#4ade80' }, { name: 'エルフのマント', color: '#4ade80' }, { name: '力の腕輪', color: '#4ade80' }, { name: '知恵のピアス', color: '#4ade80' }, { name: '緑柱石の指輪', color: '#4ade80' },
+    { name: '騎士の兜', color: '#60a5fa' }, { name: '氷結の指輪', color: '#60a5fa' }, { name: '水晶のネックレス', color: '#60a5fa' }, { name: '鋼のガントレット', color: '#60a5fa' }, { name: '水竜の鱗', color: '#60a5fa' }, { name: '魔術師の帽子', color: '#60a5fa' }, { name: '疾風のバンダナ', color: '#60a5fa' }, { name: '雷鳴の指輪', color: '#60a5fa' }, { name: '癒しのお守り', color: '#60a5fa' }, { name: '蒼玉のブローチ', color: '#60a5fa' },
+    { name: '竜鱗の護符', color: '#facc15' }, { name: '太陽の冠', color: '#facc15' }, { name: '賢者のリボン', color: '#facc15' }, { name: '黄金の指輪', color: '#facc15' }, { name: '聖騎士の兜', color: '#facc15' }, { name: '光のオーブ', color: '#facc15' }, { name: '精霊のティアラ', color: '#facc15' }, { name: '英雄の証', color: '#facc15' }, { name: '黄玉の指輪', color: '#facc15' }, { name: '王家の紋章', color: '#facc15' },
+    { name: '星降る腕輪', color: '#f87171' }, { name: '戦神の兜', color: '#f87171' }, { name: '魔王の指輪', color: '#f87171' }, { name: '紅蓮の外套', color: '#f87171' }, { name: '不死鳥の羽飾り', color: '#f87171' }, { name: '覇者の冠', color: '#f87171' }, { name: '竜王の逆鱗', color: '#f87171' }, { name: '紅玉のペンダント', color: '#f87171' },
+    { name: '創世の王冠', color: '#c084fc' }, { name: '終焉の瞳', color: '#c084fc' }
+];
+
+const ENEMY_AAS = [
+`   ___\n  /   \\\n ( o.o )\n  > ^ <`, `  /\\_/\\\\\n ( o.o )\n  > ^ <`, `   ___\n  /   \\\n |O   O|\n  \\_^_/`, `  \\|/\n - O -\n  /|\\`, `  ___ \n (o,o)\n /)  )\n  " "`, ` ,_._.,\n/ _ _ \\\n|(_)(_)|\n \\_  _/`, `  ()()\n  (..)\n  /\\/\\\\`, `    _\n   / \\\n  /  /\n  \\_\\\\_`, ` /\\   /\\\\\n  \\/-\\/ \n   (o o)\n   \\_^_/`, `  \\ /\n (o o)\n | | |\n /_|_\\\\`, `   ___\n  / * \\\n | o o |\n  \\_-_/`, `  [+ +]\n  /| |\\\\\n  \\|_|/\n   | |`, `  /---\\\\\n  |o o|\n  |---|\n  /   \\\\`, `  /\\_/\\\\\n ( 'x' )\n (  "  )`, `   ( )\n  (   )\n ( o o )\n  \\ - /`, `   /\\\\\n  /  \\\n (o  o)\n  \\__/`, `   ( )\n  / | \\\n (  |  )\n  \\/ \\/`, `  ^   ^\n /o   o\\\\\n \\_ V _/\n  |   |`, `  [___]\n  |o o|\n  [___]`, `   \\ /\n  (o o)\n  /(_)\\\\\n   / \\\\`, `  _   _\n | |_| |\n | o o |\n |_|-|_|`, `   /\\\\\n  /  \\\n  |()|\n  \\__/`, ` [___]\n [o o]\n [___]`, `  /\\_/\\\\\n ( õ_õ )\n > ^ <`, `   ___\n  / o \\\n  \\___/`, `  ()_()\n  \\ o /\n  /___\\\\`, `   ___\n  /o o\\\\\n  |___|\n  /   \\\\`, `  [+ +]\n  /| |\\\\\n   | |`, `  .--.\n | o o |\n |  ^  |\n  '--'`, `  \\|/\n (o o)\n  \\-/\n  / \\\\`,
+`  /\\_\\\\ \n (ಠ_ಠ)\n /_\\\\_\\\\`, `  , , \n (o,o)\n (   )\n  "-"`, `  \\  / \n (><)\n /  \\\\`, `  _  _ \n (o)(o)\n  \\__/\n  |__|`, `  .--.\n /_  _\\\\\n |()()|\n  \\__/`, `  (O_O)\n  /| |\\\\\n   | |`, `  /vvv\\\\\n  |o o|\n  \\^^^/`, `  /| |\\\\\n ( * * )\n  \\___/`, `  _-_ \n / o \\\n \\_o_/`, `  [+_+]\n  /| |\\\\\n  \\_|_/`, `  \\___/\n  (o.o)\n  /___\\\\`, `  /\\_/\\\\\n (=^.^=)\n  (")_(")`, `  _  _ \n (O)(O)\n  \\==/\n  /||\\\\`, `  /~~\\\\\n ( - -)\n  \\~~/`, `  /|/|\n ( o.o)\n  )  (\n  "  "`, `  ____ \n /o  o\\\\\n \\_()_/\n  /  \\\\`, `  [--]\n  |oo|\n  [--]`, `   /\\\\ \n  /  \\\\ \n ( oo )\n  \\__/\n   /\\\\`, `  /\\_/\\\\\n ( x_x )\n > ^ <`, `  (OoO)\n  /|_|\\\\\n   | |`
+];
+
+const MONSTER_TABLE = [
+    { name: 'さまよいノウサギ', floors: [1, 2], star: 1, hp: 18, atk: 9, def: 5, spd: 8, exp: 10, gold: 8, aa: 1, desc: '足音も立てずに距離を詰める。' },
+    { name: '草陰スライム', floors: [1, 2], star: 1, hp: 22, atk: 8, def: 6, spd: 5, exp: 11, gold: 7, aa: 24, desc: '湿った体で草むらを這う。' },
+    { name: '風切りコウモリ', floors: [1, 3], star: 1, hp: 17, atk: 10, def: 4, spd: 11, exp: 12, gold: 8, aa: 41, desc: '羽音だけを残して頭上を巡る。' },
+    { name: '石ころコボルト', floors: [1, 3], star: 2, hp: 24, atk: 12, def: 8, spd: 8, exp: 15, gold: 11, aa: 12, desc: '手製の棍棒を振り上げる。' },
+    { name: '枯葉ウルフ', floors: [2, 4], star: 2, hp: 28, atk: 14, def: 8, spd: 13, exp: 18, gold: 14, aa: 8, desc: '草の匂いに紛れて襲い掛かる。' },
+    { name: '野盗ゴブリン', floors: [2, 4], star: 2, hp: 32, atk: 15, def: 10, spd: 9, exp: 19, gold: 16, aa: 27, desc: '錆びた刃物で威嚇してくる。' },
+    { name: '泥鎧の亡霊', floors: [3, 5], star: 3, hp: 36, atk: 17, def: 11, spd: 10, exp: 23, gold: 19, aa: 33, desc: '鎧の隙間から冷気が漏れる。' },
+    { name: '岩肌タートル', floors: [3, 5], star: 3, hp: 44, atk: 16, def: 16, spd: 6, exp: 24, gold: 18, aa: 21, desc: '甲羅を鳴らしながら迫る。' },
+    { name: '静丘の見張り兵', floors: [4, 6], star: 3, hp: 48, atk: 19, def: 15, spd: 11, exp: 28, gold: 22, aa: 46, desc: '無言のまま槍先を向ける。' },
+    { name: '雷尾リザード', floors: [4, 6], star: 4, hp: 52, atk: 22, def: 15, spd: 14, exp: 31, gold: 24, aa: 32, desc: '尾の先から火花が散る。' },
+    { name: '砂塵マンドラゴラ', floors: [4, 7], star: 4, hp: 55, atk: 21, def: 14, spd: 12, exp: 32, gold: 25, aa: 15, desc: '耳障りな悲鳴を潜ませる。' },
+    { name: '呪い羊', floors: [5, 7], star: 4, hp: 58, atk: 24, def: 16, spd: 10, exp: 36, gold: 28, aa: 31, desc: '白い毛並みの下に禍々しさを隠す。' },
+    { name: '蒼眼ハーピー', floors: [5, 8], star: 4, hp: 62, atk: 25, def: 17, spd: 16, exp: 40, gold: 31, aa: 17, desc: '遠くから嘲笑が降ってくる。' },
+    { name: '朽ちた騎士', floors: [6, 8], star: 5, hp: 72, atk: 29, def: 22, spd: 11, exp: 46, gold: 38, aa: 10, desc: '錆の匂いをまとって剣を抜く。' },
+    { name: '結晶ゴーレム', floors: [6, 8], star: 5, hp: 80, atk: 31, def: 26, spd: 8, exp: 48, gold: 40, aa: 20, desc: '足を踏み鳴らし大地を揺らす。' },
+    { name: '風読みの魔術師', floors: [7, 9], star: 5, hp: 68, atk: 33, def: 19, spd: 17, exp: 52, gold: 42, aa: 35, desc: '詠唱とともに気流が変わる。' },
+    { name: '月食サーペント', floors: [7, 9], star: 6, hp: 86, atk: 34, def: 24, spd: 15, exp: 58, gold: 48, aa: 42, desc: 'うねる体躯が視界を埋める。' },
+    { name: '白銀ミノタウロス', floors: [8, 9], star: 6, hp: 98, atk: 38, def: 27, spd: 13, exp: 65, gold: 54, aa: 49, desc: '角を鳴らして突進の間合いを測る。' },
+    { name: '深緑ワイバーン', floors: [8, 10], star: 6, hp: 104, atk: 40, def: 28, spd: 15, exp: 69, gold: 60, aa: 38, desc: '翼で空気を切り裂き唸る。' },
+    { name: '断罪の修道騎士', floors: [9, 10], star: 7, hp: 118, atk: 43, def: 31, spd: 17, exp: 78, gold: 68, aa: 43, desc: '審判の時を告げるように剣を掲げる。' },
+    { name: '星喰いキマイラ', floors: [9, 10], star: 7, hp: 126, atk: 47, def: 33, spd: 18, exp: 84, gold: 74, aa: 39, desc: '複数の咆哮が重なって聞こえる。' }
+];
+
+const BOSS_TEMPLATE = Object.freeze({
+    name: '静寂の王ヴォイドメイン',
+    star: 7,
+    hp: 220,
+    atk: 58,
+    def: 38,
+    spd: 22,
+    exp: 180,
+    gold: 220,
+    aa: 30,
+    kind: 'boss',
+    desc: '全ての音を奪う王。草原の最奥で待ち受けていた存在。'
+});
+
+const state = {
+    user: null,
+    run: null,
+    settings: { ...DEFAULT_SETTINGS },
+    migrationNotice: '',
+    currentCellNote: ''
+};
+
+const $ = (id) => document.getElementById(id);
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+const formatDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const generateId = () => Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+const getHash = (str) => { let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash); return Math.abs(hash); };
+const getRequiredExp = (lv) => 10 + 5 * (lv - 1) + 2 * Math.pow(lv - 1, 2);
+const escapeHtml = (str = '') => String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+const plainTextToHtml = (text = '') => escapeHtml(text).replace(/\n/g, '<br>');
+
+function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function() {
+        a |= 0;
+        a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+}
+
+function pick(arr, rng = Math.random) {
+    return arr[Math.floor(rng() * arr.length)];
+}
+
+function shuffle(arr, rng = Math.random) {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+}
+
+function getStarHtml(star) {
+    const safeStar = clamp(Number(star) || 1, 1, 7);
+    const starStr = '★'.repeat(safeStar);
+    const colors = ['#ffffff', '#4ade80', '#60a5fa', '#facc15', '#f87171', '#c084fc', '#f472b6'];
+    const color = colors[(safeStar - 1) % colors.length];
+    return `<span style="color:${color}; text-shadow:0 0 3px ${color}; font-size: 0.75rem; letter-spacing: -1px; margin-right: 4px;">${starStr}</span>`;
+}
+
+function createDefaultStats() {
+    return { ...DEFAULT_STATS };
+}
+
+function createDefaultEquipment() {
+    return {
+        weapon: { ...DEFAULT_EQUIPMENT.weapon },
+        armor: { ...DEFAULT_EQUIPMENT.armor },
+        acc: { ...DEFAULT_EQUIPMENT.acc }
+    };
+}
+
+function createDefaultInventory() {
+    return { ...DEFAULT_INVENTORY };
+}
+
+function normalizeName(name) {
+    if (typeof name !== 'string') return 'Hero';
+    const trimmed = name.trim().slice(0, 12);
+    return trimmed || 'Hero';
+}
+
+function normalizeGender(gender) {
+    return VALID_GENDERS.includes(gender) ? gender : 'other';
+}
+
+function normalizeColor(color, fallback) {
+    return typeof color === 'string' && /^#[0-9a-fA-F]{6}$/.test(color) ? color : fallback;
+}
+
+function normalizeSettings(settings) {
+    return {
+        crtEffect: settings?.crtEffect !== false,
+        showMiniStatus: settings?.showMiniStatus !== false
+    };
+}
+
+function normalizeEquipmentSlot(slot, fallback) {
+    const normalized = { name: fallback.name, color: fallback.color };
+    if (!slot || typeof slot !== 'object') return normalized;
+    if (typeof slot.name === 'string' && slot.name.trim()) normalized.name = slot.name.trim();
+    normalized.color = normalizeColor(slot.color, fallback.color);
+    return normalized;
+}
+
+function normalizeEquipment(rawEquipment = {}) {
+    const defaults = createDefaultEquipment();
+    return {
+        weapon: normalizeEquipmentSlot(rawEquipment.weapon, defaults.weapon),
+        armor: normalizeEquipmentSlot(rawEquipment.armor, defaults.armor),
+        acc: normalizeEquipmentSlot(rawEquipment.acc, defaults.acc)
+    };
+}
+
+function normalizeStatValue(value, fallback, min = 0) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return fallback;
+    return Math.max(min, Math.floor(num));
+}
+
+function normalizeStats(rawStats = {}) {
+    const stats = createDefaultStats();
+    stats.LV = normalizeStatValue(rawStats.LV, stats.LV, 1);
+    const minExp = stats.LV === 1 ? 0 : getRequiredExp(stats.LV - 1);
+    stats.EXP = Math.max(normalizeStatValue(rawStats.EXP, minExp, 0), minExp);
+    ['STR', 'INT', 'DEX', 'AGI', 'VIT', 'LUK'].forEach((key) => {
+        stats[key] = normalizeStatValue(rawStats[key], stats[key], 0);
+    });
+    return stats;
+}
+
+function normalizeUser(rawUser = {}) {
+    return {
+        name: normalizeName(rawUser.name),
+        gender: normalizeGender(rawUser.gender || rawUser.appearance?.gender),
+        geminiApiKey: typeof rawUser.geminiApiKey === 'string' ? rawUser.geminiApiKey.trim() : '',
+        stats: normalizeStats(rawUser.stats),
+        equipment: normalizeEquipment(rawUser.equipment)
+    };
+}
+
+function buildCharacterSnapshot(user) {
+    const normalizedUser = normalizeUser(user);
+    return {
+        name: normalizedUser.name,
+        gender: normalizedUser.gender,
+        appearance: { gender: normalizedUser.gender },
+        stats: normalizedUser.stats,
+        equipment: normalizedUser.equipment
+    };
+}
+
+function sanitizeFileName(name) {
+    return normalizeName(name).replace(/[\\/:*?"<>|]/g, '_');
+}
+
+function resolveCharacterImportData(rawData) {
+    if (!rawData || typeof rawData !== 'object') throw new Error('キャラクターデータの形式が正しくありません。');
+    let base = null;
+    if (rawData.type === CHARACTER_EXPORT_TYPE && rawData.character) base = rawData.character;
+    else if (rawData.character && typeof rawData.character === 'object') base = rawData.character;
+    else if (rawData.user && typeof rawData.user === 'object') base = rawData.user;
+    else if (rawData.stats && rawData.equipment) base = rawData;
+    if (!base) throw new Error('キャラクターデータを見つけられませんでした。');
+
+    return {
+        name: base.name,
+        gender: base.gender || base.appearance?.gender,
+        stats: base.stats,
+        equipment: base.equipment
+    };
+}
+
+function getEquipmentRank(name, list) {
+    const idx = list.findIndex((item) => item.name === name);
+    return idx >= 0 ? idx + 1 : 1;
+}
+
+function getMaxHp(user) {
+    return 28 + user.stats.LV * 8 + user.stats.VIT * 3;
+}
+
+function getMaxMp(user) {
+    return 10 + user.stats.LV * 3 + user.stats.INT * 2;
+}
+
+function getWeaponPower(user) {
+    return Math.floor(getEquipmentRank(user.equipment.weapon.name, WEAPONS) / 2) + user.stats.LV;
+}
+
+function getArmorPower(user) {
+    return Math.floor(getEquipmentRank(user.equipment.armor.name, ARMORS) / 2) + user.stats.LV;
+}
+
+function getAccessoryPower(user) {
+    return Math.floor(getEquipmentRank(user.equipment.acc.name, ACCESSORIES) / 3);
+}
+
+function getBattleStats(user) {
+    return {
+        maxHp: getMaxHp(user),
+        maxMp: getMaxMp(user),
+        attack: user.stats.STR + Math.floor(user.stats.DEX / 2) + getWeaponPower(user) * 2,
+        magic: user.stats.INT + user.stats.LV * 2 + getAccessoryPower(user),
+        defense: user.stats.VIT + Math.floor(user.stats.AGI / 3) + getArmorPower(user) * 2,
+        speed: user.stats.AGI + Math.floor(user.stats.DEX / 2) + getAccessoryPower(user),
+        crit: clamp(0.05 + user.stats.LUK / 250, 0.05, 0.3)
+    };
+}
+
+function createCell(x, y) {
+    return {
+        x, y,
+        open: { N: false, E: false, S: false, W: false },
+        kind: 'normal',
+        visited: false,
+        seen: false,
+        searched: false,
+        eventResolved: false
+    };
+}
+
+function getCellKey(x, y) {
+    return `${x},${y}`;
+}
+
+function directionVector(dir) {
+    if (dir === 'N') return { x: 0, y: -1 };
+    if (dir === 'E') return { x: 1, y: 0 };
+    if (dir === 'S') return { x: 0, y: 1 };
+    return { x: -1, y: 0 };
+}
+
+function oppositeDirection(dir) {
+    return { N: 'S', E: 'W', S: 'N', W: 'E' }[dir];
+}
+
+function stepFacing(current, delta) {
+    const idx = FACING_ORDER.indexOf(current);
+    return FACING_ORDER[(idx + delta + FACING_ORDER.length) % FACING_ORDER.length];
+}
+
+function generateFloorMap(seed, floor) {
+    const size = 7;
+    const rng = mulberry32(seed + floor * 4099);
+    const cells = {};
+    for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+            cells[getCellKey(x, y)] = createCell(x, y);
+        }
+    }
+
+    const visited = new Set();
+    const stack = [{ x: 0, y: 0 }];
+    visited.add(getCellKey(0, 0));
+    const dirs = ['N', 'E', 'S', 'W'];
+
+    while (stack.length) {
+        const current = stack[stack.length - 1];
+        const options = shuffle(dirs, rng).filter((dir) => {
+            const vec = directionVector(dir);
+            const nx = current.x + vec.x;
+            const ny = current.y + vec.y;
+            return nx >= 0 && nx < size && ny >= 0 && ny < size && !visited.has(getCellKey(nx, ny));
+        });
+
+        if (options.length === 0) {
+            stack.pop();
+            continue;
+        }
+
+        const dir = options[0];
+        const vec = directionVector(dir);
+        const nx = current.x + vec.x;
+        const ny = current.y + vec.y;
+        const currentCell = cells[getCellKey(current.x, current.y)];
+        const nextCell = cells[getCellKey(nx, ny)];
+        currentCell.open[dir] = true;
+        nextCell.open[oppositeDirection(dir)] = true;
+        visited.add(getCellKey(nx, ny));
+        stack.push({ x: nx, y: ny });
+    }
+
+    for (let i = 0; i < size + floor; i++) {
+        const x = Math.floor(rng() * size);
+        const y = Math.floor(rng() * size);
+        const dir = pick(dirs, rng);
+        const vec = directionVector(dir);
+        const nx = x + vec.x;
+        const ny = y + vec.y;
+        if (nx < 0 || ny < 0 || nx >= size || ny >= size) continue;
+        cells[getCellKey(x, y)].open[dir] = true;
+        cells[getCellKey(nx, ny)].open[oppositeDirection(dir)] = true;
+    }
+
+    const farthest = getFarthestCell(cells, size, { x: 0, y: 0 });
+    const startKey = getCellKey(0, 0);
+    const farthestKey = getCellKey(farthest.x, farthest.y);
+    cells[startKey].kind = 'start';
+    cells[farthestKey].kind = floor === MAX_FLOOR ? 'boss' : 'stairs';
+
+    const pool = [];
+    for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+            const key = getCellKey(x, y);
+            if (key === startKey || key === farthestKey) continue;
+            if (Math.abs(x) + Math.abs(y) <= 1) continue;
+            pool.push(key);
+        }
+    }
+
+    const shuffled = shuffle(pool, rng);
+    const treasureRooms = 2 + Math.floor(floor / 3);
+    const fountainRooms = floor % 3 === 0 ? 1 : 0;
+    const omenRooms = floor >= 5 ? 1 : 0;
+    let cursor = 0;
+
+    for (let i = 0; i < treasureRooms && cursor < shuffled.length; i++, cursor++) cells[shuffled[cursor]].kind = 'treasure';
+    for (let i = 0; i < fountainRooms && cursor < shuffled.length; i++, cursor++) cells[shuffled[cursor]].kind = 'fountain';
+    for (let i = 0; i < omenRooms && cursor < shuffled.length; i++, cursor++) cells[shuffled[cursor]].kind = 'omen';
+
+    return {
+        floor,
+        size,
+        start: { x: 0, y: 0 },
+        cells
+    };
+}
+
+function getFarthestCell(cells, size, start) {
+    const queue = [{ x: start.x, y: start.y, dist: 0 }];
+    const seen = new Set([getCellKey(start.x, start.y)]);
+    let farthest = queue[0];
+
+    while (queue.length) {
+        const current = queue.shift();
+        if (current.dist > farthest.dist) farthest = current;
+        const cell = cells[getCellKey(current.x, current.y)];
+        for (const dir of FACING_ORDER) {
+            if (!cell.open[dir]) continue;
+            const vec = directionVector(dir);
+            const nx = current.x + vec.x;
+            const ny = current.y + vec.y;
+            const key = getCellKey(nx, ny);
+            if (nx < 0 || ny < 0 || nx >= size || ny >= size || seen.has(key)) continue;
+            seen.add(key);
+            queue.push({ x: nx, y: ny, dist: current.dist + 1 });
+        }
+    }
+
+    return farthest;
+}
+
+function createNewRun(user, bonus = {}) {
+    const vitals = { hp: getMaxHp(user), mp: getMaxMp(user) };
+    const run = {
+        mode: APP_MODE,
+        dungeonName: DUNGEON.name,
+        seed: Date.now(),
+        floor: 1,
+        x: 0,
+        y: 0,
+        facing: 'E',
+        depthRecord: 1,
+        steps: 0,
+        roomsCleared: 0,
+        treasureCount: 0,
+        defeatedCount: 0,
+        gold: 40 + (bonus.gold || 0),
+        cleared: false,
+        safeSteps: 2,
+        vitals,
+        inventory: createDefaultInventory(),
+        battle: null,
+        maps: {},
+        journal: []
+    };
+    Object.keys(run.inventory).forEach((key) => {
+        run.inventory[key] += bonus[key] || 0;
+    });
+    run.maps['1'] = generateFloorMap(run.seed, 1);
+    revealCurrentRoom(run);
+    return run;
+}
+
+function normalizeInventory(rawInventory = {}) {
+    const inv = createDefaultInventory();
+    Object.keys(inv).forEach((key) => {
+        inv[key] = normalizeStatValue(rawInventory[key], inv[key], 0);
+    });
+    return inv;
+}
+
+function normalizeCell(rawCell, x, y) {
+    const cell = createCell(x, y);
+    if (!rawCell || typeof rawCell !== 'object') return cell;
+    cell.kind = typeof rawCell.kind === 'string' ? rawCell.kind : cell.kind;
+    cell.visited = !!rawCell.visited;
+    cell.seen = !!rawCell.seen;
+    cell.searched = !!rawCell.searched;
+    cell.eventResolved = !!rawCell.eventResolved;
+    for (const dir of FACING_ORDER) cell.open[dir] = !!rawCell.open?.[dir];
+    return cell;
+}
+
+function normalizeMap(rawMap, floor, seed) {
+    const fallback = generateFloorMap(seed, floor);
+    if (!rawMap || typeof rawMap !== 'object') return fallback;
+    const size = Number.isInteger(rawMap.size) ? rawMap.size : fallback.size;
+    const cells = {};
+    for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+            cells[getCellKey(x, y)] = normalizeCell(rawMap.cells?.[getCellKey(x, y)], x, y);
+        }
+    }
+    return {
+        floor,
+        size,
+        start: rawMap.start?.x === 0 && rawMap.start?.y === 0 ? { x: 0, y: 0 } : { x: 0, y: 0 },
+        cells
+    };
+}
+
+function normalizeRun(rawRun, user) {
+    if (!rawRun || typeof rawRun !== 'object') return createNewRun(user);
+    const seed = Number.isFinite(rawRun.seed) ? rawRun.seed : Date.now();
+    const fallback = createNewRun(user);
+    const maxHp = getMaxHp(user);
+    const maxMp = getMaxMp(user);
+    const run = {
+        mode: APP_MODE,
+        dungeonName: DUNGEON.name,
+        seed,
+        floor: clamp(normalizeStatValue(rawRun.floor, 1, 1), 1, MAX_FLOOR),
+        x: clamp(normalizeStatValue(rawRun.x, 0, 0), 0, 6),
+        y: clamp(normalizeStatValue(rawRun.y, 0, 0), 0, 6),
+        facing: FACING_ORDER.includes(rawRun.facing) ? rawRun.facing : 'E',
+        depthRecord: clamp(normalizeStatValue(rawRun.depthRecord, 1, 1), 1, MAX_FLOOR),
+        steps: normalizeStatValue(rawRun.steps, 0, 0),
+        roomsCleared: normalizeStatValue(rawRun.roomsCleared, 0, 0),
+        treasureCount: normalizeStatValue(rawRun.treasureCount, 0, 0),
+        defeatedCount: normalizeStatValue(rawRun.defeatedCount, 0, 0),
+        gold: normalizeStatValue(rawRun.gold, 40, 0),
+        cleared: !!rawRun.cleared,
+        safeSteps: normalizeStatValue(rawRun.safeSteps, 0, 0),
+        vitals: {
+            hp: clamp(normalizeStatValue(rawRun.vitals?.hp, maxHp, 0), 0, maxHp),
+            mp: clamp(normalizeStatValue(rawRun.vitals?.mp, maxMp, 0), 0, maxMp)
+        },
+        inventory: normalizeInventory(rawRun.inventory),
+        battle: normalizeBattle(rawRun.battle),
+        maps: {},
+        journal: Array.isArray(rawRun.journal) ? rawRun.journal.filter((x) => typeof x === 'string').slice(0, 60) : []
+    };
+
+    if (rawRun.maps && typeof rawRun.maps === 'object') {
+        Object.keys(rawRun.maps).forEach((key) => {
+            const floorNum = clamp(normalizeStatValue(key, 1, 1), 1, MAX_FLOOR);
+            run.maps[String(floorNum)] = normalizeMap(rawRun.maps[key], floorNum, seed);
+        });
+    }
+    if (!run.maps[String(run.floor)]) run.maps[String(run.floor)] = generateFloorMap(seed, run.floor);
+    revealCurrentRoom(run);
+    if (run.vitals.hp <= 0) run.vitals.hp = Math.max(1, Math.floor(maxHp * 0.4));
+    return run;
+}
+
+function normalizeBattle(rawBattle) {
+    if (!rawBattle || typeof rawBattle !== 'object') return null;
+    if (!rawBattle.enemy || typeof rawBattle.enemy !== 'object') return null;
+    const enemy = {
+        id: typeof rawBattle.enemy.id === 'string' ? rawBattle.enemy.id : generateId(),
+        name: typeof rawBattle.enemy.name === 'string' ? rawBattle.enemy.name : '名もなき敵',
+        star: clamp(normalizeStatValue(rawBattle.enemy.star, 1, 1), 1, 7),
+        hp: normalizeStatValue(rawBattle.enemy.hp, 1, 0),
+        maxHp: Math.max(normalizeStatValue(rawBattle.enemy.maxHp, 1, 1), 1),
+        atk: normalizeStatValue(rawBattle.enemy.atk, 1, 1),
+        def: normalizeStatValue(rawBattle.enemy.def, 1, 0),
+        spd: normalizeStatValue(rawBattle.enemy.spd, 1, 0),
+        exp: normalizeStatValue(rawBattle.enemy.exp, 1, 1),
+        gold: normalizeStatValue(rawBattle.enemy.gold, 1, 0),
+        aa: normalizeStatValue(rawBattle.enemy.aa, 0, 0) % ENEMY_AAS.length,
+        desc: typeof rawBattle.enemy.desc === 'string' ? rawBattle.enemy.desc : '',
+        kind: rawBattle.enemy.kind === 'boss' ? 'boss' : 'normal'
+    };
+    enemy.hp = clamp(enemy.hp, 0, enemy.maxHp);
+    return {
+        enemy,
+        guard: !!rawBattle.guard,
+        focusTurns: normalizeStatValue(rawBattle.focusTurns, 0, 0),
+        barrierTurns: normalizeStatValue(rawBattle.barrierTurns, 0, 0)
+    };
+}
+
+function countLegacyCompletedTasks(calendarData) {
+    if (!calendarData || typeof calendarData !== 'object') return 0;
+    let completed = 0;
+    Object.values(calendarData).forEach((month) => {
+        if (!month || typeof month !== 'object') return;
+        Object.values(month).forEach((tasks) => {
+            if (!Array.isArray(tasks)) return;
+            completed += tasks.filter((task) => task?.status === 'completed').length;
+        });
+    });
+    return completed;
+}
+
+function createLegacyBonus(calendarData) {
+    const completed = countLegacyCompletedTasks(calendarData);
+    return {
+        gold: Math.min(300, completed * 4),
+        herbs: Math.floor(completed / 6),
+        ethers: Math.floor(completed / 12)
+    };
+}
+
+function revealCurrentRoom(run = state.run) {
+    const map = ensureFloor(run.floor, run);
+    const current = map.cells[getCellKey(run.x, run.y)];
+    current.visited = true;
+    current.seen = true;
+    for (const dir of FACING_ORDER) {
+        const vec = directionVector(dir);
+        const nx = run.x + vec.x;
+        const ny = run.y + vec.y;
+        if (nx < 0 || ny < 0 || nx >= map.size || ny >= map.size) continue;
+        map.cells[getCellKey(nx, ny)].seen = true;
+    }
+}
+
+function ensureFloor(floor, run = state.run) {
+    const key = String(floor);
+    if (!run.maps[key]) run.maps[key] = generateFloorMap(run.seed, floor);
+    return run.maps[key];
+}
+
+function getCurrentMap() {
+    return ensureFloor(state.run.floor);
+}
+
+function getCurrentCell(run = state.run) {
+    return ensureFloor(run.floor, run).cells[getCellKey(run.x, run.y)];
+}
+
+function applyDungeonTheme() {
+    const root = document.documentElement;
+    root.style.setProperty('--col-bg', DUNGEON.bg);
+    root.style.setProperty('--col-border', DUNGEON.border);
+    root.style.setProperty('--col-window-bg', 'rgba(10, 10, 10, 0.95)');
+}
+
+const StorageManager = {
+    save: (silent = true) => {
+        if (!state.user || !state.run) return false;
+        try {
+            const data = {
+                version: APP_VERSION,
+                mode: APP_MODE,
+                user: normalizeUser(state.user),
+                run: normalizeRun(state.run, state.user),
+                settings: normalizeSettings(state.settings),
+                lastUpdate: Date.now()
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            if (!silent) addLog('▶ 冒険の書に記録した。', 'text-blue');
+            return true;
+        } catch (e) {
+            console.error(e);
+            if (!silent) alert('エラーが発生しました。');
+            return false;
+        }
+    },
+    load: () => {
+        try {
+            const dataStr = localStorage.getItem(STORAGE_KEY);
+            if (!dataStr) return false;
+            const data = JSON.parse(dataStr);
+            if (!data?.user) return false;
+            state.user = normalizeUser(data.user);
+            state.settings = normalizeSettings(data.settings);
+            if (data.mode === APP_MODE || data.run) {
+                state.run = normalizeRun(data.run, state.user);
+                state.migrationNotice = '';
+            } else {
+                const bonus = createLegacyBonus(data.calendarData);
+                state.run = createNewRun(state.user, bonus);
+                state.migrationNotice = '旧版データを探索RPG形式へ移行しました。冒険者情報は継承され、実績に応じて支給品が増えています。';
+                StorageManager.save(true);
+            }
+            return true;
+        } catch (e) {
+            console.error(e);
+            return false;
+        }
+    },
+    exportFile: () => {
+        if (!state.user || !state.run) return;
+        StorageManager.save(true);
+        const dataStr = localStorage.getItem(STORAGE_KEY);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `yzardry_save_${formatDate(new Date()).replace(/-/g, '')}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    },
+    importFile: (file) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (!data?.user) throw new Error('save data not found');
+                const user = normalizeUser(data.user);
+                const settings = normalizeSettings(data.settings);
+                let run = null;
+                let notice = '';
+                if (data.mode === APP_MODE || data.run) {
+                    run = normalizeRun(data.run, user);
+                } else {
+                    run = createNewRun(user, createLegacyBonus(data.calendarData));
+                    notice = '旧版の記録を新ダンジョン形式に変換しました。';
+                }
+                const normalized = {
+                    version: APP_VERSION,
+                    mode: APP_MODE,
+                    user,
+                    run,
+                    settings,
+                    lastUpdate: Date.now()
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+                alert(notice || '読み込みました！');
+                location.reload();
+            } catch (err) {
+                console.error(err);
+                alert('ファイルの読み込みに失敗しました。');
+            } finally {
+                $('file-import').value = '';
+            }
+        };
+        reader.readAsText(file);
+    },
+    reset: () => {
+        if (confirm('本当に全ての記録を消去しますか？')) {
+            localStorage.removeItem(STORAGE_KEY);
+            location.reload();
+        }
+    }
+};
+
+const CharacterManager = {
+    exportFile: () => {
+        if (!state.user) return;
+        const exportData = {
+            type: CHARACTER_EXPORT_TYPE,
+            version: CHARACTER_EXPORT_VERSION,
+            appVersion: APP_VERSION,
+            exportedAt: new Date().toISOString(),
+            character: buildCharacterSnapshot(state.user)
+        };
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `yzardry_character_${sanitizeFileName(state.user.name)}_${formatDate(new Date()).replace(/-/g, '')}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        addLog(`▶ 冒険者「${state.user.name}」の器を写し取った。`, 'text-blue');
+    },
+    importFile: (file) => {
+        if (!state.user || !state.run) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const rawData = JSON.parse(e.target.result);
+                const importedData = resolveCharacterImportData(rawData);
+                const nextUser = normalizeUser({ ...importedData, geminiApiKey: state.user.geminiApiKey });
+                const currentName = state.user.name;
+                if (!confirm(`現在の冒険者「${currentName}」の見た目・能力値・装備を、読み込んだキャラクターで上書きしますか？`)) return;
+                state.user = nextUser;
+                state.run = normalizeRun(state.run, state.user);
+                state.run.vitals.hp = getMaxHp(state.user);
+                state.run.vitals.mp = getMaxMp(state.user);
+                StorageManager.save(true);
+                renderMain();
+                renderStatus();
+                renderSystem();
+                addLog(`▶ 冒険者の器を継承した。 ${currentName} → ${state.user.name}`, 'text-green');
+                showModal('キャラクター読込', `新たな魂を継承した。\n\n名前: ${state.user.name}\nLV: ${state.user.stats.LV}\n武器: ${state.user.equipment.weapon.name}\n防具: ${state.user.equipment.armor.name}\n装飾: ${state.user.equipment.acc.name}`);
+            } catch (err) {
+                console.error(err);
+                showModal('キャラクター読込エラー', err?.message || 'キャラクターデータの読み込みに失敗しました。');
+            } finally {
+                $('file-import-character').value = '';
+            }
+        };
+        reader.readAsText(file);
+    }
+};
+
+function initApp() {
+    applyDungeonTheme();
+    if (StorageManager.load()) {
+        $('btn-continue').classList.remove('hidden');
+        applySettings();
+    }
+
+    $('btn-new-game').addEventListener('click', () => switchScene('scene-creation'));
+    $('btn-continue').addEventListener('click', continueAdventure);
+    $('btn-open-import').addEventListener('click', () => $('file-import').click());
+    $('btn-import-save').addEventListener('click', () => $('file-import').click());
+    $('file-import').addEventListener('change', (e) => { if (e.target.files[0]) StorageManager.importFile(e.target.files[0]); });
+
+    $('btn-start-adventure').addEventListener('click', handleCreateUser);
+    $('btn-cancel-creation').addEventListener('click', () => switchScene('scene-title'));
+    $('btn-toggle-mini').addEventListener('click', toggleMiniStatus);
+    $('cmd-status').addEventListener('click', () => {
+        renderStatus();
+        switchScene('scene-status');
+    });
+    $('btn-close-status').addEventListener('click', () => switchScene('scene-main'));
+    $('cmd-system').addEventListener('click', () => {
+        renderSystem();
+        switchScene('scene-system');
+    });
+    $('btn-close-system').addEventListener('click', () => switchScene('scene-main'));
+    $('cmd-journal').addEventListener('click', showJournal);
+    $('cmd-camp').addEventListener('click', handleCampCommand);
+
+    $('btn-manual-save').addEventListener('click', () => StorageManager.save(false));
+    $('btn-export-file').addEventListener('click', StorageManager.exportFile);
+    $('btn-export-character').addEventListener('click', CharacterManager.exportFile);
+    $('btn-import-character').addEventListener('click', () => $('file-import-character').click());
+    $('file-import-character').addEventListener('change', (e) => { if (e.target.files[0]) CharacterManager.importFile(e.target.files[0]); });
+    $('btn-toggle-crt').addEventListener('click', toggleCRT);
+    $('btn-update-name').addEventListener('click', updateCharacterName);
+    $('sys-character-name').addEventListener('keypress', (e) => { if (e.key === 'Enter') updateCharacterName(); });
+    $('btn-reset-data').addEventListener('click', StorageManager.reset);
+    $('btn-modal-close').addEventListener('click', closeModal);
+
+    switchScene('scene-title');
+}
+
+function switchScene(sceneId) {
+    document.querySelectorAll('.scene').forEach((el) => el.classList.remove('active'));
+    $(sceneId).classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+function continueAdventure() {
+    if (!state.user || !state.run) return;
+    state.run = normalizeRun(state.run, state.user);
+    describeCurrentRoom();
+    applySettings();
+    switchScene('scene-main');
+    renderMain();
+    if (state.migrationNotice) {
+        showModal('データ移行', state.migrationNotice);
+        state.migrationNotice = '';
+    }
+}
+
+function handleCreateUser() {
+    const existingSave = localStorage.getItem(STORAGE_KEY);
+    if (existingSave && !confirm('現在の冒険データを新しい冒険者で上書きしますか？')) return;
+    const name = $('input-name').value.trim() || 'Hero';
+    const gender = $('input-gender').value;
+    state.user = normalizeUser({
+        name,
+        gender,
+        stats: createDefaultStats(),
+        equipment: createDefaultEquipment()
+    });
+    state.run = createNewRun(state.user);
+    state.migrationNotice = '';
+    applySettings();
+    StorageManager.save(true);
+    switchScene('scene-main');
+    renderMain();
+    addLog(`▶ 冒険者 ${state.user.name} は「${DUNGEON.name}」へ足を踏み入れた。`, 'text-yellow');
+    addJournal(`冒険者 ${state.user.name} が ${DUNGEON.name} に挑んだ。`);
+    describeCurrentRoom(true);
+}
+
+function applySettings() {
+    $('crt-effect').className = state.settings.crtEffect ? 'crt-overlay' : 'crt-overlay disabled';
+    updateMiniStatusToggle();
+}
+
+function toggleCRT() {
+    state.settings.crtEffect = !state.settings.crtEffect;
+    applySettings();
+    StorageManager.save(true);
+    renderSystem();
+}
+
+function toggleMiniStatus() {
+    state.settings.showMiniStatus = !state.settings.showMiniStatus;
+    updateMiniStatusToggle();
+    StorageManager.save(true);
+}
+
+function updateMiniStatusToggle() {
+    const el = $('hero-mini-status');
+    const btn = $('btn-toggle-mini');
+    if (state.settings.showMiniStatus) {
+        el.classList.remove('minimized');
+        btn.innerText = '▼';
+    } else {
+        el.classList.add('minimized');
+        btn.innerText = '▲';
+    }
+}
+
+function updateCharacterName() {
+    if (!state.user) return;
+    const newName = normalizeName($('sys-character-name').value);
+    const oldName = state.user.name;
+    if (!newName) {
+        alert('キャラクター名を入力してください。');
+        return;
+    }
+    if (newName === oldName) {
+        showModal('名前変更', '新しい名前は現在と同じです。');
+        return;
+    }
+    state.user.name = newName;
+    StorageManager.save(true);
+    renderMain();
+    renderStatus();
+    renderSystem();
+    addLog(`▶ 冒険者の名が「${oldName}」から「${newName}」へ改められた。`, 'text-yellow');
+    addJournal(`名を ${oldName} から ${newName} へ改めた。`);
+    showModal('名前変更', `新たな銘が刻まれた。\n\n${oldName} → ${newName}`);
+}
+
+function addJournal(text) {
+    if (!state.run) return;
+    state.run.journal.unshift(text);
+    if (state.run.journal.length > 60) state.run.journal.length = 60;
+}
+
+function addLog(text, col = '') {
+    const log = document.createElement('div');
+    if (col) log.className = col;
+    log.innerText = text;
+    const container = $('battle-log');
+    container.prepend(log);
+    if (container.children.length > 30) container.removeChild(container.lastChild);
+    addJournal(text);
+}
+
+function getCurrentLocationLabel() {
+    return `${DUNGEON.name} B${state.run.floor}F`;
+}
+
+function getCurrentRoomLabel(cell) {
+    const labels = {
+        start: '入口の石碑',
+        normal: '静かな草路',
+        treasure: '隠し宝箱の間',
+        fountain: '霧泉の間',
+        stairs: '下層への裂け目',
+        boss: '王の間',
+        omen: 'ざわめきの空間'
+    };
+    return labels[cell.kind] || '無名の空間';
+}
+
+function getCurrentRoomAA(cell) {
+    if (cell.kind === 'stairs') return STAIRS_AA;
+    if (cell.kind === 'treasure') return TREASURE_AA;
+    if (cell.kind === 'fountain') return FOUNTAIN_AA;
+    if (cell.kind === 'boss') return BOSS_ROOM_AA;
+    return DEFAULT_ROOM_AA;
+}
+
+function getPassageSummary(cell) {
+    const open = FACING_ORDER.filter((dir) => cell.open[dir]).map((dir) => FACING_JA[dir]);
+    return open.length ? `${open.join(' / ')} に通路` : '通路なし';
+}
+
+function describeCurrentRoom(showLog = false) {
+    const cell = getCurrentCell();
+    const texts = {
+        start: 'ひび割れた石碑が立つ始まりの間。背後には、もう地上の気配はない。',
+        normal: '風が止み、草の擦れる音だけが耳に残る。沈黙そのものがこちらを見ているようだ。',
+        treasure: '草と土の匂いの中に、金属の冷たい気配が混じっている。宝箱がどこかにある。',
+        fountain: '乳白色の霧をたたえた泉が、かすかな光を放って脈打っている。',
+        stairs: '地面が裂け、さらに深い層へ落ちる石階段が口を開けている。',
+        boss: '空気が重く沈み、王の気配が音を奪っている。ここが最深部だ。',
+        omen: 'わずかな揺らぎが肌を刺す。何かが潜み、こちらを見定めている。'
+    };
+    state.currentCellNote = texts[cell.kind] || texts.normal;
+    if (showLog) addLog(`▶ ${getCurrentRoomLabel(cell)}: ${state.currentCellNote}`);
+    renderMapPane();
+}
+
+function renderMain() {
+    if (!state.user || !state.run) return;
+    applyDungeonTheme();
+    renderMiniStatus();
+    renderBattlePane();
+    renderMapPane();
+    renderCommandPane();
+    renderSystem();
+}
+
+function renderMiniStatus() {
+    const s = state.user.stats;
+    const eq = state.user.equipment;
+    const maxHp = getMaxHp(state.user);
+    const maxMp = getMaxMp(state.user);
+    $('disp-lv').innerText = s.LV;
+    $('disp-exp').innerText = s.EXP;
+    $('disp-next').innerText = getRequiredExp(s.LV);
+    $('disp-h-name').innerText = state.user.name;
+    $('disp-h-wpn').innerText = `⚔️${eq.weapon.name}`;
+    $('disp-h-wpn').style.color = eq.weapon.color;
+    $('disp-h-amr').innerText = `🛡️${eq.armor.name}`;
+    $('disp-h-amr').style.color = eq.armor.color;
+    $('disp-h-acc').innerText = `💍${eq.acc.name}`;
+    $('disp-h-acc').style.color = eq.acc.color;
+    $('disp-hp-text').innerText = `${state.run.vitals.hp} / ${maxHp}`;
+    $('disp-mp-text').innerText = `${state.run.vitals.mp} / ${maxMp}`;
+    $('disp-hp-bar').style.width = `${clamp((state.run.vitals.hp / maxHp) * 100, 0, 100)}%`;
+    $('disp-mp-bar').style.width = `${clamp((state.run.vitals.mp / maxMp) * 100, 0, 100)}%`;
+}
+
+function renderBattlePane() {
+    $('dungeon-name-display').innerText = getCurrentLocationLabel();
+    const vElem = $('enemy-visual');
+    const nElem = $('enemy-name');
+    const subElem = $('enemy-subtitle');
+    const hpBar = $('enemy-hp-bar');
+    const battle = state.run.battle;
+
+    if (!battle) {
+        const cell = getCurrentCell();
+        vElem.innerText = getCurrentRoomAA(cell);
+        nElem.innerText = `-- ${getCurrentRoomLabel(cell)} --`;
+        subElem.innerText = state.currentCellNote || '静かな気配が漂っている。';
+        hpBar.style.width = '0%';
+        return;
+    }
+
+    const enemy = battle.enemy;
+    vElem.innerText = ENEMY_AAS[enemy.aa % ENEMY_AAS.length];
+    nElem.innerHTML = `${enemy.kind === 'boss' ? '[BOSS] ' : ''}${getStarHtml(enemy.star)}${escapeHtml(enemy.name)}`;
+    subElem.innerText = enemy.desc;
+    hpBar.style.width = `${clamp((enemy.hp / enemy.maxHp) * 100, 0, 100)}%`;
+    hpBar.style.backgroundColor = enemy.hp / enemy.maxHp > 0.5 ? 'var(--col-green)' : (enemy.hp / enemy.maxHp > 0.2 ? 'var(--col-yellow)' : 'var(--col-red)');
+}
+
+function renderMapPane() {
+    if (!state.run) return;
+    const map = getCurrentMap();
+    const grid = $('map-grid');
+    grid.innerHTML = '';
+    for (let y = 0; y < map.size; y++) {
+        for (let x = 0; x < map.size; x++) {
+            const cell = map.cells[getCellKey(x, y)];
+            const div = document.createElement('div');
+            const classes = ['map-cell'];
+            if (!cell.seen) classes.push('hidden-room');
+            else classes.push('seen-room');
+            if (cell.visited) classes.push('visited-room');
+            if (cell.kind === 'treasure') classes.push('treasure-room');
+            if (cell.kind === 'fountain') classes.push('fountain-room');
+            if (cell.kind === 'stairs') classes.push('stairs-room');
+            if (cell.kind === 'boss') classes.push('boss-room');
+            if (state.run.x === x && state.run.y === y) classes.push('current-room');
+            div.className = classes.join(' ');
+            const top = cell.open.N ? '1px dashed rgba(255,255,255,0.18)' : '2px solid var(--col-border)';
+            const right = cell.open.E ? '1px dashed rgba(255,255,255,0.18)' : '2px solid var(--col-border)';
+            const bottom = cell.open.S ? '1px dashed rgba(255,255,255,0.18)' : '2px solid var(--col-border)';
+            const left = cell.open.W ? '1px dashed rgba(255,255,255,0.18)' : '2px solid var(--col-border)';
+            div.style.borderTop = top;
+            div.style.borderRight = right;
+            div.style.borderBottom = bottom;
+            div.style.borderLeft = left;
+            if (!cell.seen) {
+                div.innerHTML = '<span class="map-icon">?</span>';
+            } else if (state.run.x === x && state.run.y === y) {
+                const icon = { N: '↑', E: '→', S: '↓', W: '←' }[state.run.facing];
+                div.innerHTML = `<span class="map-icon">${icon}</span>`;
+            } else if (cell.kind === 'start') {
+                div.innerHTML = '<span class="map-icon">S</span>';
+            } else if (cell.kind === 'treasure' && !cell.searched) {
+                div.innerHTML = '<span class="map-icon">T</span>';
+            } else if (cell.kind === 'fountain' && !cell.eventResolved) {
+                div.innerHTML = '<span class="map-icon">F</span>';
+            } else if (cell.kind === 'stairs' && !state.run.cleared) {
+                div.innerHTML = '<span class="map-icon">D</span>';
+            } else if (cell.kind === 'boss' && !state.run.cleared) {
+                div.innerHTML = '<span class="map-icon">B</span>';
+            } else {
+                div.innerHTML = '<span class="map-icon">·</span>';
+            }
+            grid.appendChild(div);
+        }
+    }
+
+    const cell = getCurrentCell();
+    const discoveredCount = Object.values(map.cells).filter((room) => room.seen).length;
+    const exploredPct = Math.floor((discoveredCount / Object.keys(map.cells).length) * 100);
+    $('location-summary').innerHTML = `現在地: <span class="text-yellow">B${state.run.floor}F (${state.run.x + 1}, ${state.run.y + 1})</span><br>向き: <span class="text-blue">${FACING_JA[state.run.facing]}</span><br>部屋: ${getCurrentRoomLabel(cell)}`;
+    $('passage-summary').innerHTML = `通路: <span class="text-green">${getPassageSummary(cell)}</span><br>探索率: <span class="text-yellow">${exploredPct}%</span><br>脅威: ${state.run.battle ? '交戦中' : '探索中'}`;
+    $('room-description').innerText = state.currentCellNote || '静かな空間が続いている。';
+    $('progress-summary').innerHTML = `
+        <div class="record-chip">総歩数<br><span class="text-yellow">${state.run.steps}</span></div>
+        <div class="record-chip">撃破数<br><span class="text-green">${state.run.roomsCleared}</span></div>
+        <div class="record-chip">宝箱発見<br><span class="text-blue">${state.run.treasureCount}</span></div>
+        <div class="record-chip">到達深度<br><span class="text-red">B${state.run.depthRecord}F</span></div>
+    `;
+}
+
+function renderCommandPane() {
+    if (!state.user || !state.run) return;
+    const maxHp = getMaxHp(state.user);
+    const maxMp = getMaxMp(state.user);
+    $('cmd-hp-text').innerText = `${state.run.vitals.hp} / ${maxHp}`;
+    $('cmd-mp-text').innerText = `${state.run.vitals.mp} / ${maxMp}`;
+    $('cmd-hp-bar').style.width = `${clamp((state.run.vitals.hp / maxHp) * 100, 0, 100)}%`;
+    $('cmd-mp-bar').style.width = `${clamp((state.run.vitals.mp / maxMp) * 100, 0, 100)}%`;
+    $('cmd-gold').innerText = state.run.gold;
+    $('cmd-depth').innerText = `B${state.run.depthRecord}F`;
+
+    $('inventory-summary').innerHTML = `
+        <div class="inventory-line">薬草: <span class="text-green">${state.run.inventory.herbs}</span></div>
+        <div class="inventory-line">術酒: <span class="text-blue">${state.run.inventory.ethers}</span></div>
+        <div class="inventory-line">爆薬: <span class="text-red">${state.run.inventory.bombs}</span></div>
+        <div class="inventory-line">野営具: <span class="text-yellow">${state.run.inventory.campKits}</span></div>
+        <div class="inventory-line">帰還の翼: <span class="text-blue">${state.run.inventory.warpWings}</span></div>
+        <div class="inventory-line">秘薬: <span class="text-yellow">${state.run.inventory.elixirs}</span></div>
+    `;
+
+    const battle = state.run.battle;
+    const hint = battle
+        ? '交戦中。攻撃・術式・防御を使い分け、深層の敵に備えて消耗を抑える。'
+        : '壁なら向きを変え、異変のある部屋は「調べる」。階段は調査で降下できる。';
+    $('action-hint').innerText = hint;
+    $('command-title').innerText = battle ? '戦闘行動' : '探索行動';
+
+    if (battle) {
+        $('battle-status').innerHTML = `敵: <span class="text-red">${escapeHtml(battle.enemy.name)}</span><br>危険度: ${getStarHtml(battle.enemy.star)}<span class="text-gray">HP ${battle.enemy.hp} / ${battle.enemy.maxHp}</span>`;
+        renderBattleActions();
+    } else {
+        const cell = getCurrentCell();
+        $('battle-status').innerHTML = `現在: <span class="text-yellow">${getCurrentRoomLabel(cell)}</span><br>通路: <span class="text-green">${getPassageSummary(cell)}</span>`;
+        renderExploreActions();
+    }
+}
+
+function renderActionButtons(actions) {
+    $('dynamic-actions').innerHTML = actions.map((action) => {
+        const cls = action.className ? ` ${action.className}` : '';
+        return `<button class="${cls.trim()}" onclick="handleAction('${action.id}')" ${action.disabled ? 'disabled' : ''}>${escapeHtml(action.label)}</button>`;
+    }).join('');
+}
+
+function renderExploreActions() {
+    const cell = getCurrentCell();
+    renderActionButtons([
+        { id: 'forward', label: '前進', disabled: false },
+        { id: 'turnLeft', label: '左旋回', disabled: false },
+        { id: 'turnRight', label: '右旋回', disabled: false },
+        { id: 'search', label: '調べる', disabled: false },
+        { id: 'rest', label: `短休息\nHP+`, disabled: false },
+        { id: 'herb', label: `薬草\nx${state.run.inventory.herbs}`, disabled: state.run.inventory.herbs <= 0 || state.run.vitals.hp >= getMaxHp(state.user) },
+        { id: 'ether', label: `術酒\nx${state.run.inventory.ethers}`, disabled: state.run.inventory.ethers <= 0 || state.run.vitals.mp >= getMaxMp(state.user) },
+        { id: 'campKit', label: `野営具\nx${state.run.inventory.campKits}`, disabled: state.run.inventory.campKits <= 0 },
+        { id: 'warpWing', label: `帰還の翼\nx${state.run.inventory.warpWings}`, disabled: state.run.inventory.warpWings <= 0 },
+        { id: 'descend', label: state.run.floor === MAX_FLOOR ? '最深部' : '階段降下', disabled: cell.kind !== 'stairs' },
+        { id: 'bossSearch', label: state.run.cleared ? '制覇済' : '王の間へ', disabled: cell.kind !== 'boss' || state.run.cleared },
+        { id: 'elixir', label: `秘薬\nx${state.run.inventory.elixirs}`, disabled: state.run.inventory.elixirs <= 0 }
+    ]);
+}
+
+function renderBattleActions() {
+    renderActionButtons([
+        { id: 'attack', label: '攻撃', disabled: false, className: 'text-yellow' },
+        { id: 'missile', label: '魔弾\nMP4', disabled: state.run.vitals.mp < 4, className: 'text-blue' },
+        { id: 'heal', label: '治癒\nMP5', disabled: state.run.vitals.mp < 5 || state.run.vitals.hp >= getMaxHp(state.user), className: 'text-green' },
+        { id: 'focus', label: '心眼\nMP3', disabled: state.run.vitals.mp < 3, className: 'text-blue' },
+        { id: 'guard', label: '防御', disabled: false },
+        { id: 'herb', label: `薬草\nx${state.run.inventory.herbs}`, disabled: state.run.inventory.herbs <= 0 || state.run.vitals.hp >= getMaxHp(state.user) },
+        { id: 'ether', label: `術酒\nx${state.run.inventory.ethers}`, disabled: state.run.inventory.ethers <= 0 || state.run.vitals.mp >= getMaxMp(state.user) },
+        { id: 'bomb', label: `爆薬\nx${state.run.inventory.bombs}`, disabled: state.run.inventory.bombs <= 0, className: 'text-red' },
+        { id: 'elixir', label: `秘薬\nx${state.run.inventory.elixirs}`, disabled: state.run.inventory.elixirs <= 0, className: 'text-yellow' },
+        { id: 'flee', label: '逃走', disabled: state.run.battle?.enemy.kind === 'boss' }
+    ]);
+}
+
+window.handleAction = function(action) {
+    if (!state.run || !state.user) return;
+    const handlers = {
+        forward: moveForward,
+        turnLeft: () => rotateFacing(-1),
+        turnRight: () => rotateFacing(1),
+        search: searchRoom,
+        rest: () => shortRest(false),
+        descend: descendFloor,
+        bossSearch: searchRoom,
+        attack: playerAttack,
+        missile: castMissile,
+        heal: castHeal,
+        focus: castFocus,
+        guard: guardBattle,
+        herb: useHerb,
+        ether: useEther,
+        bomb: useBomb,
+        campKit: useCampKit,
+        warpWing: useWarpWing,
+        elixir: useElixir,
+        flee: attemptFlee
+    };
+    const fn = handlers[action];
+    if (fn) fn();
+};
+
+function rotateFacing(delta) {
+    if (state.run.battle) return;
+    state.run.facing = stepFacing(state.run.facing, delta);
+    addLog(`▶ 向きを ${FACING_JA[state.run.facing]} に変えた。`);
+    StorageManager.save(true);
+    renderMain();
+}
+
+function moveForward() {
+    if (state.run.battle) return;
+    const cell = getCurrentCell();
+    if (!cell.open[state.run.facing]) {
+        addLog('▶ 行く手は壁だ。');
+        renderMain();
+        return;
+    }
+    const vec = directionVector(state.run.facing);
+    state.run.x += vec.x;
+    state.run.y += vec.y;
+    state.run.steps++;
+    revealCurrentRoom();
+    state.run.depthRecord = Math.max(state.run.depthRecord, state.run.floor);
+    describeCurrentRoom(true);
+    handleRoomEntry();
+    StorageManager.save(true);
+    renderMain();
+}
+
+function handleRoomEntry() {
+    const cell = getCurrentCell();
+    if (state.run.safeSteps > 0) state.run.safeSteps--;
+    if (cell.kind === 'boss' && !cell.eventResolved && !state.run.cleared) {
+        startEncounter(createBossEnemy());
+        return;
+    }
+    if (cell.kind === 'stairs') {
+        addLog('▶ 下層へ通じる階段を見つけた。調べれば降りられる。', 'text-blue');
+        return;
+    }
+    if (cell.kind === 'treasure' && !cell.searched) {
+        addLog('▶ 宝箱の気配がする。調べてみる価値がある。', 'text-yellow');
+    }
+    if (cell.kind === 'fountain' && !cell.eventResolved) {
+        addLog('▶ 霧をまとった泉が静かに脈打っている。', 'text-blue');
+    }
+    if (cell.kind === 'omen' && !cell.eventResolved) {
+        addLog('▶ 皮膚を刺すような違和感がある。', 'text-red');
+    }
+    if (shouldTriggerEncounter(cell)) startEncounter(createEnemyForFloor(state.run.floor));
+}
+
+function shouldTriggerEncounter(cell) {
+    if (state.run.safeSteps > 0 || state.run.battle) return false;
+    const base = cell.visited ? 0.18 : 0.34;
+    const bonus = state.run.floor * 0.025 + (cell.kind === 'omen' ? 0.2 : 0);
+    return Math.random() < clamp(base + bonus, 0.12, 0.72);
+}
+
+function createEnemyForFloor(floor) {
+    const eligible = MONSTER_TABLE.filter((m) => floor >= m.floors[0] && floor <= m.floors[1]);
+    const template = pick(eligible.length ? eligible : MONSTER_TABLE);
+    const variance = 0.9 + Math.random() * 0.25;
+    const star = clamp(template.star + (Math.random() < 0.22 ? 1 : 0), 1, 7);
+    return {
+        id: generateId(),
+        name: template.name,
+        star,
+        hp: Math.max(1, Math.floor((template.hp + floor * 4 + star * 3) * variance)),
+        maxHp: Math.max(1, Math.floor((template.hp + floor * 4 + star * 3) * variance)),
+        atk: Math.floor(template.atk + floor * 2 + star * 1.4),
+        def: Math.floor(template.def + floor * 1.6 + star),
+        spd: Math.floor(template.spd + floor * 1.5),
+        exp: Math.floor(template.exp + floor * 4 + star * 5),
+        gold: Math.floor(template.gold + floor * 3 + star * 4),
+        aa: template.aa % ENEMY_AAS.length,
+        desc: template.desc,
+        kind: 'normal'
+    };
+}
+
+function createBossEnemy() {
+    return {
+        id: generateId(),
+        name: BOSS_TEMPLATE.name,
+        star: BOSS_TEMPLATE.star,
+        hp: BOSS_TEMPLATE.hp,
+        maxHp: BOSS_TEMPLATE.hp,
+        atk: BOSS_TEMPLATE.atk,
+        def: BOSS_TEMPLATE.def,
+        spd: BOSS_TEMPLATE.spd,
+        exp: BOSS_TEMPLATE.exp,
+        gold: BOSS_TEMPLATE.gold,
+        aa: BOSS_TEMPLATE.aa,
+        desc: BOSS_TEMPLATE.desc,
+        kind: 'boss'
+    };
+}
+
+function startEncounter(enemy) {
+    state.run.battle = {
+        enemy,
+        guard: false,
+        focusTurns: 0,
+        barrierTurns: 0
+    };
+    addLog(`▶ ${enemy.kind === 'boss' ? 'BOSS ' : ''}${enemy.name} が現れた！`, enemy.kind === 'boss' ? 'text-red' : 'text-yellow');
+    shakeEnemy();
+    StorageManager.save(true);
+    renderMain();
+}
+
+function shakeEnemy() {
+    const el = $('enemy-visual');
+    el.classList.remove('anim-shake');
+    void el.offsetWidth;
+    el.classList.add('anim-shake');
+}
+
+function getPlayerCombatStats() {
+    return getBattleStats(state.user);
+}
+
+function spendMp(cost) {
+    if (state.run.vitals.mp < cost) return false;
+    state.run.vitals.mp -= cost;
+    return true;
+}
+
+function playerAttack() {
+    if (!state.run.battle) return;
+    const player = getPlayerCombatStats();
+    const enemy = state.run.battle.enemy;
+    const focusBonus = state.run.battle.focusTurns > 0 ? 0.12 : 0;
+    const hitRate = clamp(0.72 + (player.speed - enemy.spd) / 120 + focusBonus, 0.2, 0.95);
+    if (Math.random() <= hitRate) {
+        let damage = Math.floor(player.attack * (0.78 + Math.random() * 0.45) - enemy.def * 0.45);
+        damage = Math.max(1, damage);
+        if (Math.random() < player.crit + focusBonus) {
+            damage = Math.floor(damage * 1.8);
+            addLog('▶ 会心の一撃！', 'text-yellow');
+        }
+        damageEnemy(damage, `▶ ${enemy.name} に ${damage} ダメージ！`);
+    } else {
+        addLog(`▶ ${enemy.name} に攻撃したが外れた。`, 'text-gray');
+    }
+    if (state.run.battle?.focusTurns > 0) state.run.battle.focusTurns--;
+    if (state.run.battle) enemyTurn();
+    finalizeTurn();
+}
+
+function castMissile() {
+    if (!state.run.battle || !spendMp(4)) return;
+    const player = getPlayerCombatStats();
+    const enemy = state.run.battle.enemy;
+    let damage = Math.floor(player.magic * 1.6 + state.user.stats.LV * 2 + Math.random() * 8 - enemy.def * 0.18);
+    damage = Math.max(6, damage);
+    damageEnemy(damage, `▶ 魔弾が ${enemy.name} を貫いた！ ${damage} ダメージ！`, 'text-blue');
+    if (state.run.battle) enemyTurn();
+    finalizeTurn();
+}
+
+function castHeal() {
+    if (!state.run.battle || !spendMp(5)) return;
+    const heal = Math.floor(state.user.stats.INT * 1.4 + state.user.stats.LV * 4 + 12);
+    restoreHp(heal);
+    addLog(`▶ 治癒術で ${heal} 回復した。`, 'text-green');
+    if (state.run.battle) enemyTurn();
+    finalizeTurn();
+}
+
+function castFocus() {
+    if (!state.run.battle || !spendMp(3)) return;
+    state.run.battle.focusTurns = 3;
+    state.run.battle.barrierTurns = Math.max(state.run.battle.barrierTurns, 1);
+    addLog('▶ 心眼を開き、次の数手に集中した。', 'text-blue');
+    if (state.run.battle) enemyTurn();
+    finalizeTurn();
+}
+
+function guardBattle() {
+    if (!state.run.battle) return;
+    state.run.battle.guard = true;
+    state.run.battle.barrierTurns = Math.max(state.run.battle.barrierTurns, 1);
+    addLog('▶ 防御の構えを取った。');
+    enemyTurn();
+    finalizeTurn();
+}
+
+function useBomb() {
+    if (state.run.inventory.bombs <= 0 || !state.run.battle) return;
+    state.run.inventory.bombs--;
+    const damage = Math.floor(24 + state.run.floor * 6 + Math.random() * 16);
+    damageEnemy(damage, `▶ 爆薬が炸裂！ ${damage} ダメージ！`, 'text-red');
+    if (state.run.battle) enemyTurn();
+    finalizeTurn();
+}
+
+function useHerb() {
+    if (state.run.inventory.herbs <= 0) return;
+    if (state.run.vitals.hp >= getMaxHp(state.user)) return;
+    state.run.inventory.herbs--;
+    const heal = Math.floor(getMaxHp(state.user) * 0.32);
+    restoreHp(heal);
+    addLog(`▶ 薬草を使い ${heal} 回復した。`, 'text-green');
+    if (state.run.battle) enemyTurn();
+    finalizeTurn();
+}
+
+function useEther() {
+    if (state.run.inventory.ethers <= 0) return;
+    if (state.run.vitals.mp >= getMaxMp(state.user)) return;
+    state.run.inventory.ethers--;
+    const mp = Math.floor(getMaxMp(state.user) * 0.45);
+    restoreMp(mp);
+    addLog(`▶ 術酒で ${mp} MP 回復した。`, 'text-blue');
+    if (state.run.battle) enemyTurn();
+    finalizeTurn();
+}
+
+function useCampKit() {
+    if (state.run.inventory.campKits <= 0 || state.run.battle) return;
+    state.run.inventory.campKits--;
+    const hpHeal = Math.floor(getMaxHp(state.user) * 0.7);
+    const mpHeal = Math.floor(getMaxMp(state.user) * 0.7);
+    restoreHp(hpHeal);
+    restoreMp(mpHeal);
+    state.run.safeSteps = Math.max(state.run.safeSteps, 2);
+    addLog('▶ 野営具を使い、安全な短い野営を行った。', 'text-yellow');
+    StorageManager.save(true);
+    renderMain();
+}
+
+function useWarpWing() {
+    if (state.run.inventory.warpWings <= 0 || state.run.battle) return;
+    state.run.inventory.warpWings--;
+    state.run.floor = 1;
+    state.run.x = 0;
+    state.run.y = 0;
+    state.run.facing = 'E';
+    state.run.safeSteps = 3;
+    revealCurrentRoom();
+    describeCurrentRoom();
+    addLog('▶ 帰還の翼が砕け、入口へ転移した。', 'text-blue');
+    StorageManager.save(true);
+    renderMain();
+}
+
+function useElixir() {
+    if (state.run.inventory.elixirs <= 0) return;
+    state.run.inventory.elixirs--;
+    state.run.vitals.hp = getMaxHp(state.user);
+    state.run.vitals.mp = getMaxMp(state.user);
+    addLog('▶ 秘薬で全回復した！', 'text-yellow');
+    if (state.run.battle) enemyTurn();
+    finalizeTurn();
+}
+
+function shortRest(fromCampButton) {
+    if (state.run.battle) {
+        addLog('▶ 交戦中は休息できない。', 'text-gray');
+        return;
+    }
+    const hpHeal = Math.floor(getMaxHp(state.user) * 0.14);
+    const mpHeal = Math.floor(getMaxMp(state.user) * 0.12);
+    restoreHp(hpHeal);
+    restoreMp(mpHeal);
+    addLog(fromCampButton ? '▶ 物陰で息を整えた。' : '▶ 立ち止まり、短く呼吸を整えた。', 'text-blue');
+    if (Math.random() < 0.28) {
+        addLog('▶ 休息の隙を狙われた！', 'text-red');
+        startEncounter(createEnemyForFloor(state.run.floor));
+    }
+    StorageManager.save(true);
+    renderMain();
+}
+
+function handleCampCommand() {
+    if (!state.run || !state.user) return;
+    if (state.run.battle) {
+        showModal('Camp', '戦闘中は野営できません。');
+        return;
+    }
+    if (state.run.inventory.campKits > 0) {
+        useCampKit();
+    } else {
+        shortRest(true);
+    }
+}
+
+function attemptFlee() {
+    if (!state.run.battle || state.run.battle.enemy.kind === 'boss') return;
+    const player = getPlayerCombatStats();
+    const enemy = state.run.battle.enemy;
+    const rate = clamp(0.35 + (player.speed - enemy.spd) / 100 + state.user.stats.LUK / 220 - enemy.star * 0.03, 0.12, 0.88);
+    if (Math.random() < rate) {
+        addLog('▶ 退却に成功した。', 'text-blue');
+        state.run.battle = null;
+        state.run.safeSteps = 1;
+    } else {
+        addLog('▶ 退却に失敗した！', 'text-red');
+        enemyTurn();
+    }
+    finalizeTurn();
+}
+
+function damageEnemy(amount, text, color = '') {
+    if (!state.run.battle) return;
+    state.run.battle.enemy.hp = clamp(state.run.battle.enemy.hp - amount, 0, state.run.battle.enemy.maxHp);
+    addLog(text, color);
+    shakeEnemy();
+    if (state.run.battle.enemy.hp <= 0) resolveVictory();
+}
+
+function enemyTurn() {
+    if (!state.run.battle) return;
+    const enemy = state.run.battle.enemy;
+    const player = getPlayerCombatStats();
+    const specialChance = enemy.kind === 'boss' ? 0.35 : (enemy.star >= 5 ? 0.22 : 0.1);
+    let damage = 0;
+    let text = '';
+
+    if (Math.random() < specialChance) {
+        damage = Math.floor(enemy.atk * 1.25 + Math.random() * 10 - player.defense * 0.35);
+        text = enemy.kind === 'boss'
+            ? `▶ ${enemy.name} の無音の咆哮！ `
+            : `▶ ${enemy.name} の強打！ `;
+    } else {
+        damage = Math.floor(enemy.atk * (0.72 + Math.random() * 0.38) - player.defense * 0.42);
+        text = `▶ ${enemy.name} の攻撃！ `;
+    }
+
+    damage = Math.max(1, damage);
+    if (state.run.battle.guard) damage = Math.max(1, Math.floor(damage * 0.55));
+    if (state.run.battle.barrierTurns > 0) damage = Math.max(1, Math.floor(damage * 0.82));
+    state.run.vitals.hp = clamp(state.run.vitals.hp - damage, 0, getMaxHp(state.user));
+    addLog(text + `${damage} ダメージを受けた。`, damage >= 20 ? 'text-red' : '');
+    state.run.battle.guard = false;
+    if (state.run.battle.barrierTurns > 0) state.run.battle.barrierTurns--;
+    if (state.run.vitals.hp <= 0) handleDefeat();
+}
+
+function restoreHp(amount) {
+    state.run.vitals.hp = clamp(state.run.vitals.hp + amount, 0, getMaxHp(state.user));
+}
+
+function restoreMp(amount) {
+    state.run.vitals.mp = clamp(state.run.vitals.mp + amount, 0, getMaxMp(state.user));
+}
+
+function resolveVictory() {
+    if (!state.run.battle) return;
+    const enemy = state.run.battle.enemy;
+    addLog(`▶ ${enemy.name} を打ち倒した！`, 'text-green');
+    state.run.gold += enemy.gold;
+    state.run.roomsCleared++;
+    addLog(`▶ ${enemy.gold} G を得た。`, 'text-yellow');
+    gainExp(enemy.exp, enemy.star);
+    handleLoot(enemy);
+    const cell = getCurrentCell();
+    if (cell.kind === 'omen') cell.eventResolved = true;
+    if (enemy.kind === 'boss') {
+        cell.eventResolved = true;
+        state.run.cleared = true;
+        state.run.safeSteps = 3;
+        addJournal('静寂の王を討ち、ダンジョンを制覇した。');
+        showModal('踏破達成', `静寂の王ヴォイドメインを討伐した。\n\n${state.user.name} は「${DUNGEON.name}」を制覇した。\n次の作品へ備え、キャラクター出力でこの英雄を持ち出せます。`);
+    }
+    state.run.battle = null;
+}
+
+function gainExp(baseExp, star) {
+    const gainExp = Math.floor(baseExp + Math.random() * (8 + star * 2));
+    state.user.stats.EXP += gainExp;
+    addLog(`▶ ${gainExp} EXP 獲得！`, 'text-blue');
+
+    while (state.user.stats.EXP >= getRequiredExp(state.user.stats.LV)) {
+        state.user.stats.LV++;
+        const pane = $('battle-pane');
+        pane.classList.remove('anim-levelup');
+        void pane.offsetWidth;
+        pane.classList.add('anim-levelup');
+        addLog(`★★★ LEVEL UP! LV${state.user.stats.LV} になった！ ★★★`, 'text-yellow');
+        const stats = ['STR', 'INT', 'DEX', 'AGI', 'VIT', 'LUK'];
+        for (let i = 0; i < 3; i++) {
+            const tgt = stats[Math.floor(Math.random() * stats.length)];
+            const val = Math.floor(Math.random() * 3) + 1;
+            state.user.stats[tgt] += val;
+            addLog(`  ${tgt} が ${val} 上がった！`, 'text-green');
+        }
+        state.run.vitals.hp = getMaxHp(state.user);
+        state.run.vitals.mp = getMaxMp(state.user);
+        addLog('  生命力と精神力が全快した。', 'text-blue');
+    }
+}
+
+function handleLoot(enemy) {
+    const star = enemy.star;
+    const floor = state.run.floor;
+    if (Math.random() < clamp(0.14 + floor * 0.02 + star * 0.04, 0.15, 0.75)) {
+        dropEquipment(star, floor);
+    }
+    if (Math.random() < 0.52) {
+        const itemPool = ['herbs', 'ethers', 'bombs', 'campKits'];
+        const item = pick(itemPool);
+        state.run.inventory[item]++;
+        const names = { herbs: '薬草', ethers: '術酒', bombs: '爆薬', campKits: '野営具' };
+        addLog(`🎁 ${names[item]} を拾った。`, 'text-yellow');
+    }
+    if (enemy.kind === 'boss') {
+        state.run.inventory.elixirs++;
+        addLog('🎁 王の秘薬を手に入れた。', 'text-yellow');
+    }
+}
+
+function dropEquipment(star, floor) {
+    const typeRoll = Math.random();
+    let list;
+    let typeStr;
+    let slotKey;
+    if (typeRoll < 0.42) { list = WEAPONS; typeStr = '武器'; slotKey = 'weapon'; }
+    else if (typeRoll < 0.82) { list = ARMORS; typeStr = '防具'; slotKey = 'armor'; }
+    else { list = ACCESSORIES; typeStr = '装飾'; slotKey = 'acc'; }
+
+    const progress = clamp(Math.floor((floor - 1) * 5 + star * 3 + Math.random() * 8), 0, list.length - 1);
+    const idx = clamp(progress, 0, list.length - 1);
+    const item = list[idx];
+    const currentRank = getEquipmentRank(state.user.equipment[slotKey].name, list);
+    const nextRank = getEquipmentRank(item.name, list);
+    if (nextRank >= currentRank) {
+        state.user.equipment[slotKey] = { name: item.name, color: item.color };
+        addLog(`🎁 ${typeStr}[${item.name}] を手に入れた！ 装備を更新。`, 'text-yellow');
+    } else {
+        addLog(`🎁 ${typeStr}[${item.name}] を発見したが、今の装備を優先した。`, 'text-blue');
+    }
+}
+
+function handleDefeat() {
+    state.run.defeatedCount++;
+    const lostGold = Math.floor(state.run.gold * 0.5);
+    state.run.gold -= lostGold;
+    state.run.battle = null;
+    state.run.floor = 1;
+    state.run.x = 0;
+    state.run.y = 0;
+    state.run.facing = 'E';
+    state.run.safeSteps = 3;
+    state.run.vitals.hp = Math.max(1, Math.floor(getMaxHp(state.user) * 0.7));
+    state.run.vitals.mp = Math.max(1, Math.floor(getMaxMp(state.user) * 0.5));
+    revealCurrentRoom();
+    describeCurrentRoom();
+    addLog(`▶ 力尽きた... ${lostGold} G を失い、入口まで退却した。`, 'text-red');
+    addJournal('力尽きて入口へ戻された。');
+    showModal('敗走', `深層の脅威に屈した。\n\n${lostGold} G を失い、入口へ退却した。\nHPとMPを一部回復した状態で再挑戦できる。`);
+}
+
+function finalizeTurn() {
+    StorageManager.save(true);
+    renderMain();
+}
+
+function searchRoom() {
+    if (!state.run || !state.user || state.run.battle) return;
+    const cell = getCurrentCell();
+    if (cell.kind === 'treasure') {
+        searchTreasure(cell);
+        finalizeTurn();
+        return;
+    }
+    if (cell.kind === 'fountain') {
+        useFountain(cell);
+        finalizeTurn();
+        return;
+    }
+    if (cell.kind === 'stairs') {
+        descendFloor();
+        return;
+    }
+    if (cell.kind === 'boss' && !state.run.cleared) {
+        startEncounter(createBossEnemy());
+        finalizeTurn();
+        return;
+    }
+    if (!cell.searched && Math.random() < 0.32) {
+        cell.searched = true;
+        const gold = Math.floor(12 + Math.random() * 20 + state.run.floor * 4);
+        state.run.gold += gold;
+        addLog(`▶ 足元から ${gold} G を拾った。`, 'text-yellow');
+    } else if (Math.random() < 0.25) {
+        addLog('▶ 調べている最中に敵意が迫る！', 'text-red');
+        startEncounter(createEnemyForFloor(state.run.floor));
+    } else {
+        addLog('▶ 特に目ぼしいものは見つからない。');
+    }
+    cell.searched = true;
+    finalizeTurn();
+}
+
+function searchTreasure(cell) {
+    if (cell.searched) {
+        addLog('▶ 宝箱は既に開けられている。');
+        return;
+    }
+    cell.searched = true;
+    state.run.treasureCount++;
+    if (Math.random() < 0.18) {
+        addLog('▶ 宝箱は罠だった！', 'text-red');
+        const mimic = createEnemyForFloor(Math.min(MAX_FLOOR, state.run.floor + 1));
+        mimic.name = 'まどろみミミック';
+        mimic.star = clamp(mimic.star + 1, 2, 7);
+        mimic.kind = 'normal';
+        startEncounter(mimic);
+        return;
+    }
+    const gold = Math.floor(25 + Math.random() * 30 + state.run.floor * 10);
+    state.run.gold += gold;
+    addLog(`▶ 宝箱から ${gold} G を得た！`, 'text-yellow');
+    if (Math.random() < 0.6) {
+        handleLoot({ star: Math.min(7, state.run.floor + 1), kind: 'normal' });
+    }
+}
+
+function useFountain(cell) {
+    if (cell.eventResolved) {
+        addLog('▶ 泉は既に静まり返っている。');
+        return;
+    }
+    cell.eventResolved = true;
+    if (Math.random() < 0.55) {
+        state.run.vitals.hp = getMaxHp(state.user);
+        addLog('▶ 泉の雫が傷を癒やし、HPが全快した。', 'text-green');
+    } else if (Math.random() < 0.8) {
+        state.run.vitals.mp = getMaxMp(state.user);
+        addLog('▶ 霧の祝福でMPが全快した。', 'text-blue');
+    } else {
+        const keys = ['STR', 'INT', 'DEX', 'AGI', 'VIT', 'LUK'];
+        const key = pick(keys);
+        state.user.stats[key] += 1;
+        addLog(`▶ 泉が輝き、${key} が 1 上がった。`, 'text-yellow');
+    }
+}
+
+function descendFloor() {
+    if (state.run.battle) return;
+    const cell = getCurrentCell();
+    if (cell.kind !== 'stairs') {
+        addLog('▶ ここには下る道がない。');
+        return;
+    }
+    if (state.run.floor >= MAX_FLOOR) {
+        addLog('▶ これ以上先はない。');
+        return;
+    }
+    state.run.floor++;
+    state.run.x = 0;
+    state.run.y = 0;
+    state.run.facing = 'E';
+    state.run.depthRecord = Math.max(state.run.depthRecord, state.run.floor);
+    state.run.safeSteps = 2;
+    ensureFloor(state.run.floor);
+    revealCurrentRoom();
+    restoreHp(Math.floor(getMaxHp(state.user) * 0.15));
+    restoreMp(Math.floor(getMaxMp(state.user) * 0.15));
+    describeCurrentRoom();
+    addLog(`▶ B${state.run.floor}F へ降りた。`, 'text-blue');
+    StorageManager.save(true);
+    renderMain();
+}
+
+function showJournal() {
+    if (!state.run) return;
+    const lines = state.run.journal.length
+        ? state.run.journal.slice(0, 18).map((line) => `・${escapeHtml(line)}`).join('<br>')
+        : 'まだ記録はない。';
+    showModal('冒険記録', `踏破: B${state.run.depthRecord}F<br>撃破数: ${state.run.roomsCleared}<br>宝箱: ${state.run.treasureCount}<br><br>${lines}`, true);
+}
+
+function showModal(title, content, allowHtml = false) {
+    $('modal-title').innerText = title;
+    $('modal-body').innerHTML = allowHtml ? content : plainTextToHtml(content);
+    $('modal-overlay').style.display = 'flex';
+}
+
+function closeModal() {
+    $('modal-overlay').style.display = 'none';
+}
+
+function renderStatus() {
+    if (!state.user || !state.run) return;
+    const s = state.user.stats;
+    const eq = state.user.equipment;
+    const maxHp = getMaxHp(state.user);
+    const maxMp = getMaxMp(state.user);
+    $('st-name').innerText = state.user.name;
+    $('st-lv').innerText = s.LV;
+    $('st-hp').innerText = state.run.vitals.hp;
+    $('st-hp-max').innerText = maxHp;
+    $('st-mp').innerText = state.run.vitals.mp;
+    $('st-mp-max').innerText = maxMp;
+    $('st-exp').innerText = s.EXP;
+    $('st-next').innerText = getRequiredExp(s.LV);
+    const prevExp = s.LV === 1 ? 0 : getRequiredExp(s.LV - 1);
+    const nextExp = getRequiredExp(s.LV);
+    const expPct = clamp(((s.EXP - prevExp) / Math.max(1, nextExp - prevExp)) * 100, 0, 100);
+    $('st-exp-bar').style.width = `${expPct}%`;
+    $('st-hp-bar').style.width = `${clamp((state.run.vitals.hp / maxHp) * 100, 0, 100)}%`;
+    $('st-mp-bar').style.width = `${clamp((state.run.vitals.mp / maxMp) * 100, 0, 100)}%`;
+
+    ['str', 'int', 'dex', 'agi', 'vit', 'luk'].forEach((k) => { $(`st-${k}`).innerText = s[k.toUpperCase()]; });
+    $('eq-weapon').innerText = eq.weapon.name;
+    $('eq-weapon').style.color = eq.weapon.color;
+    $('eq-armor').innerText = eq.armor.name;
+    $('eq-armor').style.color = eq.armor.color;
+    $('eq-acc').innerText = eq.acc.name;
+    $('eq-acc').style.color = eq.acc.color;
+    $('st-floor').innerText = `B${state.run.floor}F`;
+    $('st-depth').innerText = `B${state.run.depthRecord}F`;
+    $('st-steps').innerText = state.run.steps;
+    $('st-clears').innerText = state.run.roomsCleared;
+    $('st-treasures').innerText = state.run.treasureCount;
+    $('st-gold').innerText = state.run.gold;
+
+    const aaElem = $('status-aa');
+    aaElem.innerHTML = generateHeroAAHTML(state.user.gender, eq);
+    aaElem.style.textShadow = `0 0 8px ${eq.weapon.color}66`;
+    drawRadarChart('radar-canvas', s);
+
+    const badges = [];
+    if (state.run.cleared) badges.push('<span class="status-badge text-yellow">静寂の平原 制覇</span>');
+    if (state.run.depthRecord >= 5) badges.push('<span class="status-badge text-blue">中層到達</span>');
+    if (state.run.roomsCleared >= 20) badges.push('<span class="status-badge text-green">討伐者</span>');
+    if (state.run.defeatedCount === 0 && state.run.steps > 0) badges.push('<span class="status-badge text-yellow">無敗継続</span>');
+    $('status-badges').innerHTML = badges.join('');
+}
+
+function generateHeroAAHTML(gender, eq) {
+    let head = ' _O_ ';
+    let bodyL = ' /';
+    let bodyC = ' | ';
+    let bodyR = '\\ ';
+    let leg = '';
+
+    const accName = eq.acc.name;
+    if (/(兜|冠|クラウン|ティアラ)/.test(accName)) head = ' [O] ';
+    else if (/(帽子|ハット|バンダナ|鉢巻き)/.test(accName)) head = ' <O> ';
+    else if (/(リボン)/.test(accName)) head = ' xOx ';
+    else if (accName !== '---') head = ' *O* ';
+
+    const armName = eq.armor.name;
+    if (/(鎧|胸当て|チェスト|アーマー|盾|チェイン|アイギス|ヴァルキリー|オメガ|ガントレット)/.test(armName)) bodyC = '[#]';
+    else if (/(服|ローブ|マント|衣|外套|クローク|法衣|胴着)/.test(armName)) bodyC = '|||';
+
+    const wpnName = eq.weapon.name;
+    if (/(剣|ダガー|レイピア|エクスカリバー|村正|スレイヴ|刃|ナイフ)/.test(wpnName)) bodyR = '\\-';
+    else if (/(槍|ハルバード)/.test(wpnName)) bodyR = '\\|';
+    else if (/(弓|スリング|フェイルノート)/.test(wpnName)) bodyR = '\\D';
+    else if (/(杖|カドゥケウス|ロッド)/.test(wpnName)) bodyR = '\\/';
+    else if (/(斧|ハンマー|メイス|槌)/.test(wpnName)) bodyR = '\\P';
+
+    if (gender === 'female') leg = ' /   \\ ';
+    else if (gender === 'other') leg = ' \\_|_/ ';
+    else leg = '  / \\  ';
+
+    const accColor = eq.acc.color === '#ffffff' ? '#bbbbbb' : eq.acc.color;
+
+    return `<div style="font-family: monospace; text-align: center;">
+<span style="color: ${accColor}">${head}</span><br>
+<span style="color: #fff">${bodyL}</span><span style="color: ${eq.armor.color}">${bodyC}</span><span style="color: ${eq.weapon.color}">${bodyR}</span><br>
+<span style="color: #fff">${leg}</span>
+</div>`;
+}
+
+function drawRadarChart(canvasId, stats) {
+    const canvas = $(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+    const cx = w / 2;
+    const cy = h / 2;
+    const radius = Math.min(w, h) / 2 - 25;
+    ctx.clearRect(0, 0, w, h);
+
+    const statVals = [stats.STR, stats.INT, stats.DEX, stats.AGI, stats.VIT, stats.LUK];
+    const maxVal = Math.max(...statVals, 20);
+    const minVal = Math.min(...statVals);
+    const chartMin = Math.max(0, minVal - 10);
+    const chartMax = maxVal + 10;
+    const range = Math.max(1, chartMax - chartMin);
+    const labels = ['STR', 'INT', 'DEX', 'AGI', 'VIT', 'LUK'];
+    const angles = Array.from({ length: 6 }, (_, i) => i * Math.PI * 2 / 6 - Math.PI / 2);
+
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 1;
+    for (let step = 1; step <= 4; step++) {
+        const r = radius * (step / 4);
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+            const x = cx + r * Math.cos(angles[i]);
+            const y = cy + r * Math.sin(angles[i]);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+    }
+
+    ctx.fillStyle = '#aaa';
+    ctx.font = '11px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < 6; i++) {
+        const x = cx + radius * Math.cos(angles[i]);
+        const y = cy + radius * Math.sin(angles[i]);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.fillText(labels[i], cx + (radius + 15) * Math.cos(angles[i]), cy + (radius + 15) * Math.sin(angles[i]));
+    }
+
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(74, 222, 128, 0.9)';
+    ctx.fillStyle = 'rgba(74, 222, 128, 0.4)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 6; i++) {
+        const r = radius * (Math.max(0, statVals[i] - chartMin) / range);
+        const x = cx + r * Math.cos(angles[i]);
+        const y = cy + r * Math.sin(angles[i]);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#fff';
+    for (let i = 0; i < 6; i++) {
+        const r = radius * (Math.max(0, statVals[i] - chartMin) / range);
+        ctx.beginPath();
+        ctx.arc(cx + r * Math.cos(angles[i]), cy + r * Math.sin(angles[i]), 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+function renderSystem() {
+    if (!state.user || !state.run) return;
+    $('btn-toggle-crt').innerText = state.settings.crtEffect ? 'ON' : 'OFF';
+    $('btn-toggle-crt').className = state.settings.crtEffect ? 'text-green border-green' : 'text-gray';
+    $('sys-character-name').value = state.user.name;
+    $('sys-character-summary').innerHTML = `現在の冒険者: <span class="text-yellow">${escapeHtml(state.user.name)}</span> / Lv.${state.user.stats.LV} / B${state.run.floor}F / ${state.run.gold}G`;
+}
+
+document.addEventListener('DOMContentLoaded', initApp);
+</script>
+</body>
+</html>
+
