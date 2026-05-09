@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Y-zardry Dungeon - Silent Plains Edition</title>
+    <title>Y-zardry Dungeon 3D - Silent Plains</title>
     <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -29,15 +29,19 @@
             line-height: 1.4;
             user-select: none;
             -webkit-user-select: none;
-            overflow: hidden; /* スマホでの意図しないスクロールを防止 */
+            overflow: hidden;
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* 画面全体をスマホサイズに制限して中央配置 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(163,230,53,0.3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(163,230,53,0.6); }
+
         #app-container {
             max-width: 500px;
             margin: 0 auto;
-            height: 100dvh; /* スマホのアドレスバーを考慮した高さ */
+            height: 100dvh;
             display: flex;
             flex-direction: column;
             position: relative;
@@ -59,17 +63,17 @@
         .crt-overlay.disabled { display: none; }
 
         .scene {
-            display: none;
+            display: none !important;
             flex: 1;
             flex-direction: column;
             animation: fadeIn 0.3s;
             overflow: hidden;
+            background-color: var(--col-bg);
         }
-        .scene.active { display: flex; }
+        .scene.active { display: flex !important; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Window & Buttons */
         .window {
             border: 1px solid var(--col-border);
             background-color: var(--col-window-bg);
@@ -95,21 +99,13 @@
             transition: all 0.1s ease;
         }
         button:active { transform: translateY(2px); }
-        button:hover:not(:disabled) {
-            background-color: rgba(255,255,255,0.1);
-            box-shadow: 0 0 8px rgba(255,255,255,0.2);
-        }
-        button:disabled {
-            border-color: var(--col-darkgray);
-            color: var(--col-gray);
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
+        button:hover:not(:disabled) { background-color: rgba(255,255,255,0.1); box-shadow: 0 0 8px rgba(255,255,255,0.2); }
+        button:disabled { border-color: var(--col-darkgray); color: var(--col-gray); cursor: not-allowed; opacity: 0.5; }
         input, select { padding: 8px; width: 100%; margin-bottom: 8px; background-color: rgba(0,0,0,0.5); }
         input:focus, select:focus { outline: none; border-color: var(--col-green); }
 
-        /* Typography & Colors */
         .text-center { text-align: center; }
+        .text-left { text-align: left; }
         .text-green { color: var(--col-green); }
         .text-red { color: var(--col-red); }
         .text-yellow { color: var(--col-yellow); }
@@ -122,7 +118,6 @@
         .text-xl { font-size: 1.5rem; }
         .font-bold { font-weight: bold; }
 
-        /* Utilities */
         .flex { display: flex; }
         .flex-col { display: flex; flex-direction: column; }
         .flex-col-reverse { flex-direction: column-reverse; }
@@ -149,7 +144,6 @@
         .z-10 { z-index: 10; }
         .hidden { display: none !important; }
 
-        /* Specific UI Components */
         .header-bar {
             background-color: var(--col-window-bg);
             border-bottom: 1px solid var(--col-border);
@@ -157,117 +151,41 @@
             padding: 4px 8px;
         }
 
-        .bar-container {
-            width: 100%;
-            background-color: rgba(255,255,255,0.1);
-            height: 4px;
-            border-radius: 2px;
-            overflow: hidden;
-            margin-top: 2px;
-        }
+        .bar-container { width: 100%; background-color: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; overflow: hidden; margin-top: 2px; }
         .hp-bar, .mp-bar, .exp-bar { height: 100%; transition: width 0.3s, background-color 0.3s; }
         .hp-bar { background-color: var(--col-green); }
         .mp-bar { background-color: var(--col-blue); }
         .exp-bar { background-color: var(--col-yellow); }
 
-        .map-wrapper {
-            flex: 1;
-            min-height: 0; /* flexアイテムが縮むために必須 */
-            overflow: auto; /* マップスクロール対応 */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 4px;
-        }
-
-        .map-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 1px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 2px;
-            width: 100%;
-            max-width: 320px;
-            aspect-ratio: 1 / 1;
-            margin: auto;
-            box-shadow: 0 0 15px rgba(255,255,255,0.05);
-        }
-        .map-cell {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 0.65rem;
-            background: rgba(0,0,0,0.4);
-            transition: background-color 0.2s, transform 0.1s;
-        }
+        .map-overlay-bg { background: rgba(0,0,0,0.85); backdrop-filter: blur(3px); }
+        .map-scroll-area { flex: 1; width: 100%; overflow: auto; padding: 8px; display: flex; flex-direction: column; }
+        .map-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); padding: 2px; width: 100%; min-width: 280px; max-width: 340px; aspect-ratio: 1 / 1; margin: auto; box-shadow: 0 0 20px rgba(0,0,0,0.8); flex-shrink: 0; }
+        .map-cell { position: relative; display: flex; justify-content: center; align-items: center; font-size: 0.65rem; background: rgba(0,0,0,0.6); }
         .map-cell.hidden-room { opacity: 0; }
         .map-cell.visited-room { background: rgba(163, 230, 53, 0.15); }
-        .map-cell.current-room {
-            background: rgba(250, 204, 21, 0.25);
-            box-shadow: inset 0 0 8px rgba(250, 204, 21, 0.5);
-            transform: scale(1.05);
-            z-index: 2;
-        }
+        .map-cell.current-room { background: rgba(250, 204, 21, 0.3); box-shadow: inset 0 0 8px rgba(250, 204, 21, 0.8); transform: scale(1.05); z-index: 2; }
         .map-cell.treasure-room { color: var(--col-yellow); }
         .map-cell.fountain-room { color: #7dd3fc; }
         .map-cell.stairs-room { color: #d1fae5; }
         .map-cell.boss-room { color: #fca5a5; }
 
-        .battle-log-area {
-            height: 70px; /* ログエリアを縮小 */
-            background: rgba(0,0,0,0.8);
-            border-top: 1px solid var(--col-border);
-            border-bottom: 1px solid var(--col-border);
-            padding: 2px 6px;
-            font-size: 0.7rem;
-            line-height: 1.3;
-        }
+        .battle-log-area { height: 70px; background: rgba(0,0,0,0.8); border-top: 1px solid var(--col-border); border-bottom: 1px solid var(--col-border); padding: 2px 6px; font-size: 0.7rem; line-height: 1.3; }
         .battle-log-area div { margin-bottom: 2px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 1px;}
         .battle-log-area div:first-child { opacity: 1; font-weight: bold; text-shadow: 0 0 2px rgba(255,255,255,0.3); }
         .battle-log-area div:nth-child(n+2) { opacity: 0.8; }
         .battle-log-area div:nth-child(n+4) { opacity: 0.5; }
 
-        .command-area {
-            background-color: var(--col-window-bg);
-            padding: 6px;
-            padding-bottom: env(safe-area-inset-bottom, 6px); /* セーフエリア考慮 */
-        }
-        .command-area button { 
-            min-height: 38px; /* ボタンの高さを縮小 */
-            font-size: 0.7rem; /* ボタンの文字を小さく */
-            padding: 2px;
-        }
+        .command-area { background-color: var(--col-window-bg); padding: 6px; padding-bottom: env(safe-area-inset-bottom, 6px); }
+        .command-area button { min-height: 38px; font-size: 0.7rem; padding: 2px; }
 
-        @keyframes shake {
-            0%, 100% { transform: translate(0, 0); }
-            20% { transform: translate(-4px, 2px); color: var(--col-red); }
-            40% { transform: translate(4px, -2px); }
-            60% { transform: translate(-4px, -2px); }
-            80% { transform: translate(4px, 2px); }
-        }
+        @keyframes shake { 0%, 100% { transform: translate(0, 0); } 20% { transform: translate(-4px, 2px); color: var(--col-red); } 40% { transform: translate(4px, -2px); } 60% { transform: translate(-4px, -2px); } 80% { transform: translate(4px, 2px); } }
         .anim-shake { animation: shake 0.4s; }
 
-        .aa-logo {
-            font-size: 9px;
-            line-height: 1.1;
-            white-space: pre;
-            color: #fff;
-            text-shadow: 0 0 8px rgba(255,255,255,0.8);
-            text-align: center;
-        }
+        .aa-logo { font-size: 10px; line-height: 1.1; white-space: pre; text-align: center; }
 
-        /* Modal / Overlay */
-        .modal-overlay {
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(3px);
-            z-index: 1000;
-        }
-        .menu-overlay {
-            background: rgba(10,10,10,0.95);
-            z-index: 100;
-        }
+        .modal-overlay { background: rgba(0,0,0,0.85); backdrop-filter: blur(3px); z-index: 1000; }
+        .menu-overlay { background: rgba(10,10,10,0.95); z-index: 100; }
+        #dungeon-3d-canvas { image-rendering: pixelated; }
     </style>
 </head>
 <body>
@@ -277,25 +195,28 @@
 
     <!-- Title Scene -->
     <div id="scene-title" class="scene active p-4 overflow-y-auto">
-        <div class="aa-logo mt-4 mb-4">
-__  __               ___           _
-\ \/ /              |_  |         | |
- \  /_____ ____ _ _ __| |_ __ _   | |
- /  \______|_  / _` | '__/ _` |   | |
-/_/\_\     / / (_| | | | (_| |   | |____
-          /___\__,_|_|  \__,_|   \_____/
-      Silent Plains
+        <div class="aa-logo mt-6 mb-4 text-green" style="text-shadow: 0 0 12px rgba(74,222,128,0.7);">
+    .  * .   .  * * .
+ __  __               ___           _
+ \ \/ /              |_  |         | |
+  \  /_____ ____ _ _ __| |_ __ _   | |
+  /  \______|_  / _` | '__/ _` |   | |
+ /_/\_\     / / (_| | | | (_| |   | |____
+           /___\__,_|_|  \__,_|   \_____/
+
+    ~ S I L E N T  P L A I N S  3 D ~
         </div>
-        <div class="window text-center mt-4 p-4">
-            <p class="mb-2 text-yellow text-sm" style="letter-spacing: 0.05em;">沈黙の迷宮へ降り、育てた英雄で踏破せよ。</p>
-            <div class="flex-col gap-3 mt-6">
-                <button id="btn-new-game" class="w-full text-lg text-yellow border-yellow py-3">＞ 新たな冒険</button>
-                <button id="btn-continue" class="w-full text-lg hidden py-3">＞ 冒険を再開する</button>
-                <button id="btn-open-import" class="w-full text-blue mt-4 py-2" style="border-color: #374151;">＞ 冒険の書を読み込む</button>
+        <div class="text-center mt-6 p-4">
+            <p class="mb-2 text-yellow text-sm" style="letter-spacing: 0.05em;">静寂の平原へ踏み入り、奥地を目指せ。</p>
+            <div class="flex-col gap-3 mt-8">
+                <!-- 冒険再開ボタン -->
+                <button id="btn-continue" class="w-full text-xl hidden py-4 text-green border-green font-bold shadow-[0_0_15px_rgba(74,222,128,0.3)]">＞ 冒険を再開する</button>
+                <button id="btn-new-game" class="w-full text-lg text-yellow border-yellow py-3 mt-2">＞ 新たな冒険</button>
+                <button id="btn-open-import" class="w-full text-sm text-blue border-blue py-2 mt-2">＞ 冒険の書を読込 (Import)</button>
             </div>
         </div>
-        <div class="text-center mt-auto pb-2">
-            <p class="text-gray text-xs">v3.3 Mobile Optimized UI</p>
+        <div class="text-center mt-auto pb-4">
+            <p class="text-gray text-xs">v4.3 Floral Plains Edition</p>
         </div>
     </div>
 
@@ -315,14 +236,13 @@ __  __               ___           _
                 <p class="text-[0.7rem] text-yellow mb-1">探索開始時の支給品</p>
                 <p class="text-[0.65rem] text-gray">薬草x3 / 術酒x1 / 爆薬x1 / 野営具x1 / 帰還翼x1</p>
             </div>
-            <button id="btn-start-adventure" class="w-full text-sm mt-6 text-yellow border-yellow py-2">＞ 静寂の平原へ降りる</button>
+            <button id="btn-start-adventure" class="w-full text-sm mt-6 text-yellow border-yellow py-2">＞ 静寂の平原へ出発する</button>
             <button id="btn-cancel-creation" class="w-full mt-2 border-transparent py-2">戻る</button>
         </div>
     </div>
 
     <!-- Main Game Scene -->
     <div id="scene-main" class="scene h-full flex-col relative">
-        
         <!-- Header (Status) -->
         <div class="header-bar flex justify-between items-center z-10">
             <div class="flex flex-col">
@@ -333,43 +253,48 @@ __  __               ___           _
                     <span id="head-gold" class="text-yellow">0</span>G
                 </div>
             </div>
-            <div class="flex gap-3 text-xs items-center">
-                <div class="flex flex-col items-end w-14">
+            <div class="flex gap-2 text-xs items-center">
+                <div class="flex flex-col items-end w-12 mr-1">
                     <span class="text-green text-[0.6rem] leading-none mb-0.5">HP</span>
                     <span id="head-hp" class="font-bold text-[0.7rem]">0/0</span>
                 </div>
-                <div class="flex flex-col items-end w-14">
+                <div class="flex flex-col items-end w-12 mr-1">
                     <span class="text-blue text-[0.6rem] leading-none mb-0.5">MP</span>
                     <span id="head-mp" class="font-bold text-[0.7rem]">0/0</span>
                 </div>
+                <button id="btn-toggle-map" class="border-gray px-2 py-1 text-[0.65rem] rounded text-gray hover:text-white min-h-[24px]">MAP</button>
+                <button id="btn-open-menu" class="border-gray px-2 py-1 text-[0.65rem] rounded text-gray hover:text-white min-h-[24px]">MENU</button>
             </div>
-            <button id="btn-open-menu" class="border-gray px-2 py-1 text-[0.65rem] rounded text-gray hover:text-white min-h-[24px]">MENU</button>
         </div>
 
-        <!-- Visual Area (Map / Enemy) -->
-        <div class="flex-1 relative overflow-hidden flex flex-col" style="background: radial-gradient(circle at center, #111 0%, #000 100%);">
-            
+        <!-- Visual Area -->
+        <div class="flex-1 relative overflow-hidden flex flex-col bg-black">
             <!-- Explore View -->
             <div id="view-explore" class="absolute inset-0 flex flex-col p-2 transition-opacity">
-                <div class="flex justify-between items-center mb-1 px-1">
-                    <div class="text-xs text-yellow font-bold">B<span id="loc-floor">1</span>F</div>
+                <div class="flex justify-between items-center mb-1 px-1 z-10">
+                    <div class="text-xs text-yellow font-bold">エリア <span id="loc-floor">1</span></div>
                     <div class="text-[0.65rem] text-blue">向き: <span id="loc-facing">北</span></div>
                 </div>
                 
-                <!-- Map Scroll Wrapper -->
-                <div class="map-wrapper">
-                    <div id="map-grid" class="map-grid"></div>
+                <div class="flex-1 relative flex justify-center items-center overflow-hidden border border-gray-800 bg-black mt-1 mb-1 shadow-[inset_0_0_20px_rgba(163,230,53,0.05)]">
+                    <canvas id="dungeon-3d-canvas" width="320" height="320" class="max-w-full max-h-full object-contain"></canvas>
+                    
+                    <div id="map-overlay" class="absolute inset-0 map-overlay-bg hidden flex-col items-center z-20">
+                        <div class="text-yellow text-xs mt-3 mb-2 font-bold tracking-widest flex-shrink-0">【 AUTO MAPPING 】</div>
+                        <div id="map-scroll-area" class="map-scroll-area">
+                            <div id="map-grid" class="map-grid"></div>
+                        </div>
+                    </div>
                 </div>
                 
-                <!-- Mini Info -->
-                <div class="text-center h-8 flex flex-col justify-center mt-1">
-                    <div class="text-[0.65rem] text-green mb-0.5" id="loc-passage">通路: 北 / 東</div>
-                    <div class="text-[0.65rem] text-gray truncate px-2" id="loc-desc">静かな空間が続いている。</div>
+                <div class="text-center h-8 flex flex-col justify-center mt-1 z-10">
+                    <div class="text-[0.65rem] text-green mb-0.5" id="loc-passage">道: 北 / 東</div>
+                    <div class="text-[0.65rem] text-gray truncate px-2" id="loc-desc">草花が揺れる静かな平原だ。</div>
                 </div>
             </div>
 
             <!-- Battle View -->
-            <div id="view-battle" class="absolute inset-0 flex flex-col items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity">
+            <div id="view-battle" class="absolute inset-0 flex flex-col items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity bg-black/85 backdrop-blur-[2px] z-30">
                 <div class="text-xs text-red font-bold mb-4" style="animation: pulse 2s infinite;">交戦中</div>
                 <div id="enemy-visual" class="text-xl text-yellow whitespace-pre text-center mb-4" style="filter: drop-shadow(0 0 5px rgba(250,204,21,0.5));">AA</div>
                 <div class="w-full max-w-[200px] flex flex-col items-center">
@@ -465,26 +390,28 @@ __  __               ___           _
         
         <div class="mb-4">
             <h3 class="text-yellow text-xs mb-1">セーブ / バックアップ</h3>
-            <p class="text-[0.65rem] text-gray mb-2">手動保存や別ファイルへの書き出しを行います。</p>
+            <p class="text-[0.65rem] text-gray mb-2 text-left">ローカル保存に加え、完全な冒険データをファイル化できます。</p>
             <div class="flex gap-2 mb-2">
                 <button id="btn-manual-save" class="flex-1 text-green border-green py-2 text-xs">上書き保存</button>
                 <button id="btn-export-file" class="flex-1 text-blue border-blue py-2 text-xs">ファイル出力</button>
             </div>
-            <button id="btn-import-save" class="w-full text-blue border-blue py-2 text-xs">冒険の書を読込</button>
+            <div class="flex gap-2">
+                <button id="btn-import-save" class="flex-1 text-blue border-blue py-2 text-xs">冒険の書を読込</button>
+            </div>
         </div>
 
         <div class="mb-4">
             <h3 class="text-yellow text-xs mb-1">キャラクター管理</h3>
-            <p class="text-[0.65rem] text-gray mb-2">見た目・能力値・装備を別ファイルへ書き出します。</p>
-            <div id="sys-character-summary" class="text-[0.65rem] text-gray mb-2 text-center p-1 bg-black/50 border border-gray-800">現在の冒険者: Hero</div>
+            <p class="text-[0.65rem] text-gray mb-2 text-left">見た目・能力値・装備だけを別ファイルへ書き出し、別作品の冒険者も読み込めます。</p>
+            <div id="sys-character-summary" class="text-[0.65rem] text-gray mb-2 text-left">現在の冒険者: Hero</div>
             <div class="flex gap-2 mb-2">
                 <button id="btn-export-character" class="flex-1 text-blue border-blue py-2 text-xs">キャラ出力</button>
                 <button id="btn-import-character" class="flex-1 text-green border-green py-2 text-xs">キャラ読込</button>
             </div>
-            <label class="text-[0.65rem] text-gray block mb-1">キャラクター名変更</label>
+            <label class="text-[0.65rem] text-gray block mb-1 text-left">キャラクター名変更</label>
             <div class="flex gap-2">
-                <input type="text" id="sys-character-name" maxlength="12" placeholder="Hero" class="m-0 py-1 text-xs">
-                <button id="btn-update-name" class="px-3 text-xs">変更</button>
+                <input type="text" id="sys-character-name" maxlength="12" placeholder="Hero" class="flex-1" style="margin-bottom:0;">
+                <button id="btn-update-name" class="px-4 text-xs border-white">変更</button>
             </div>
         </div>
 
@@ -495,12 +422,11 @@ __  __               ___           _
                 <button id="btn-toggle-crt" class="px-3 py-1 text-[0.65rem] min-h-0">ON</button>
             </div>
         </div>
-
+        
         <div class="mb-6 mt-auto">
             <h3 class="text-red text-xs mb-1">危険領域</h3>
             <button id="btn-reset-data" class="w-full text-red border-red py-2 text-xs">冒険の書を消去する</button>
         </div>
-
         <button id="btn-close-system" class="w-full text-sm py-2 sticky bottom-2 shadow-lg border-gray bg-black">＞ 戻る</button>
     </div>
 
@@ -516,6 +442,7 @@ __  __               ___           _
     </div>
 </div>
 
+<!-- ファイル入力用（非表示） -->
 <input type="file" id="file-import" accept=".json" style="display: none;">
 <input type="file" id="file-import-character" accept=".json" style="display: none;">
 
@@ -523,114 +450,77 @@ __  __               ___           _
 // ==========================================
 // 定数・データ定義
 // ==========================================
-const STORAGE_KEY = 'yzardry_dungeon_save_data_v3';
-const LEGACY_STORAGE_KEY = 'yzardry_save_data_v2';
+const STORAGE_KEY = 'yzardry_dungeon_save_data_v4';
+const LEGACY_STORAGE_KEY = 'yzardry_dungeon_save_data_v3';
+const TASKS_STORAGE_KEY = 'yzardry_save_data_v2'; // 古いタスク版データ読み込み用
 
-const APP_VERSION = 3.3;
-const APP_MODE = 'dungeon_rpg';
 const CHARACTER_EXPORT_TYPE = 'yzardry_character_data';
 const CHARACTER_EXPORT_VERSION = 1;
-const VALID_GENDERS = ['male', 'female', 'other'];
+
+const APP_VERSION = 4.3;
+const APP_MODE = 'dungeon_rpg_3d';
 const MAX_FLOOR = 10;
 const FACING_ORDER = ['N', 'E', 'S', 'W'];
 const FACING_JA = { N: '北', E: '東', S: '南', W: '西' };
-const DUNGEON = Object.freeze({ name: '静寂の平原', bg: '#050505', border: '#a3e635' });
 const DEFAULT_SETTINGS = Object.freeze({ crtEffect: true });
 const DEFAULT_STATS = Object.freeze({ LV: 1, EXP: 0, STR: 10, INT: 10, DEX: 10, AGI: 10, VIT: 10, LUK: 10 });
 const DEFAULT_EQUIPMENT = Object.freeze({
-    weapon: Object.freeze({ name: 'ひのきの棒', color: '#ffffff' }),
-    armor: Object.freeze({ name: '布の服', color: '#ffffff' }),
-    acc: Object.freeze({ name: '---', color: '#ffffff' })
+    weapon: { name: 'ひのきの棒', color: '#ffffff' },
+    armor: { name: '布の服', color: '#ffffff' },
+    acc: { name: '---', color: '#ffffff' }
 });
 const DEFAULT_INVENTORY = Object.freeze({ herbs: 3, ethers: 1, bombs: 1, campKits: 1, warpWings: 1, elixirs: 0 });
-const DEFAULT_ROOM_AA = `   ____\n _/ __ \\\n|  /  \\ |\n| |    | |\n|  \\__/ /\n \\_____/`;
-const STAIRS_AA = `    ||\n  __||__\n /_    _\\\\\n   |  |\n   |__|`;
-const TREASURE_AA = `  ______\n / ____ \\\\\n|| [] [] ||\n||______||\n \\______/`;
-const FOUNTAIN_AA = `    _\n _ ( ) _\n(_     _)\n  |___|\n   |_|`;
-const BOSS_ROOM_AA = `  /^^^^\\\\\n /  ..  \\\\\n|  ----  |\n| |====| |\n \\______/'`;
 
 const WEAPONS = [
     { name: 'ひのきの棒', color: '#ffffff' }, { name: 'こんぼう', color: '#ffffff' }, { name: '錆びた短剣', color: '#ffffff' },
     { name: '銅の剣', color: '#ffffff' }, { name: '鉄の槍', color: '#ffffff' }, { name: '狩人の弓', color: '#ffffff' },
-    { name: '木の枝', color: '#ffffff' }, { name: '石の斧', color: '#ffffff' }, { name: '見習いの剣', color: '#ffffff' }, { name: 'スリング', color: '#ffffff' },
     { name: '鋼の長剣', color: '#4ade80' }, { name: '青銅の斧', color: '#4ade80' }, { name: '魔法の杖', color: '#4ade80' },
-    { name: '銀の細剣', color: '#4ade80' }, { name: '大地の槌', color: '#4ade80' }, { name: '疾風の短剣', color: '#4ade80' },
-    { name: '鉄の斧', color: '#4ade80' }, { name: '狩人の槍', color: '#4ade80' }, { name: 'オークの杖', color: '#4ade80' }, { name: '骨の短剣', color: '#4ade80' },
     { name: '騎士の大剣', color: '#60a5fa' }, { name: '氷結の槍', color: '#60a5fa' }, { name: '炎の杖', color: '#60a5fa' },
-    { name: '雷鳴の弓', color: '#60a5fa' }, { name: '毒牙のダガー', color: '#60a5fa' }, { name: '破砕のメイス', color: '#60a5fa' },
-    { name: 'ハルバード', color: '#60a5fa' }, { name: 'ミスリルの剣', color: '#60a5fa' }, { name: '水晶の杖', color: '#60a5fa' }, { name: '風切りの弓', color: '#60a5fa' },
     { name: '竜殺しの大剣', color: '#facc15' }, { name: '聖騎士の槍', color: '#facc15' }, { name: '賢者の杖', color: '#facc15' },
-    { name: '精霊の弓', color: '#facc15' }, { name: '暗殺者の刃', color: '#facc15' }, { name: '太陽のメイス', color: '#facc15' },
-    { name: '雷神の槌', color: '#facc15' }, { name: '聖者のメイス', color: '#facc15' }, { name: '妖精の弓', color: '#facc15' }, { name: '暗黒騎士の槍', color: '#facc15' },
-    { name: '魔剣ダイン', color: '#f87171' }, { name: '聖剣エクスカリバー', color: '#f87171' }, { name: '神杖カドゥケウス', color: '#f87171' },
-    { name: '魔弓フェイル', color: '#f87171' }, { name: '妖刀・村正', color: '#f87171' }, { name: '血塗られた剣', color: '#f87171' }, { name: '竜王の大斧', color: '#f87171' }, { name: '星砕きの戦鎚', color: '#f87171' },
-    { name: '創世の神武', color: '#c084fc' }, { name: '終焉の魔杖', color: '#c084fc' }
+    { name: '魔剣ダイン', color: '#f87171' }, { name: '聖剣エクスカリバー', color: '#f87171' }, { name: '妖刀・村正', color: '#f87171' }
 ];
 
 const ARMORS = [
     { name: '布の服', color: '#ffffff' }, { name: '旅人の服', color: '#ffffff' }, { name: '革の鎧', color: '#ffffff' },
-    { name: '銅の胸当て', color: '#ffffff' }, { name: '鉄の鎧', color: '#ffffff' }, { name: '狩人の外套', color: '#ffffff' },
-    { name: '古びたマント', color: '#ffffff' }, { name: '木の盾と服', color: '#ffffff' }, { name: '獣皮の鎧', color: '#ffffff' }, { name: '兵士の鎧', color: '#ffffff' },
-    { name: '鋼の鎧', color: '#4ade80' }, { name: '青銅の盾鎧', color: '#4ade80' }, { name: '魔術師のローブ', color: '#4ade80' },
-    { name: '銀の胸当て', color: '#4ade80' }, { name: '大地の衣', color: '#4ade80' }, { name: '盗賊の軽鎧', color: '#4ade80' },
-    { name: '鉄の重鎧', color: '#4ade80' }, { name: '狩人の鎧', color: '#4ade80' }, { name: 'オークの鎧', color: '#4ade80' }, { name: '骨の鎧', color: '#4ade80' },
-    { name: '騎士の重鎧', color: '#60a5fa' }, { name: '氷結のローブ', color: '#60a5fa' }, { name: '炎の衣', color: '#60a5fa' },
-    { name: '雷鳴の外套', color: '#60a5fa' }, { name: '暗黒の軽鎧', color: '#60a5fa' }, { name: '破砕の防具', color: '#60a5fa' },
-    { name: '鋼の胸当て', color: '#60a5fa' }, { name: 'ミスリルチェイン', color: '#60a5fa' }, { name: '水晶のローブ', color: '#60a5fa' }, { name: '風防ぎの外套', color: '#60a5fa' },
-    { name: '竜鱗の鎧', color: '#facc15' }, { name: '聖騎士の鎧', color: '#facc15' }, { name: '賢者のローブ', color: '#facc15' },
-    { name: '精霊の衣', color: '#facc15' }, { name: '影の装束', color: '#facc15' }, { name: '太陽の鎧', color: '#facc15' },
-    { name: '雷神の鎧', color: '#facc15' }, { name: '聖者のローブ', color: '#facc15' }, { name: '妖精のマント', color: '#facc15' }, { name: '暗黒騎士の鎧', color: '#facc15' },
-    { name: '魔鎧オメガ', color: '#f87171' }, { name: '聖鎧アイギス', color: '#f87171' }, { name: '神衣ヴァルキリー', color: '#f87171' },
-    { name: '幻影の外套', color: '#f87171' }, { name: '鬼神の胴着', color: '#f87171' }, { name: '血塗られた鎧', color: '#f87171' }, { name: '竜王の重鎧', color: '#f87171' }, { name: '星守の法衣', color: '#f87171' },
-    { name: '創世の神鎧', color: '#c084fc' }, { name: '終焉の魔鎧', color: '#c084fc' }
+    { name: '鋼の鎧', color: '#4ade80' }, { name: '魔術師のローブ', color: '#4ade80' }, { name: '盗賊の軽鎧', color: '#4ade80' },
+    { name: '騎士の重鎧', color: '#60a5fa' }, { name: '氷結のローブ', color: '#60a5fa' }, { name: 'ミスリルチェイン', color: '#60a5fa' },
+    { name: '竜鱗の鎧', color: '#facc15' }, { name: '賢者のローブ', color: '#facc15' }, { name: '聖騎士の鎧', color: '#facc15' },
+    { name: '魔鎧オメガ', color: '#f87171' }, { name: '聖鎧アイギス', color: '#f87171' }, { name: '血塗られた鎧', color: '#f87171' }
 ];
 
 const ACCESSORIES = [
-    { name: '旅人のマント', color: '#ffffff' }, { name: '革の帽子', color: '#ffffff' }, { name: '銅の指輪', color: '#ffffff' }, { name: '木の兜', color: '#ffffff' }, { name: 'ボロの鉢巻', color: '#ffffff' }, { name: 'ガラスの指輪', color: '#ffffff' }, { name: '鉄の指輪', color: '#ffffff' }, { name: '骨の首飾り', color: '#ffffff' }, { name: '石のお守り', color: '#ffffff' }, { name: '布のリボン', color: '#ffffff' },
-    { name: '銀の指輪', color: '#4ade80' }, { name: '魔除けの護符', color: '#4ade80' }, { name: '狩人の帽子', color: '#4ade80' }, { name: '青銅の兜', color: '#4ade80' }, { name: '風のブーツ', color: '#4ade80' }, { name: '守りの指輪', color: '#4ade80' }, { name: 'エルフのマント', color: '#4ade80' }, { name: '力の腕輪', color: '#4ade80' }, { name: '知恵のピアス', color: '#4ade80' }, { name: '緑柱石の指輪', color: '#4ade80' },
-    { name: '騎士の兜', color: '#60a5fa' }, { name: '氷結の指輪', color: '#60a5fa' }, { name: '水晶の首飾り', color: '#60a5fa' }, { name: '鋼の小手', color: '#60a5fa' }, { name: '水竜の鱗', color: '#60a5fa' }, { name: '魔術師の帽子', color: '#60a5fa' }, { name: '疾風の鉢巻', color: '#60a5fa' }, { name: '雷鳴の指輪', color: '#60a5fa' }, { name: '癒しのお守り', color: '#60a5fa' }, { name: '蒼玉の飾り', color: '#60a5fa' },
-    { name: '竜鱗の護符', color: '#facc15' }, { name: '太陽の冠', color: '#facc15' }, { name: '賢者のリボン', color: '#facc15' }, { name: '黄金の指輪', color: '#facc15' }, { name: '聖騎士の兜', color: '#facc15' }, { name: '光のオーブ', color: '#facc15' }, { name: '精霊の冠', color: '#facc15' }, { name: '英雄の証', color: '#facc15' }, { name: '黄玉の指輪', color: '#facc15' }, { name: '王家の紋章', color: '#facc15' },
-    { name: '星降る腕輪', color: '#f87171' }, { name: '戦神の兜', color: '#f87171' }, { name: '魔王の指輪', color: '#f87171' }, { name: '紅蓮の外套', color: '#f87171' }, { name: '不死鳥の羽', color: '#f87171' }, { name: '覇者の冠', color: '#f87171' }, { name: '竜王の逆鱗', color: '#f87171' }, { name: '紅玉の飾り', color: '#f87171' },
-    { name: '創世の王冠', color: '#c084fc' }, { name: '終焉の瞳', color: '#c084fc' }
+    { name: '旅人のマント', color: '#ffffff' }, { name: '銅の指輪', color: '#ffffff' }, { name: '木の兜', color: '#ffffff' },
+    { name: '銀の指輪', color: '#4ade80' }, { name: '魔除けの護符', color: '#4ade80' }, { name: '力の腕輪', color: '#4ade80' },
+    { name: '騎士の兜', color: '#60a5fa' }, { name: '水晶の首飾り', color: '#60a5fa' }, { name: '疾風の鉢巻', color: '#60a5fa' },
+    { name: '竜鱗の護符', color: '#facc15' }, { name: '太陽の冠', color: '#facc15' }, { name: '光のオーブ', color: '#facc15' },
+    { name: '星降る腕輪', color: '#f87171' }, { name: '魔王の指輪', color: '#f87171' }, { name: '覇者の冠', color: '#f87171' }
 ];
 
 const ENEMY_AAS = [
-`   ___\n  /   \\\n ( o.o )\n  > ^ <`, `  /\\_/\\\\\n ( o.o )\n  > ^ <`, `   ___\n  /   \\\n |O   O|\n  \\_^_/`, `  \\|/\n - O -\n  /|\\`, `  ___ \n (o,o)\n /)  )\n  " "`, ` ,_._.,\n/ _ _ \\\n|(_)(_)|\n \\_  _/`, `  ()()\n  (..)\n  /\\/\\\\`, `    _\n   / \\\n  /  /\n  \\_\\\\_`, ` /\\   /\\\\\n  \\/-\\/ \n   (o o)\n   \\_^_/`, `  \\ /\n (o o)\n | | |\n /_|_\\\\`, `   ___\n  / * \\\n | o o |\n  \\_-_/`, `  [+ +]\n  /| |\\\\\n  \\|_|/\n   | |`, `  /---\\\\\n  |o o|\n  |---|\n  /   \\\\`, `  /\\_/\\\\\n ( 'x' )\n (  "  )`, `   ( )\n  (   )\n ( o o )\n  \\ - /`, `   /\\\\\n  /  \\\n (o  o)\n  \\__/`, `   ( )\n  / | \\\n (  |  )\n  \\/ \\/`, `  ^   ^\n /o   o\\\\\n \\_ V _/\n  |   |`, `  [___]\n  |o o|\n  [___]`, `   \\ /\n  (o o)\n  /(_)\\\\\n   / \\\\`, `  _   _\n | |_| |\n | o o |\n |_|-|_|`, `   /\\\\\n  /  \\\n  |()|\n  \\__/`, ` [___]\n [o o]\n [___]`, `  /\\_/\\\\\n ( õ_õ )\n > ^ <`, `   ___\n  / o \\\n  \\___/`, `  ()_()\n  \\ o /\n  /___\\\\`, `   ___\n  /o o\\\\\n  |___|\n  /   \\\\`, `  [+ +]\n  /| |\\\\\n   | |`, `  .--.\n | o o |\n |  ^  |\n  '--'`, `  \\|/\n (o o)\n  \\-/\n  / \\\\`,
-`  /\\_\\\\ \n (ಠ_ಠ)\n /_\\\\_\\\\`, `  , , \n (o,o)\n (   )\n  "-"`, `  \\  / \n (><)\n /  \\\\`, `  _  _ \n (o)(o)\n  \\__/\n  |__|`, `  .--.\n /_  _\\\\\n |()()|\n  \\__/`, `  (O_O)\n  /| |\\\\\n   | |`, `  /vvv\\\\\n  |o o|\n  \\^^^/`, `  /| |\\\\\n ( * * )\n  \\___/`, `  _-_ \n / o \\\n \\_o_/`, `  [+_+]\n  /| |\\\\\n  \\_|_/`, `  \\___/\n  (o.o)\n  /___\\\\`, `  /\\_/\\\\\n (=^.^=)\n  (")_(")`, `  _  _ \n (O)(O)\n  \\==/\n  /||\\\\`, `  /~~\\\\\n ( - -)\n  \\~~/`, `  /|/|\n ( o.o)\n  )  (\n  "  "`, `  ____ \n /o  o\\\\\n \\_()_/\n  /  \\\\`, `  [--]\n  |oo|\n  [--]`, `   /\\\\ \n  /  \\\\ \n ( oo )\n  \\__/\n   /\\\\`, `  /\\_/\\\\\n ( x_x )\n > ^ <`, `  (OoO)\n  /|_|\\\\\n   | |`
+`   ___\n  /   \\\n ( o.o )\n  > ^ <`, `   ___\n  /   \\\n |O   O|\n  \\_^_/`, `  \\|/\n - O -\n  /|\\`, `  ___ \n (o,o)\n /)  )\n  " "`, ` ,_._.,\n/ _ _ \\\n|(_)(_)|\n \\_  _/`, `  ()()\n  (..)\n  /\\/\\\\`, `    _\n   / \\\n  /  /\n  \\_\\\\_`, ` /\\   /\\\\\n  \\/-\\/ \n   (o o)\n   \\_^_/`, `   ___\n  / * \\\n | o o |\n  \\_-_/`, `  [+ +]\n  /| |\\\\\n  \\|_|/\n   | |`
 ];
 
 const MONSTER_TABLE = [
-    { name: 'さまよいノウサギ', floors: [1, 2], star: 1, hp: 18, atk: 9, def: 5, spd: 8, exp: 10, gold: 8, aa: 1, desc: '足音も立てずに距離を詰める。' },
-    { name: '草陰スライム', floors: [1, 2], star: 1, hp: 22, atk: 8, def: 6, spd: 5, exp: 11, gold: 7, aa: 24, desc: '湿った体で草むらを這う。' },
-    { name: '風切りコウモリ', floors: [1, 3], star: 1, hp: 17, atk: 10, def: 4, spd: 11, exp: 12, gold: 8, aa: 41, desc: '羽音だけを残して頭上を巡る。' },
-    { name: '石ころコボルト', floors: [1, 3], star: 2, hp: 24, atk: 12, def: 8, spd: 8, exp: 15, gold: 11, aa: 12, desc: '手製の棍棒を振り上げる。' },
-    { name: '枯葉ウルフ', floors: [2, 4], star: 2, hp: 28, atk: 14, def: 8, spd: 13, exp: 18, gold: 14, aa: 8, desc: '草の匂いに紛れて襲い掛かる。' },
-    { name: '野盗ゴブリン', floors: [2, 4], star: 2, hp: 32, atk: 15, def: 10, spd: 9, exp: 19, gold: 16, aa: 27, desc: '錆びた刃物で威嚇してくる。' },
-    { name: '泥鎧の亡霊', floors: [3, 5], star: 3, hp: 36, atk: 17, def: 11, spd: 10, exp: 23, gold: 19, aa: 33, desc: '鎧の隙間から冷気が漏れる。' },
-    { name: '岩肌タートル', floors: [3, 5], star: 3, hp: 44, atk: 16, def: 16, spd: 6, exp: 24, gold: 18, aa: 21, desc: '甲羅を鳴らしながら迫る。' },
-    { name: '静丘の見張り兵', floors: [4, 6], star: 3, hp: 48, atk: 19, def: 15, spd: 11, exp: 28, gold: 22, aa: 46, desc: '無言のまま槍先を向ける。' },
-    { name: '雷尾リザード', floors: [4, 6], star: 4, hp: 52, atk: 22, def: 15, spd: 14, exp: 31, gold: 24, aa: 32, desc: '尾の先から火花が散る。' },
-    { name: '砂塵マンドラゴラ', floors: [4, 7], star: 4, hp: 55, atk: 21, def: 14, spd: 12, exp: 32, gold: 25, aa: 15, desc: '耳障りな悲鳴を潜ませる。' },
-    { name: '呪い羊', floors: [5, 7], star: 4, hp: 58, atk: 24, def: 16, spd: 10, exp: 36, gold: 28, aa: 31, desc: '白い毛並みの下に禍々しさを隠す。' },
-    { name: '蒼眼ハーピー', floors: [5, 8], star: 4, hp: 62, atk: 25, def: 17, spd: 16, exp: 40, gold: 31, aa: 17, desc: '遠くから嘲笑が降ってくる。' },
-    { name: '朽ちた騎士', floors: [6, 8], star: 5, hp: 72, atk: 29, def: 22, spd: 11, exp: 46, gold: 38, aa: 10, desc: '錆の匂いをまとって剣を抜く。' },
-    { name: '結晶ゴーレム', floors: [6, 8], star: 5, hp: 80, atk: 31, def: 26, spd: 8, exp: 48, gold: 40, aa: 20, desc: '足を踏み鳴らし大地を揺らす。' },
-    { name: '風読みの魔術師', floors: [7, 9], star: 5, hp: 68, atk: 33, def: 19, spd: 17, exp: 52, gold: 42, aa: 35, desc: '詠唱とともに気流が変わる。' },
-    { name: '月食サーペント', floors: [7, 9], star: 6, hp: 86, atk: 34, def: 24, spd: 15, exp: 58, gold: 48, aa: 42, desc: 'うねる体躯が視界を埋める。' },
-    { name: '白銀ミノタウロス', floors: [8, 9], star: 6, hp: 98, atk: 38, def: 27, spd: 13, exp: 65, gold: 54, aa: 49, desc: '角を鳴らして突進の間合いを測る。' },
-    { name: '深緑ワイバーン', floors: [8, 10], star: 6, hp: 104, atk: 40, def: 28, spd: 15, exp: 69, gold: 60, aa: 38, desc: '翼で空気を切り裂き唸る。' },
-    { name: '断罪の修道騎士', floors: [9, 10], star: 7, hp: 118, atk: 43, def: 31, spd: 17, exp: 78, gold: 68, aa: 43, desc: '審判の時を告げるように剣を掲げる。' },
-    { name: '星喰いキマイラ', floors: [9, 10], star: 7, hp: 126, atk: 47, def: 33, spd: 18, exp: 84, gold: 74, aa: 39, desc: '複数の咆哮が重なって聞こえる。' }
+    { name: 'さまよいノウサギ', floors: [1, 2], star: 1, hp: 18, atk: 9, def: 5, spd: 8, exp: 10, gold: 8, aa: 0, desc: '足音も立てずに距離を詰める。' },
+    { name: '草陰スライム', floors: [1, 2], star: 1, hp: 22, atk: 8, def: 6, spd: 5, exp: 11, gold: 7, aa: 1, desc: '湿った体で草むらを這う。' },
+    { name: '風切りコウモリ', floors: [1, 3], star: 1, hp: 17, atk: 10, def: 4, spd: 11, exp: 12, gold: 8, aa: 2, desc: '羽音だけを残して頭上を巡る。' },
+    { name: '石ころコボルト', floors: [1, 3], star: 2, hp: 24, atk: 12, def: 8, spd: 8, exp: 15, gold: 11, aa: 3, desc: '手製の棍棒を振り上げる。' },
+    { name: '枯葉ウルフ', floors: [2, 4], star: 2, hp: 28, atk: 14, def: 8, spd: 13, exp: 18, gold: 14, aa: 4, desc: '草の匂いに紛れて襲い掛かる。' },
+    { name: '野盗ゴブリン', floors: [2, 4], star: 2, hp: 32, atk: 15, def: 10, spd: 9, exp: 19, gold: 16, aa: 5, desc: '錆びた刃物で威嚇してくる。' },
+    { name: '泥鎧の亡霊', floors: [3, 5], star: 3, hp: 36, atk: 17, def: 11, spd: 10, exp: 23, gold: 19, aa: 6, desc: '鎧の隙間から冷気が漏れる。' },
+    { name: '岩肌タートル', floors: [3, 5], star: 3, hp: 44, atk: 16, def: 16, spd: 6, exp: 24, gold: 18, aa: 7, desc: '甲羅を鳴らしながら迫る。' },
+    { name: '静丘の見張り兵', floors: [4, 6], star: 3, hp: 48, atk: 19, def: 15, spd: 11, exp: 28, gold: 22, aa: 8, desc: '無言のまま槍先を向ける。' },
+    { name: '雷尾リザード', floors: [4, 6], star: 4, hp: 52, atk: 22, def: 15, spd: 14, exp: 31, gold: 24, aa: 9, desc: '尾の先から火花が散る。' }
 ];
 
 const BOSS_TEMPLATE = Object.freeze({
     name: '静寂の王ヴォイドメイン',
-    star: 7, hp: 220, atk: 58, def: 38, spd: 22, exp: 180, gold: 220, aa: 30, kind: 'boss',
-    desc: '全ての音を奪う王。草原の最奥で待ち受けていた存在。'
+    star: 7, hp: 220, atk: 58, def: 38, spd: 22, exp: 180, gold: 220, aa: 4, kind: 'boss',
+    desc: '全ての音を奪う存在。平原の最奥で待ち受けていた。'
 });
 
 const state = {
-    user: null, run: null, settings: { ...DEFAULT_SETTINGS }, currentCellNote: ''
+    user: null, run: null, settings: { ...DEFAULT_SETTINGS }, currentCellNote: '', isMapOpen: false, migrationNotice: ''
 };
 
 // ==========================================
@@ -638,11 +528,11 @@ const state = {
 // ==========================================
 const $ = (id) => document.getElementById(id);
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-const formatDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-const generateId = () => Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+const generateId = () => Math.random().toString(36).substring(2, 10);
 const getRequiredExp = (lv) => 10 + 5 * (lv - 1) + 2 * Math.pow(lv - 1, 2);
-const escapeHtml = (str = '') => String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-const plainTextToHtml = (text = '') => escapeHtml(text).replace(/\n/g, '<br>');
+const escapeHtml = (str = '') => String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const formatDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const sanitizeFileName = (name) => (name || 'Hero').replace(/[\\/:*?"<>|]/g, '_');
 
 function mulberry32(seed) {
     let a = seed >>> 0;
@@ -661,22 +551,27 @@ function shuffle(arr, rng = Math.random) {
 }
 function getStarHtml(star) {
     const safeStar = clamp(Number(star) || 1, 1, 7);
-    const starStr = '★'.repeat(safeStar);
     const colors = ['#ffffff', '#4ade80', '#60a5fa', '#facc15', '#f87171', '#c084fc', '#f472b6'];
     const color = colors[(safeStar - 1) % colors.length];
-    return `<span style="color:${color}; text-shadow:0 0 3px ${color}; font-size: 0.75rem; letter-spacing: -1px; margin-right: 2px;">${starStr}</span>`;
+    return `<span style="color:${color}; font-size: 0.75rem; letter-spacing: -1px; margin-right: 2px;">${'★'.repeat(safeStar)}</span>`;
 }
 
 // ==========================================
-// ロジック (ステータス・ダンジョン生成)
+// 正規化と堅牢なデータ読み込み関数群
 // ==========================================
-function createDefaultStats() { return { ...DEFAULT_STATS }; }
-function createDefaultEquipment() { return { weapon: { ...DEFAULT_EQUIPMENT.weapon }, armor: { ...DEFAULT_EQUIPMENT.armor }, acc: { ...DEFAULT_EQUIPMENT.acc } }; }
-function createDefaultInventory() { return { ...DEFAULT_INVENTORY }; }
-function normalizeName(name) { return (typeof name === 'string' ? name.trim().slice(0, 12) : 'Hero') || 'Hero'; }
-function normalizeGender(gender) { return VALID_GENDERS.includes(gender) ? gender : 'other'; }
-function normalizeColor(color, fallback) { return typeof color === 'string' && /^#[0-9a-fA-F]{6}$/.test(color) ? color : fallback; }
-function normalizeSettings(settings) { return { crtEffect: settings?.crtEffect !== false }; }
+function normalizeStatValue(value, fallback, min = 0) {
+    const num = Number(value);
+    return Number.isFinite(num) ? Math.max(min, Math.floor(num)) : fallback;
+}
+
+function normalizeColor(color, fallback) {
+    return typeof color === 'string' && /^#[0-9a-fA-F]{6}$/.test(color) ? color : fallback;
+}
+
+function normalizeSettings(settings) {
+    return { crtEffect: settings?.crtEffect !== false };
+}
+
 function normalizeEquipmentSlot(slot, fallback) {
     const normalized = { name: fallback.name, color: fallback.color };
     if (!slot || typeof slot !== 'object') return normalized;
@@ -684,34 +579,176 @@ function normalizeEquipmentSlot(slot, fallback) {
     normalized.color = normalizeColor(slot.color, fallback.color);
     return normalized;
 }
+
 function normalizeEquipment(rawEquipment = {}) {
     const defaults = createDefaultEquipment();
-    return { weapon: normalizeEquipmentSlot(rawEquipment.weapon, defaults.weapon), armor: normalizeEquipmentSlot(rawEquipment.armor, defaults.armor), acc: normalizeEquipmentSlot(rawEquipment.acc, defaults.acc) };
+    return {
+        weapon: normalizeEquipmentSlot(rawEquipment.weapon, defaults.weapon),
+        armor: normalizeEquipmentSlot(rawEquipment.armor, defaults.armor),
+        acc: normalizeEquipmentSlot(rawEquipment.acc, defaults.acc)
+    };
 }
-function normalizeStatValue(value, fallback, min = 0) { const num = Number(value); return !Number.isFinite(num) ? fallback : Math.max(min, Math.floor(num)); }
+
 function normalizeStats(rawStats = {}) {
     const stats = createDefaultStats();
     stats.LV = normalizeStatValue(rawStats.LV, stats.LV, 1);
     const minExp = stats.LV === 1 ? 0 : getRequiredExp(stats.LV - 1);
     stats.EXP = Math.max(normalizeStatValue(rawStats.EXP, minExp, 0), minExp);
-    ['STR', 'INT', 'DEX', 'AGI', 'VIT', 'LUK'].forEach(key => stats[key] = normalizeStatValue(rawStats[key], stats[key], 0));
+    ['STR', 'INT', 'DEX', 'AGI', 'VIT', 'LUK'].forEach((key) => {
+        stats[key] = normalizeStatValue(rawStats[key], stats[key], 0);
+    });
     return stats;
 }
+
+function normalizeGender(gender) {
+    return ['male', 'female', 'other'].includes(gender) ? gender : 'other';
+}
+
+function normalizeName(name) {
+    return (typeof name === 'string' ? name.trim().slice(0, 12) : 'Hero') || 'Hero';
+}
+
 function normalizeUser(rawUser = {}) {
     return {
-        name: normalizeName(rawUser.name), gender: normalizeGender(rawUser.gender || rawUser.appearance?.gender),
-        stats: normalizeStats(rawUser.stats), equipment: normalizeEquipment(rawUser.equipment)
+        name: normalizeName(rawUser.name),
+        gender: normalizeGender(rawUser.gender || rawUser.appearance?.gender),
+        stats: normalizeStats(rawUser.stats),
+        equipment: normalizeEquipment(rawUser.equipment)
     };
 }
-function buildCharacterSnapshot(user) {
-    const n = normalizeUser(user);
-    return { name: n.name, gender: n.gender, appearance: { gender: n.gender }, stats: n.stats, equipment: n.equipment };
+
+function normalizeInventory(rawInventory = {}) {
+    const inv = createDefaultInventory();
+    Object.keys(inv).forEach((key) => {
+        inv[key] = normalizeStatValue(rawInventory[key], inv[key], 0);
+    });
+    return inv;
 }
-function resolveCharacterImportData(rawData) {
-    let base = rawData?.character || rawData?.user || (rawData?.stats ? rawData : null);
-    if (!base) throw new Error('キャラクターデータが見つかりません。');
-    return { name: base.name, gender: base.gender || base.appearance?.gender, stats: base.stats, equipment: base.equipment };
+
+function normalizeCell(rawCell, x, y) {
+    const cell = createCell(x, y);
+    if (!rawCell || typeof rawCell !== 'object') return cell;
+    cell.kind = typeof rawCell.kind === 'string' ? rawCell.kind : cell.kind;
+    cell.visited = !!rawCell.visited;
+    cell.seen = !!rawCell.seen;
+    cell.searched = !!rawCell.searched;
+    cell.eventResolved = !!rawCell.eventResolved;
+    for (const dir of FACING_ORDER) cell.open[dir] = !!rawCell.open?.[dir];
+    return cell;
 }
+
+function normalizeMap(rawMap, floor, seed) {
+    const fallback = generateFloorMap(seed, floor);
+    if (!rawMap || typeof rawMap !== 'object') return fallback;
+    const size = Number.isInteger(rawMap.size) ? rawMap.size : fallback.size;
+    const cells = {};
+    for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+            cells[getCellKey(x, y)] = normalizeCell(rawMap.cells?.[getCellKey(x, y)], x, y);
+        }
+    }
+    return { floor, size, start: { x: 0, y: 0 }, cells };
+}
+
+function normalizeBattle(rawBattle) {
+    if (!rawBattle || typeof rawBattle !== 'object') return null;
+    if (!rawBattle.enemy || typeof rawBattle.enemy !== 'object') return null;
+    const enemy = {
+        id: typeof rawBattle.enemy.id === 'string' ? rawBattle.enemy.id : generateId(),
+        name: typeof rawBattle.enemy.name === 'string' ? rawBattle.enemy.name : '名もなき敵',
+        star: clamp(normalizeStatValue(rawBattle.enemy.star, 1, 1), 1, 7),
+        hp: normalizeStatValue(rawBattle.enemy.hp, 1, 0),
+        maxHp: Math.max(normalizeStatValue(rawBattle.enemy.maxHp, 1, 1), 1),
+        atk: normalizeStatValue(rawBattle.enemy.atk, 1, 1),
+        def: normalizeStatValue(rawBattle.enemy.def, 1, 0),
+        spd: normalizeStatValue(rawBattle.enemy.spd, 1, 0),
+        exp: normalizeStatValue(rawBattle.enemy.exp, 1, 1),
+        gold: normalizeStatValue(rawBattle.enemy.gold, 1, 0),
+        aa: normalizeStatValue(rawBattle.enemy.aa, 0, 0),
+        desc: typeof rawBattle.enemy.desc === 'string' ? rawBattle.enemy.desc : '',
+        kind: rawBattle.enemy.kind === 'boss' ? 'boss' : 'normal'
+    };
+    enemy.hp = clamp(enemy.hp, 0, enemy.maxHp);
+    return {
+        enemy,
+        guard: !!rawBattle.guard,
+        focusTurns: normalizeStatValue(rawBattle.focusTurns, 0, 0),
+        barrierTurns: normalizeStatValue(rawBattle.barrierTurns, 0, 0)
+    };
+}
+
+function normalizeRun(rawRun, user) {
+    if (!rawRun || typeof rawRun !== 'object') return createNewRun(user);
+    const seed = Number.isFinite(rawRun.seed) ? rawRun.seed : Date.now();
+    const maxHp = getMaxHp(user);
+    const maxMp = getMaxMp(user);
+    const run = {
+        mode: APP_MODE,
+        seed,
+        floor: clamp(normalizeStatValue(rawRun.floor, 1, 1), 1, MAX_FLOOR),
+        x: clamp(normalizeStatValue(rawRun.x, 0, 0), 0, 6),
+        y: clamp(normalizeStatValue(rawRun.y, 0, 0), 0, 6),
+        facing: FACING_ORDER.includes(rawRun.facing) ? rawRun.facing : 'E',
+        depthRecord: clamp(normalizeStatValue(rawRun.depthRecord, 1, 1), 1, MAX_FLOOR),
+        steps: normalizeStatValue(rawRun.steps, 0, 0),
+        roomsCleared: normalizeStatValue(rawRun.roomsCleared, 0, 0),
+        treasureCount: normalizeStatValue(rawRun.treasureCount, 0, 0),
+        defeatedCount: normalizeStatValue(rawRun.defeatedCount, 0, 0),
+        gold: normalizeStatValue(rawRun.gold, 40, 0),
+        cleared: !!rawRun.cleared,
+        safeSteps: normalizeStatValue(rawRun.safeSteps, 0, 0),
+        vitals: {
+            hp: clamp(normalizeStatValue(rawRun.vitals?.hp, maxHp, 0), 0, maxHp),
+            mp: clamp(normalizeStatValue(rawRun.vitals?.mp, maxMp, 0), 0, maxMp)
+        },
+        inventory: normalizeInventory(rawRun.inventory),
+        battle: normalizeBattle(rawRun.battle),
+        maps: {},
+        journal: Array.isArray(rawRun.journal) ? rawRun.journal.filter((x) => typeof x === 'string').slice(0, 60) : []
+    };
+
+    if (rawRun.maps && typeof rawRun.maps === 'object') {
+        Object.keys(rawRun.maps).forEach((key) => {
+            const floorNum = clamp(normalizeStatValue(key, 1, 1), 1, MAX_FLOOR);
+            run.maps[String(floorNum)] = normalizeMap(rawRun.maps[key], floorNum, seed);
+        });
+    }
+    if (!run.maps[String(run.floor)]) run.maps[String(run.floor)] = generateFloorMap(seed, run.floor);
+    revealCurrentRoom(run);
+    if (run.vitals.hp <= 0) run.vitals.hp = Math.max(1, Math.floor(maxHp * 0.4));
+    return run;
+}
+
+// 旧タスク版ボーナス計算
+function countLegacyCompletedTasks(calendarData) {
+    if (!calendarData || typeof calendarData !== 'object') return 0;
+    let completed = 0;
+    Object.values(calendarData).forEach((month) => {
+        if (!month || typeof month !== 'object') return;
+        Object.values(month).forEach((tasks) => {
+            if (!Array.isArray(tasks)) return;
+            completed += tasks.filter((task) => task?.status === 'completed').length;
+        });
+    });
+    return completed;
+}
+
+function createLegacyBonus(calendarData) {
+    const completed = countLegacyCompletedTasks(calendarData);
+    return {
+        gold: Math.min(300, completed * 4),
+        herbs: Math.floor(completed / 6),
+        ethers: Math.floor(completed / 12)
+    };
+}
+
+
+// ==========================================
+// ロジック (ステータス・ダンジョン生成)
+// ==========================================
+function createDefaultStats() { return { ...DEFAULT_STATS }; }
+function createDefaultEquipment() { return { weapon: { ...DEFAULT_EQUIPMENT.weapon }, armor: { ...DEFAULT_EQUIPMENT.armor }, acc: { ...DEFAULT_EQUIPMENT.acc } }; }
+function createDefaultInventory() { return { ...DEFAULT_INVENTORY }; }
 
 function getEquipmentRank(name, list) { const idx = list.findIndex(i => i.name === name); return idx >= 0 ? idx + 1 : 1; }
 function getMaxHp(user) { return 28 + user.stats.LV * 8 + user.stats.VIT * 3; }
@@ -791,44 +828,18 @@ function getFarthestCell(cells, size, start) {
     return farthest;
 }
 
-function createNewRun(user) {
+function createNewRun(user, bonus = {}) {
     const run = {
-        mode: APP_MODE, dungeonName: DUNGEON.name, seed: Date.now(), floor: 1, x: 0, y: 0, facing: 'E',
-        depthRecord: 1, steps: 0, roomsCleared: 0, treasureCount: 0, defeatedCount: 0, gold: 40,
+        mode: APP_MODE, seed: Date.now(), floor: 1, x: 0, y: 0, facing: 'E',
+        depthRecord: 1, steps: 0, roomsCleared: 0, treasureCount: 0, defeatedCount: 0, gold: 40 + (bonus.gold || 0),
         cleared: false, safeSteps: 2, vitals: { hp: getMaxHp(user), mp: getMaxMp(user) },
         inventory: createDefaultInventory(), battle: null, maps: {}, journal: []
     };
+    Object.keys(run.inventory).forEach((key) => {
+        run.inventory[key] += bonus[key] || 0;
+    });
     run.maps['1'] = generateFloorMap(run.seed, 1);
     revealCurrentRoom(run);
-    return run;
-}
-
-function normalizeInventory(raw = {}) {
-    const inv = createDefaultInventory();
-    Object.keys(inv).forEach(k => inv[k] = normalizeStatValue(raw[k], inv[k], 0));
-    return inv;
-}
-
-function normalizeRun(rawRun, user) {
-    if (!rawRun || typeof rawRun !== 'object') return createNewRun(user);
-    const seed = Number.isFinite(rawRun.seed) ? rawRun.seed : Date.now();
-    const maxHp = getMaxHp(user); const maxMp = getMaxMp(user);
-    const run = {
-        mode: APP_MODE, dungeonName: DUNGEON.name, seed,
-        floor: clamp(normalizeStatValue(rawRun.floor, 1, 1), 1, MAX_FLOOR),
-        x: clamp(normalizeStatValue(rawRun.x, 0, 0), 0, 6), y: clamp(normalizeStatValue(rawRun.y, 0, 0), 0, 6),
-        facing: FACING_ORDER.includes(rawRun.facing) ? rawRun.facing : 'E',
-        depthRecord: clamp(normalizeStatValue(rawRun.depthRecord, 1, 1), 1, MAX_FLOOR),
-        steps: normalizeStatValue(rawRun.steps, 0, 0), roomsCleared: normalizeStatValue(rawRun.roomsCleared, 0, 0),
-        treasureCount: normalizeStatValue(rawRun.treasureCount, 0, 0), defeatedCount: normalizeStatValue(rawRun.defeatedCount, 0, 0),
-        gold: normalizeStatValue(rawRun.gold, 40, 0), cleared: !!rawRun.cleared, safeSteps: normalizeStatValue(rawRun.safeSteps, 0, 0),
-        vitals: { hp: clamp(normalizeStatValue(rawRun.vitals?.hp, maxHp, 0), 0, maxHp), mp: clamp(normalizeStatValue(rawRun.vitals?.mp, maxMp, 0), 0, maxMp) },
-        inventory: normalizeInventory(rawRun.inventory), battle: rawRun.battle ? rawRun.battle : null,
-        maps: rawRun.maps || {}, journal: Array.isArray(rawRun.journal) ? rawRun.journal.filter(x => typeof x === 'string').slice(0, 60) : []
-    };
-    if (!run.maps[String(run.floor)]) run.maps[String(run.floor)] = generateFloorMap(seed, run.floor);
-    revealCurrentRoom(run);
-    if (run.vitals.hp <= 0) run.vitals.hp = Math.max(1, Math.floor(maxHp * 0.4));
     return run;
 }
 
@@ -847,17 +858,20 @@ function getCurrentMap() {
     return state.run.maps[key];
 }
 function getCurrentCell(run = state.run) { return run.maps[String(run.floor)].cells[getCellKey(run.x, run.y)]; }
+function getCellSafe(map, x, y) {
+    if (x < 0 || y < 0 || x >= map.size || y >= map.size) return null;
+    return map.cells[getCellKey(x, y)];
+}
 
 // ==========================================
-// ストレージ
+// ストレージ ＆ キャラクター管理
 // ==========================================
 const StorageManager = {
     save: (silent = true) => {
         if (!state.user || !state.run) return false;
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                version: APP_VERSION, mode: APP_MODE, user: normalizeUser(state.user),
-                run: normalizeRun(state.run, state.user), settings: state.settings, lastUpdate: Date.now()
+                version: APP_VERSION, mode: APP_MODE, user: state.user, run: state.run, settings: state.settings, lastUpdate: Date.now()
             }));
             if (!silent) addLog('▶ 冒険の書に記録した。', 'text-blue');
             return true;
@@ -865,35 +879,100 @@ const StorageManager = {
     },
     load: () => {
         try {
-            const dataStr = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+            let dataStr = localStorage.getItem(STORAGE_KEY);
+            let migratingFromLegacy = false;
+            let migratingFromTasks = false;
+
+            if (!dataStr) {
+                dataStr = localStorage.getItem(LEGACY_STORAGE_KEY);
+                if (dataStr) migratingFromLegacy = true;
+            }
+            if (!dataStr) {
+                dataStr = localStorage.getItem(TASKS_STORAGE_KEY);
+                if (dataStr) migratingFromTasks = true;
+            }
+
             if (!dataStr) return false;
+
             const data = JSON.parse(dataStr);
             if (!data?.user) return false;
+            
             state.user = normalizeUser(data.user);
             state.settings = normalizeSettings(data.settings);
-            state.run = normalizeRun(data.run || createNewRun(state.user), state.user);
+            
+            if (data.mode && data.mode.includes('dungeon_rpg') || data.run) {
+                state.run = normalizeRun(data.run, state.user);
+                state.migrationNotice = '';
+                if (migratingFromLegacy) {
+                     state.migrationNotice = '旧バージョンのセーブデータを最新形式に移行しました。';
+                }
+            } else {
+                const bonus = createLegacyBonus(data.calendarData);
+                state.run = createNewRun(state.user, bonus);
+                state.migrationNotice = 'タスク管理版の冒険記録を検知し、探索RPGへ魂を引き継ぎました。\n実績に応じて支給品が増加しています。\n（※以降のセーブはタスク管理版とは独立して保存されます）';
+                migratingFromTasks = true;
+            }
+
+            if (migratingFromLegacy || migratingFromTasks) {
+                StorageManager.save(true);
+            }
+
             return true;
-        } catch (e) { return false; }
+        } catch (e) {
+            console.error(e);
+            return false;
+        }
     },
     exportFile: () => {
-        if (!state.user) return; StorageManager.save();
-        const blob = new Blob([localStorage.getItem(STORAGE_KEY)], { type: 'application/json' });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-        a.download = `yzardry_dungeon_save_${formatDate(new Date()).replace(/-/g, '')}.json`;
-        a.click(); URL.revokeObjectURL(a.href);
+        if (!state.user || !state.run) return;
+        StorageManager.save(true);
+        const dataStr = localStorage.getItem(STORAGE_KEY);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `yzardry_dungeon_3d_save_${formatDate(new Date()).replace(/-/g, '')}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     },
     importFile: (file) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const data = JSON.parse(e.target.result);
-                if (!data?.user) throw new Error();
-                localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                    version: APP_VERSION, mode: APP_MODE, user: normalizeUser(data.user),
-                    run: normalizeRun(data.run, data.user), settings: normalizeSettings(data.settings), lastUpdate: Date.now()
-                }));
-                alert('冒険の書を読み込みました。'); location.reload();
-            } catch (err) { alert('読み込みに失敗しました。'); }
+                if (!data?.user) throw new Error('save data not found');
+                
+                const user = normalizeUser(data.user);
+                const settings = normalizeSettings(data.settings);
+                let run = null;
+                let notice = '';
+                
+                if (data.mode && data.mode.includes('dungeon_rpg') || data.run) {
+                    run = normalizeRun(data.run, user);
+                } else {
+                    run = createNewRun(user, createLegacyBonus(data.calendarData));
+                    notice = 'タスク版の記録を読み込み、3D探索RPG形式に変換しました。';
+                }
+                
+                const normalized = {
+                    version: APP_VERSION,
+                    mode: APP_MODE,
+                    user,
+                    run,
+                    settings,
+                    lastUpdate: Date.now()
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+                alert(notice || '読み込みました！');
+                location.reload();
+            } catch (err) {
+                console.error(err);
+                alert('ファイルの読み込みに失敗しました。');
+            } finally {
+                $('file-import').value = '';
+            }
         };
         reader.readAsText(file);
     },
@@ -903,74 +982,177 @@ const StorageManager = {
 const CharacterManager = {
     exportFile: () => {
         if (!state.user) return;
-        const blob = new Blob([JSON.stringify({ type: CHARACTER_EXPORT_TYPE, character: buildCharacterSnapshot(state.user) }, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-        a.download = `yzardry_character_${state.user.name}.json`; a.click(); URL.revokeObjectURL(a.href);
+        const exportData = {
+            type: CHARACTER_EXPORT_TYPE,
+            version: CHARACTER_EXPORT_VERSION,
+            appVersion: APP_VERSION,
+            exportedAt: new Date().toISOString(),
+            character: {
+                name: state.user.name,
+                gender: state.user.gender,
+                stats: state.user.stats,
+                equipment: state.user.equipment
+            }
+        };
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `yzardry_character_${sanitizeFileName(state.user.name)}_${formatDate(new Date()).replace(/-/g, '')}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        addLog(`▶ 冒険者「${state.user.name}」の器を写し取った。`, 'text-blue');
     },
     importFile: (file) => {
-        if (!state.user) return;
+        if (!state.user || !state.run) return;
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
-                const nextUser = normalizeUser(resolveCharacterImportData(JSON.parse(e.target.result)));
-                if (!confirm(`現在の冒険者を「${nextUser.name}」で上書きしますか？（進行度は維持されます）`)) return;
-                state.user = nextUser; state.run = normalizeRun(state.run, state.user);
-                state.run.vitals.hp = getMaxHp(state.user); state.run.vitals.mp = getMaxMp(state.user);
-                StorageManager.save(); renderAll();
-                showModal('キャラクター読込', `${state.user.name} の魂を継承した。`);
-            } catch (err) { showModal('エラー', '読み込みに失敗しました。'); }
+                const rawData = JSON.parse(e.target.result);
+                let base = null;
+                if (rawData.type === CHARACTER_EXPORT_TYPE && rawData.character) base = rawData.character;
+                else if (rawData.character && typeof rawData.character === 'object') base = rawData.character;
+                else if (rawData.user && typeof rawData.user === 'object') base = rawData.user;
+                else if (rawData.stats && rawData.equipment) base = rawData;
+                if (!base) throw new Error('キャラクターデータを見つけられませんでした。');
+
+                const currentName = state.user.name;
+                if (!confirm(`現在の冒険者「${currentName}」の見た目・能力値・装備を、読み込んだキャラクターで上書きしますか？`)) return;
+                
+                state.user.name = base.name || state.user.name;
+                state.user.gender = base.gender || base.appearance?.gender || state.user.gender;
+                
+                // statsのマージ
+                if (base.stats) {
+                    ['LV', 'EXP', 'STR', 'INT', 'DEX', 'AGI', 'VIT', 'LUK'].forEach(k => {
+                        if(base.stats[k] !== undefined) state.user.stats[k] = Number(base.stats[k]) || state.user.stats[k];
+                    });
+                }
+                
+                // equipmentのマージ
+                if (base.equipment) {
+                    ['weapon', 'armor', 'acc'].forEach(k => {
+                        if(base.equipment[k]) {
+                            state.user.equipment[k].name = base.equipment[k].name || state.user.equipment[k].name;
+                            state.user.equipment[k].color = base.equipment[k].color || state.user.equipment[k].color;
+                        }
+                    });
+                }
+
+                state.run.vitals.hp = getMaxHp(state.user);
+                state.run.vitals.mp = getMaxMp(state.user);
+                StorageManager.save(true);
+                renderAll();
+                renderSystem();
+                addLog(`▶ 冒険者の器を継承した。 ${currentName} → ${state.user.name}`, 'text-green');
+                showModal('キャラクター読込', `新たな魂を継承した。\n\n名前: ${state.user.name}\nLV: ${state.user.stats.LV}\n武器: ${state.user.equipment.weapon.name}\n防具: ${state.user.equipment.armor.name}\n装飾: ${state.user.equipment.acc.name}`);
+            } catch (err) {
+                console.error(err);
+                showModal('キャラクター読込エラー', err?.message || 'キャラクターデータの読み込みに失敗しました。');
+            } finally {
+                $('file-import-character').value = '';
+            }
         };
         reader.readAsText(file);
     }
 };
 
+function updateCharacterName() {
+    if (!state.user) return;
+    const newName = normalizeName($('sys-character-name').value);
+    const oldName = state.user.name;
+    if (!newName) {
+        showModal('名前変更', 'キャラクター名を入力してください。');
+        return;
+    }
+    if (newName === oldName) {
+        showModal('名前変更', '新しい名前は現在と同じです。');
+        return;
+    }
+    state.user.name = newName;
+    StorageManager.save(true);
+    renderAll();
+    renderSystem();
+    addLog(`▶ 冒険者の名が「${oldName}」から「${newName}」へ改められた。`, 'text-yellow');
+    showModal('名前変更', `新たな銘が刻まれた。\n\n${oldName} → ${newName}`);
+}
+
+// 冒険の再開処理（正規化と安全な読み込みを実施）
+function continueAdventure() {
+    if (!state.user || !state.run) return;
+    state.run = normalizeRun(state.run, state.user);
+    describeCurrentRoom();
+    applySettings();
+    switchScene('scene-main');
+    renderAll();
+    if (state.migrationNotice) {
+        showModal('データ移行のお知らせ', state.migrationNotice);
+        state.migrationNotice = '';
+    }
+}
+
+
 // ==========================================
-// UIレンダリング
+// UIレンダリング & 3D描画
 // ==========================================
 function initApp() {
-    if (StorageManager.load()) { $('btn-continue').classList.remove('hidden'); applySettings(); }
+    if (StorageManager.load()) { 
+        $('btn-continue').classList.remove('hidden'); 
+        applySettings(); 
+    }
     
-    // Title
     $('btn-new-game').addEventListener('click', () => switchScene('scene-creation'));
-    $('btn-continue').addEventListener('click', () => { describeCurrentRoom(); switchScene('scene-main'); renderAll(); });
-    $('btn-open-import').addEventListener('click', () => $('file-import').click());
-    $('file-import').addEventListener('change', e => { if (e.target.files[0]) StorageManager.importFile(e.target.files[0]); });
+    $('btn-continue').addEventListener('click', continueAdventure); // 修正部分
 
-    // Creation
+    // ファイル入出力系のイベントリスナー
+    $('btn-open-import').addEventListener('click', () => $('file-import').click());
+    $('btn-import-save').addEventListener('click', () => $('file-import').click());
+    $('file-import').addEventListener('change', (e) => { if (e.target.files[0]) StorageManager.importFile(e.target.files[0]); });
+
+    $('btn-export-file').addEventListener('click', StorageManager.exportFile);
+    $('btn-export-character').addEventListener('click', CharacterManager.exportFile);
+    $('btn-import-character').addEventListener('click', () => $('file-import-character').click());
+    $('file-import-character').addEventListener('change', (e) => { if (e.target.files[0]) CharacterManager.importFile(e.target.files[0]); });
+
+    $('btn-update-name').addEventListener('click', updateCharacterName);
+    $('sys-character-name').addEventListener('keypress', (e) => { if (e.key === 'Enter') updateCharacterName(); });
+
+
     $('btn-start-adventure').addEventListener('click', () => {
         if (localStorage.getItem(STORAGE_KEY) && !confirm('現在のデータを上書きしますか？')) return;
-        state.user = normalizeUser({ name: $('input-name').value || 'Hero', gender: $('input-gender').value, stats: createDefaultStats(), equipment: createDefaultEquipment() });
+        state.user = { name: normalizeName($('input-name').value), gender: $('input-gender').value, stats: createDefaultStats(), equipment: createDefaultEquipment() };
         state.run = createNewRun(state.user);
-        StorageManager.save(); describeCurrentRoom(); switchScene('scene-main'); renderAll();
-        addLog(`▶ 冒険者 ${state.user.name} は迷宮へ足を踏み入れた。`, 'text-yellow');
+        StorageManager.save(); 
+        describeCurrentRoom(); 
+        switchScene('scene-main'); 
+        renderAll();
+        addLog(`▶ ${state.user.name} は静寂の平原へ出発した。`, 'text-yellow');
     });
     $('btn-cancel-creation').addEventListener('click', () => switchScene('scene-title'));
 
-    // Main & Menu
+    $('btn-toggle-map').addEventListener('click', () => { state.isMapOpen = !state.isMapOpen; updateMapOverlay(); });
+    $('map-overlay').addEventListener('click', (e) => { 
+        if (e.target.closest('#map-grid')) return;
+        state.isMapOpen = false; 
+        updateMapOverlay(); 
+    });
+    
     $('btn-open-menu').addEventListener('click', () => { renderMenu(); $('sub-menu-overlay').classList.remove('opacity-0', 'pointer-events-none'); });
     $('btn-close-menu').addEventListener('click', () => $('sub-menu-overlay').classList.add('opacity-0', 'pointer-events-none'));
+    
     $('cmd-camp-menu').addEventListener('click', () => { $('sub-menu-overlay').classList.add('opacity-0', 'pointer-events-none'); handleCampCommand(); });
     $('cmd-status-menu').addEventListener('click', () => { $('sub-menu-overlay').classList.add('opacity-0', 'pointer-events-none'); renderStatus(); switchScene('scene-status'); });
     $('cmd-journal-menu').addEventListener('click', () => { $('sub-menu-overlay').classList.add('opacity-0', 'pointer-events-none'); showJournal(); });
     $('cmd-system-menu').addEventListener('click', () => { $('sub-menu-overlay').classList.add('opacity-0', 'pointer-events-none'); renderSystem(); switchScene('scene-system'); });
 
-    // Sub Scenes
     $('btn-close-status').addEventListener('click', () => switchScene('scene-main'));
     $('btn-close-system').addEventListener('click', () => switchScene('scene-main'));
     $('btn-modal-close').addEventListener('click', () => $('modal-overlay').classList.add('hidden', 'flex'));
 
-    // System Actions
     $('btn-manual-save').addEventListener('click', () => StorageManager.save(false));
-    $('btn-export-file').addEventListener('click', StorageManager.exportFile);
-    $('btn-import-save').addEventListener('click', () => $('file-import').click());
-    $('btn-export-character').addEventListener('click', CharacterManager.exportFile);
-    $('btn-import-character').addEventListener('click', () => $('file-import-character').click());
-    $('file-import-character').addEventListener('change', e => { if (e.target.files[0]) CharacterManager.importFile(e.target.files[0]); });
     $('btn-toggle-crt').addEventListener('click', () => { state.settings.crtEffect = !state.settings.crtEffect; applySettings(); StorageManager.save(); renderSystem(); });
-    $('btn-update-name').addEventListener('click', () => {
-        const n = normalizeName($('sys-character-name').value);
-        if (n && n !== state.user.name) { state.user.name = n; StorageManager.save(); renderAll(); showModal('変更完了', `名前を ${n} に変更しました。`); }
-    });
     $('btn-reset-data').addEventListener('click', StorageManager.reset);
 
     switchScene('scene-title');
@@ -981,15 +1163,13 @@ function switchScene(sceneId) {
     $(sceneId).classList.add('active');
 }
 
-function applySettings() {
-    $('crt-effect').className = state.settings.crtEffect ? 'crt-overlay' : 'crt-overlay disabled';
-}
+function applySettings() { $('crt-effect').className = state.settings.crtEffect ? 'crt-overlay' : 'crt-overlay disabled'; }
 
-function showModal(title, text) {
-    $('modal-title').innerText = title;
-    $('modal-body').innerText = text;
-    $('modal-overlay').classList.remove('hidden');
-    $('modal-overlay').classList.add('flex');
+function showModal(title, text) { 
+    $('modal-title').innerText = title; 
+    $('modal-body').innerHTML = escapeHtml(text).replace(/\n/g, '<br>'); 
+    $('modal-overlay').classList.remove('hidden'); 
+    $('modal-overlay').classList.add('flex'); 
 }
 
 function addJournal(text) { if (state.run) { state.run.journal.unshift(text); if (state.run.journal.length > 60) state.run.journal.length = 60; } }
@@ -999,15 +1179,14 @@ function addLog(text, col = '') {
     addJournal(text);
 }
 
-function describeCurrentRoom(showLog = false) {
+function describeCurrentRoom() {
     const cell = getCurrentCell();
     const texts = {
-        start: '入口の石碑。背後にもう地上の気配はない。', normal: '風が止み、草の擦れる音だけが耳に残る。', treasure: '金属の冷たい気配が混じっている。宝箱だ。',
-        fountain: '霧をたたえた泉が、かすかな光を放っている。', stairs: 'さらに深い層へ落ちる石階段が口を開けている。',
-        boss: '空気が重く沈み、王の気配が音を奪っている。', omen: 'わずかな揺らぎが肌を刺す。何かが潜んでいる。'
+        start: '出発地点の石碑。背後には拠点への道が続く。', normal: '草花が風に揺れ、静かな空間が広がっている。', treasure: '切り株の上に古びた箱が置かれている。',
+        fountain: '草地に湧き出る澄んだ泉が、微かに光っている。', stairs: '草むらの奥に、先へ進む獣道（抜け道）が続いている。',
+        boss: '空気が重く沈み、巨大な茨のアーチが音を奪っている。', omen: 'わずかな揺らぎが肌を刺す。何かが潜んでいる。'
     };
     state.currentCellNote = texts[cell.kind] || texts.normal;
-    if (showLog) addLog(`▶ ${state.currentCellNote}`);
 }
 
 function getPassageSummary(cell) {
@@ -1026,9 +1205,20 @@ function renderHeader() {
     $('head-mp').innerText = `${state.run.vitals.mp}/${getMaxMp(state.user)}`;
 }
 
+function updateMapOverlay() {
+    const overlay = $('map-overlay'); const btn = $('btn-toggle-map');
+    if (state.isMapOpen) {
+        overlay.classList.remove('hidden'); overlay.classList.add('flex');
+        btn.classList.add('text-yellow', 'border-yellow');
+        renderMapGrid();
+    } else {
+        overlay.classList.add('hidden'); overlay.classList.remove('flex');
+        btn.classList.remove('text-yellow', 'border-yellow');
+    }
+}
+
 function renderMainView() {
     if (state.run.battle) {
-        $('view-explore').classList.add('opacity-0', 'pointer-events-none');
         $('view-battle').classList.remove('opacity-0', 'pointer-events-none');
         const e = state.run.battle.enemy;
         $('enemy-visual').innerText = ENEMY_AAS[e.aa % ENEMY_AAS.length];
@@ -1039,14 +1229,308 @@ function renderMainView() {
         $('enemy-hp-bar').style.backgroundColor = p > 50 ? 'var(--col-green)' : (p > 20 ? 'var(--col-yellow)' : 'var(--col-red)');
     } else {
         $('view-battle').classList.add('opacity-0', 'pointer-events-none');
-        $('view-explore').classList.remove('opacity-0', 'pointer-events-none');
         $('loc-floor').innerText = state.run.floor; $('loc-facing').innerText = FACING_JA[state.run.facing];
-        $('loc-passage').innerText = `通路: ${getPassageSummary(getCurrentCell())}`;
+        $('loc-passage').innerText = `道: ${getPassageSummary(getCurrentCell())}`;
         $('loc-desc').innerText = state.currentCellNote;
-        renderMapGrid();
+    }
+    draw3DView();
+    if (state.isMapOpen) renderMapGrid();
+}
+
+// ==========================================
+// 3D 疑似描写 (草花・平原テーマ)
+// ==========================================
+function draw3DView() {
+    const canvas = $('dungeon-3d-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width; const h = canvas.height;
+    const run = state.run;
+    const map = getCurrentMap(); if (!map) return;
+
+    const horizonY = h * 0.45;
+    
+    // 空 (夜空)
+    ctx.fillStyle = '#020308';
+    ctx.fillRect(0, 0, w, horizonY);
+    
+    const skySeed = run.facing.charCodeAt(0) + run.x * 13 + run.y * 17;
+    const rngSky = mulberry32(skySeed);
+    ctx.fillStyle = '#e2e8f0';
+    for (let i = 0; i < 40; i++) {
+        const sx = rngSky() * w; const sy = rngSky() * horizonY;
+        ctx.globalAlpha = 0.2 + rngSky() * 0.8;
+        ctx.beginPath(); ctx.arc(sx, sy, rngSky() * 1.5, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha = 1.0;
+
+    // 遠景の森・山
+    ctx.fillStyle = '#040b06';
+    ctx.beginPath(); ctx.moveTo(0, horizonY);
+    for(let i=0; i<=5; i++) { ctx.lineTo(w * (i/5), horizonY - rngSky() * 30 - 10); }
+    ctx.lineTo(w, horizonY); ctx.fill();
+
+    // 地面
+    ctx.fillStyle = '#051006';
+    ctx.fillRect(0, horizonY, w, h - horizonY);
+
+    const rects = [
+        {x: -120, y: -60, w: 560, h: 440},
+        {x: 20, y: 30, w: 280, h: 240},
+        {x: 80, y: 70, w: 160, h: 140},
+        {x: 115, y: 95, w: 90, h: 80},
+        {x: 135, y: 110, w: 50, h: 45},
+        {x: 148, y: 120, w: 24, h: 22}
+    ];
+
+    const fVec = directionVector(run.facing);
+    const rDir = stepFacing(run.facing, 1);
+    const lDir = stepFacing(run.facing, -1);
+    const rVec = directionVector(rDir);
+    const lVec = directionVector(lDir);
+
+    const maxD = 4;
+    for (let d = maxD; d >= 0; d--) {
+        const cx = run.x + fVec.x * d;
+        const cy = run.y + fVec.y * d;
+
+        const cell = getCellSafe(map, cx, cy);
+        const rBack = rects[d];
+        const rFront = rects[d+1];
+        
+        const seed = cx * 123 + cy * 456 + d * 789;
+
+        if (!cell) {
+            drawFrontObstacle(ctx, rFront, seed);
+            continue;
+        }
+
+        const leftCell = getCellSafe(map, cx + lVec.x, cy + lVec.y);
+        const rightCell = getCellSafe(map, cx + rVec.x, cy + rVec.y);
+
+        if (cell.open[lDir] && leftCell && !leftCell.open[run.facing]) {
+            drawFrontObstacle(ctx, {x: 0, y: rFront.y, w: rFront.x, h: rFront.h}, seed + 1);
+        }
+        if (cell.open[rDir] && rightCell && !rightCell.open[run.facing]) {
+            drawFrontObstacle(ctx, {x: rFront.x + rFront.w, y: rFront.y, w: w - (rFront.x + rFront.w), h: rFront.h}, seed + 2);
+        }
+
+        if (!cell.open[run.facing]) {
+            drawFrontObstacle(ctx, rFront, seed + 3);
+        }
+
+        if (!cell.open[lDir]) {
+            drawSideWoods(ctx, rBack, rFront, true, seed + 4);
+        } else {
+            drawSidePath(ctx, rBack, rFront, true);
+        }
+
+        if (!cell.open[rDir]) {
+            drawSideWoods(ctx, rBack, rFront, false, seed + 5);
+        } else {
+            drawSidePath(ctx, rBack, rFront, false);
+        }
+
+        if (cell.open[run.facing]) {
+            drawFrontPath(ctx, rBack, rFront);
+        }
+
+        if (cell.kind === 'stairs') draw3DObjStairs(ctx, rFront);
+        if (cell.kind === 'treasure' && !cell.searched) draw3DObjTreasure(ctx, rFront);
+        if (cell.kind === 'fountain' && !cell.eventResolved) draw3DObjFountain(ctx, rFront);
+        if (cell.kind === 'boss' && !cell.eventResolved) draw3DObjBossDoor(ctx, rFront);
     }
 }
 
+// -----------------------------
+// 3D 描画補助関数群
+// -----------------------------
+function drawFrontObstacle(ctx, r, seed) {
+    const rng = mulberry32(seed);
+    // ベースとなる深い茂み（壁）
+    ctx.fillStyle = '#051206';
+    ctx.fillRect(r.x, r.y, r.w, r.h);
+
+    // 草花のディテールを描画
+    drawBushDetails(ctx, r.x, r.y, r.w, r.h, rng);
+
+    const randVal = rng();
+    if (randVal > 0.85) {
+        // まれに岩
+        drawRockSymbol(ctx, r.x + r.w * 0.1, r.y + r.h * 0.3, r.w * 0.8, r.h * 0.7);
+    } else if (randVal > 0.70) {
+        // まれに木（頻度を低下）
+        drawTreeSymbol(ctx, r.x + r.w * 0.2, r.y, r.w * 0.6, r.h, rng());
+    }
+}
+
+function drawSideWoods(ctx, rBack, rFront, isLeft, seed) {
+    const poly = new Path2D();
+    if (isLeft) {
+        poly.moveTo(rBack.x, rBack.y); poly.lineTo(rFront.x, rFront.y);
+        poly.lineTo(rFront.x, rFront.y + rFront.h); poly.lineTo(rBack.x, rBack.y + rBack.h);
+    } else {
+        poly.moveTo(rBack.x + rBack.w, rBack.y); poly.lineTo(rFront.x + rFront.w, rFront.y);
+        poly.lineTo(rFront.x + rFront.w, rFront.y + rFront.h); poly.lineTo(rBack.x + rBack.w, rBack.y + rBack.h);
+    }
+    
+    ctx.fillStyle = '#051206'; ctx.fill(poly); 
+    
+    const rng = mulberry32(seed);
+    const minX = Math.min(rBack.x, rFront.x);
+    const maxX = Math.max(rBack.x + rBack.w, rFront.x + rFront.w);
+    const minY = Math.min(rBack.y, rFront.y);
+    
+    ctx.save();
+    ctx.clip(poly);
+    drawBushDetails(ctx, minX, minY, maxX - minX, rFront.h + (rBack.y - rFront.y), rng);
+    
+    // 側面にもごく稀に木
+    if (rng() > 0.8) {
+        const tx = isLeft ? rBack.x * 0.5 + rFront.x * 0.5 : (rBack.x + rBack.w) * 0.5 + (rFront.x + rFront.w) * 0.5 - rBack.w * 0.5;
+        const ty = rBack.y * 0.5 + rFront.y * 0.5;
+        drawTreeSymbol(ctx, tx, ty, rBack.w * 0.5, rBack.h, rng());
+    }
+    ctx.restore();
+    
+    ctx.strokeStyle = '#0a2e13'; ctx.stroke(poly);
+}
+
+function drawBushDetails(ctx, x, y, w, h, rng) {
+    ctx.strokeStyle = '#14532d';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 20; i++) {
+        const px = x + rng() * w;
+        const py = y + h * 0.3 + rng() * h * 0.7;
+        const lh = h * 0.1 + rng() * h * 0.2;
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + (rng() - 0.5) * w * 0.2, py - lh);
+        ctx.stroke();
+    }
+    const colors = ['#fde047', '#f472b6', '#a78bfa', '#ffffff'];
+    for (let i = 0; i < 10; i++) {
+        const px = x + w * 0.1 + rng() * w * 0.8;
+        const py = y + h * 0.4 + rng() * h * 0.5;
+        ctx.fillStyle = colors[Math.floor(rng() * colors.length)];
+        ctx.beginPath();
+        ctx.arc(px, py, 1.5 + rng() * 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+function drawSidePath(ctx, rBack, rFront, isLeft) {
+    ctx.fillStyle = '#14110b'; // 土の色
+    ctx.beginPath();
+    if (isLeft) {
+        ctx.moveTo(rFront.x, rFront.y + rFront.h); ctx.lineTo(rFront.x + rFront.w * 0.4, rFront.y + rFront.h);
+        ctx.lineTo(rBack.x + rBack.w * 0.4, rBack.y + rBack.h); ctx.lineTo(rBack.x, rBack.y + rBack.h);
+    } else {
+        ctx.moveTo(rFront.x + rFront.w * 0.6, rFront.y + rFront.h); ctx.lineTo(rFront.x + rFront.w, rFront.y + rFront.h);
+        ctx.lineTo(rBack.x + rBack.w, rBack.y + rBack.h); ctx.lineTo(rBack.x + rBack.w * 0.6, rBack.y + rBack.h);
+    }
+    ctx.fill();
+}
+
+function drawFrontPath(ctx, rBack, rFront) {
+    ctx.fillStyle = '#17130c';
+    ctx.beginPath();
+    ctx.moveTo(rBack.x + rBack.w * 0.4, rBack.y + rBack.h); ctx.lineTo(rFront.x + rFront.w * 0.4, rFront.y + rFront.h);
+    ctx.lineTo(rFront.x + rFront.w * 0.6, rFront.y + rFront.h); ctx.lineTo(rBack.x + rBack.w * 0.6, rBack.y + rBack.h);
+    ctx.fill();
+    ctx.strokeStyle = '#292524'; ctx.stroke();
+}
+
+function drawTreeSymbol(ctx, x, y, w, h, seed) {
+    ctx.fillStyle = '#271c19'; ctx.fillRect(x + w * 0.45, y + h * 0.8, w * 0.1, h * 0.2);
+    ctx.fillStyle = '#064e3b'; ctx.strokeStyle = '#34d399'; ctx.lineWidth = 1;
+    const drawLeaf = (yOffset, hScale, wScale) => {
+        ctx.beginPath();
+        ctx.moveTo(x + w / 2, y + yOffset);
+        ctx.lineTo(x + w / 2 + w * wScale / 2, y + yOffset + h * hScale);
+        ctx.lineTo(x + w / 2 - w * wScale / 2, y + yOffset + h * hScale);
+        ctx.closePath(); ctx.fill();
+    };
+    drawLeaf(h * 0.4, 0.45, 1.0); drawLeaf(h * 0.2, 0.4, 0.8); drawLeaf(0, 0.35, 0.6);
+}
+
+function drawRockSymbol(ctx, x, y, w, h) {
+    ctx.fillStyle = '#374151'; ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + w * 0.2, y + h); ctx.lineTo(x + w * 0.1, y + h * 0.6);
+    ctx.lineTo(x + w * 0.3, y + h * 0.2); ctx.lineTo(x + w * 0.6, y + h * 0.1);
+    ctx.lineTo(x + w * 0.9, y + h * 0.5); ctx.lineTo(x + w, y + h);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + w * 0.3, y + h * 0.2); ctx.lineTo(x + w * 0.4, y + h * 0.7); ctx.lineTo(x + w * 0.9, y + h * 0.5); ctx.stroke();
+}
+
+function draw3DObjStairs(ctx, r) {
+    // 抜け道 (アーチ状の獣道)
+    const w = r.w * 0.6; const h = r.h * 0.7;
+    const x = r.x + (r.w - w) / 2; const y = r.y + r.h - h;
+    
+    ctx.fillStyle = '#020603'; 
+    ctx.beginPath();
+    ctx.moveTo(x, y + h);
+    ctx.lineTo(x, y + h * 0.4);
+    ctx.bezierCurveTo(x, y, x + w, y, x + w, y + h * 0.4);
+    ctx.lineTo(x + w, y + h);
+    ctx.fill();
+
+    ctx.strokeStyle = '#4ade80';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 8; i++) {
+        ctx.beginPath();
+        ctx.moveTo(x - r.w*0.05 + i * (w + r.w*0.1) / 8, y + h);
+        ctx.lineTo(x + i * w / 8 + (Math.random() - 0.5) * 10, y + h * 0.8 - Math.random() * h * 0.2);
+        ctx.stroke();
+    }
+    ctx.lineWidth = 1;
+}
+
+function draw3DObjTreasure(ctx, r) {
+    const w = r.w * 0.35; const h = r.h * 0.25;
+    const x = r.x + (r.w - w) / 2; const y = r.y + r.h - h;
+    ctx.fillStyle = '#78350f'; ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = '#facc15'; ctx.strokeRect(x, y, w, h);
+    ctx.beginPath(); ctx.moveTo(x, y + h*0.2); ctx.lineTo(x + w, y + h*0.2); ctx.stroke();
+    ctx.fillStyle = '#fcd34d'; ctx.beginPath(); ctx.arc(x + w/2, y + h*0.4, w*0.05, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+}
+
+function draw3DObjFountain(ctx, r) {
+    const w = r.w * 0.6; const h = r.h * 0.3;
+    const x = r.x + (r.w - w) / 2; const y = r.y + r.h - h;
+    ctx.fillStyle = '#374151'; ctx.beginPath(); ctx.ellipse(x + w/2, y + h/2, w/2, h/2, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#0ea5e9'; ctx.beginPath(); ctx.ellipse(x + w/2, y + h*0.4, w*0.4, h*0.3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#7dd3fc'; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + w/2, y + h*0.4); ctx.lineTo(x + w/2, y - h*0.5); ctx.stroke();
+}
+
+function draw3DObjBossDoor(ctx, r) {
+    // 巨大な茨のアーチゲート
+    const w = r.w * 0.8; const h = r.h * 0.9;
+    const x = r.x + (r.w - w) / 2; const y = r.y + r.h - h;
+    
+    ctx.fillStyle = '#1e1b4b';
+    ctx.beginPath();
+    ctx.moveTo(x, y + h);
+    ctx.quadraticCurveTo(x + w/2, y - h*0.2, x + w, y + h);
+    ctx.fill();
+    
+    ctx.strokeStyle = '#dc2626';
+    ctx.lineWidth = 2;
+    for (let i=0; i<6; i++) {
+        ctx.beginPath();
+        ctx.moveTo(x + w * Math.random(), y + h);
+        ctx.quadraticCurveTo(x + w * Math.random(), y + h*0.5, x + w/2 + (Math.random()-0.5)*w*0.5, y + h*0.1);
+        ctx.stroke();
+    }
+    ctx.lineWidth = 1;
+}
+
+// ==========================================
+// オートマッピング (2D Grid)
+// ==========================================
 function renderMapGrid() {
     const map = getCurrentMap(); const grid = $('map-grid'); grid.innerHTML = '';
     for (let y = 0; y < map.size; y++) {
@@ -1062,17 +1546,17 @@ function renderMapGrid() {
             if (state.run.x === x && state.run.y === y) cls.push('current-room');
             div.className = cls.join(' ');
             
-            div.style.borderTop = cell.open.N ? '1px dashed rgba(255,255,255,0.2)' : '1px solid var(--col-border)';
-            div.style.borderRight = cell.open.E ? '1px dashed rgba(255,255,255,0.2)' : '1px solid var(--col-border)';
-            div.style.borderBottom = cell.open.S ? '1px dashed rgba(255,255,255,0.2)' : '1px solid var(--col-border)';
-            div.style.borderLeft = cell.open.W ? '1px dashed rgba(255,255,255,0.2)' : '1px solid var(--col-border)';
+            div.style.borderTop = cell.open.N ? '1px dashed rgba(255,255,255,0.2)' : '1px solid rgba(163,230,53,0.5)';
+            div.style.borderRight = cell.open.E ? '1px dashed rgba(255,255,255,0.2)' : '1px solid rgba(163,230,53,0.5)';
+            div.style.borderBottom = cell.open.S ? '1px dashed rgba(255,255,255,0.2)' : '1px solid rgba(163,230,53,0.5)';
+            div.style.borderLeft = cell.open.W ? '1px dashed rgba(255,255,255,0.2)' : '1px solid rgba(163,230,53,0.5)';
 
             if (!cell.seen) div.innerHTML = '?';
             else if (state.run.x === x && state.run.y === y) div.innerHTML = { N: '↑', E: '→', S: '↓', W: '←' }[state.run.facing];
             else if (cell.kind === 'start') div.innerHTML = 'S';
             else if (cell.kind === 'treasure' && !cell.searched) div.innerHTML = 'T';
             else if (cell.kind === 'fountain' && !cell.eventResolved) div.innerHTML = 'F';
-            else if (cell.kind === 'stairs' && !state.run.cleared) div.innerHTML = 'D';
+            else if (cell.kind === 'stairs' && !state.run.cleared) div.innerHTML = 'N'; // Next
             else if (cell.kind === 'boss' && !state.run.cleared) div.innerHTML = 'B';
             else div.innerHTML = '·';
             grid.appendChild(div);
@@ -1091,9 +1575,9 @@ function renderCommandArea() {
             { id: 'guard', label: '防御' },
             { id: 'focus', label: '心眼\nMP3', d: state.run.vitals.mp < 3 },
             { id: 'flee', label: '逃走', d: state.run.battle.enemy.kind === 'boss' },
-            { id: 'herb', label: `薬草x${inv.herbs}`, d: inv.herbs <= 0 || state.run.vitals.hp >= maxHp, c: 'text-green' },
-            { id: 'ether', label: `術酒x${inv.ethers}`, d: inv.ethers <= 0 || state.run.vitals.mp >= maxMp, c: 'text-blue' },
-            { id: 'bomb', label: `爆薬x${inv.bombs}`, d: inv.bombs <= 0, c: 'text-red' }
+            { id: 'herb', label: `薬草x${inv.herbs}`, d: inv.herbs <= 0 || state.run.vitals.hp >= maxHp, c: 'text-green border-gray-800' },
+            { id: 'ether', label: `術酒x${inv.ethers}`, d: inv.ethers <= 0 || state.run.vitals.mp >= maxMp, c: 'text-blue border-gray-800' },
+            { id: 'bomb', label: `爆薬x${inv.bombs}`, d: inv.bombs <= 0, c: 'text-red border-gray-800' }
         ]);
     } else {
         const cell = getCurrentCell();
@@ -1103,7 +1587,7 @@ function renderCommandArea() {
             { id: 'forward', label: '前進' },
             { id: 'turnRight', label: '右向' },
             { id: 'search', label: '調べる', c: 'border-yellow' },
-            { id: 'descend', label: cell.kind === 'boss' ? '王の間' : (state.run.floor === MAX_FLOOR ? '最深部' : '階段'), d: (cell.kind !== 'stairs' && cell.kind !== 'boss') || state.run.cleared },
+            { id: 'descend', label: cell.kind === 'boss' ? '王の間' : (state.run.floor === MAX_FLOOR ? '最深部' : '抜け道'), d: (cell.kind !== 'stairs' && cell.kind !== 'boss') || state.run.cleared },
             { id: 'rest', label: '休息' },
             { id: 'herb', label: `薬草x${inv.herbs}`, d: inv.herbs <= 0 || state.run.vitals.hp >= maxHp, c: 'text-green border-gray-800' },
             { id: 'ether', label: `術酒x${inv.ethers}`, d: inv.ethers <= 0 || state.run.vitals.mp >= maxMp, c: 'text-blue border-gray-800' },
@@ -1112,9 +1596,7 @@ function renderCommandArea() {
     }
 }
 
-function renderButtons(actions) {
-    $('dynamic-actions').innerHTML = actions.map(a => `<button onclick="handleAction('${a.id}')" class="${a.c||''}" ${a.d ? 'disabled' : ''}>${a.label}</button>`).join('');
-}
+function renderButtons(actions) { $('dynamic-actions').innerHTML = actions.map(a => `<button onclick="handleAction('${a.id}')" class="${a.c||''}" ${a.d ? 'disabled' : ''}>${a.label}</button>`).join(''); }
 
 function renderMenu() {
     const r = state.run;
@@ -1124,7 +1606,7 @@ function renderMenu() {
         <div class="text-blue">帰還翼: ${r.inventory.warpWings}</div><div class="text-yellow">秘薬: ${r.inventory.elixirs}</div>
     `;
     $('menu-records').innerHTML = `
-        <div>到達深度: <span class="text-red">B${r.depthRecord}F</span></div><div>総歩数: <span class="text-yellow">${r.steps}</span></div>
+        <div>到達エリア: <span class="text-red">${r.depthRecord}</span></div><div>総歩数: <span class="text-yellow">${r.steps}</span></div>
         <div>撃破数: <span class="text-green">${r.roomsCleared}</span></div><div>宝箱: <span class="text-blue">${r.treasureCount}</span></div>
     `;
 }
@@ -1142,7 +1624,7 @@ window.handleAction = (action) => {
 
 function rotate(d) { state.run.facing = stepFacing(state.run.facing, d); }
 function moveForward() {
-    if (!getCurrentCell().open[state.run.facing]) { addLog('▶ 壁だ。'); return; }
+    if (!getCurrentCell().open[state.run.facing]) { addLog('▶ 茂みが道を塞いでいる。'); return; }
     const v = directionVector(state.run.facing); state.run.x += v.x; state.run.y += v.y; state.run.steps++;
     revealCurrentRoom(); state.run.depthRecord = Math.max(state.run.depthRecord, state.run.floor);
     describeCurrentRoom(); handleRoomEntry();
@@ -1150,7 +1632,7 @@ function moveForward() {
 function handleRoomEntry() {
     const c = getCurrentCell(); if (state.run.safeSteps > 0) state.run.safeSteps--;
     if (c.kind === 'boss' && !c.eventResolved && !state.run.cleared) { startEncounter(createBossEnemy()); return; }
-    if (c.kind === 'stairs') addLog('▶ 階段を見つけた。', 'text-blue');
+    if (c.kind === 'stairs') addLog('▶ 抜け道を見つけた。', 'text-blue');
     else if (c.kind === 'treasure' && !c.searched) addLog('▶ 宝箱の気配。', 'text-yellow');
     else if (c.kind === 'omen' && !c.eventResolved) addLog('▶ 嫌な予感がする。', 'text-red');
     if (shouldEncounter(c)) startEncounter(createEnemyForFloor(state.run.floor));
@@ -1189,7 +1671,7 @@ function guardBattle() { state.run.battle.guard = true; state.run.battle.barrier
 function useBomb() { state.run.inventory.bombs--; const d = Math.floor(24 + state.run.floor*6 + Math.random()*16); damageEnemy(d, `▶ 爆薬！ ${d} ダメージ！`, 'text-red'); if(state.run.battle) enemyTurn(); }
 function useHerb() { state.run.inventory.herbs--; const h = Math.floor(getMaxHp(state.user)*0.32); restoreHp(h); addLog(`▶ 薬草で ${h} 回復。`, 'text-green'); if(state.run.battle) enemyTurn(); }
 function useEther() { state.run.inventory.ethers--; const m = Math.floor(getMaxMp(state.user)*0.45); restoreMp(m); addLog(`▶ 術酒で ${m} MP回復。`, 'text-blue'); if(state.run.battle) enemyTurn(); }
-function useWarpWing() { state.run.inventory.warpWings--; state.run.floor = 1; state.run.x = 0; state.run.y = 0; state.run.facing = 'E'; state.run.safeSteps = 3; revealCurrentRoom(); describeCurrentRoom(); addLog('▶ 入口へ転移した。', 'text-blue'); }
+function useWarpWing() { state.run.inventory.warpWings--; state.run.floor = 1; state.run.x = 0; state.run.y = 0; state.run.facing = 'E'; state.run.safeSteps = 3; revealCurrentRoom(); describeCurrentRoom(); addLog('▶ 出発地点へ転移した。', 'text-blue'); }
 function shortRest() { const h = Math.floor(getMaxHp(state.user)*0.14); const m = Math.floor(getMaxMp(state.user)*0.12); restoreHp(h); restoreMp(m); addLog('▶ 息を整えた。'); if(Math.random()<0.28){ addLog('▶ 隙を狙われた！', 'text-red'); startEncounter(createEnemyForFloor(state.run.floor)); } }
 function handleCampCommand() { if(state.run.battle){ showModal('Camp', '戦闘中は不可。'); return; } if(state.run.inventory.campKits>0){ state.run.inventory.campKits--; restoreHp(getMaxHp(state.user)*0.7); restoreMp(getMaxMp(state.user)*0.7); state.run.safeSteps=2; addLog('▶ 野営を行った。', 'text-yellow'); StorageManager.save(); renderAll(); } else shortRest(); }
 function attemptFlee() { if(Math.random() < clamp(0.35 + (getBattleStats(state.user).speed - state.run.battle.enemy.spd)/100, 0.12, 0.88)){ addLog('▶ 退却成功。', 'text-blue'); state.run.battle = null; state.run.safeSteps = 1; } else { addLog('▶ 退却失敗！', 'text-red'); enemyTurn(); } }
@@ -1206,7 +1688,7 @@ function damageEnemy(amount, text, color = '') {
         }
         if(Math.random() < clamp(0.14+state.run.floor*0.02+e.star*0.04, 0.15, 0.75)) dropEquipment(e.star, state.run.floor);
         if(Math.random() < 0.52) { const i = pick(['herbs','ethers','bombs','campKits']); state.run.inventory[i]++; addLog(`🎁 アイテムを入手。`, 'text-yellow'); }
-        if(e.kind === 'boss') { getCurrentCell().eventResolved = true; state.run.cleared = true; state.run.safeSteps = 3; state.run.inventory.elixirs++; showModal('踏破達成', '静寂の王を討伐した！\n\nダンジョンを制覇しました。'); }
+        if(e.kind === 'boss') { getCurrentCell().eventResolved = true; state.run.cleared = true; state.run.safeSteps = 3; state.run.inventory.elixirs++; showModal('踏破達成', '静寂の王を討伐した！\n\n平原を制覇しました。'); }
         state.run.battle = null;
     }
 }
@@ -1221,7 +1703,7 @@ function enemyTurn() {
     d = Math.max(1, d); if(state.run.battle.guard) d = Math.floor(d*0.55); if(state.run.battle.barrierTurns>0) d = Math.floor(d*0.82);
     state.run.vitals.hp = clamp(state.run.vitals.hp - d, 0, getMaxHp(state.user)); addLog(`▶ ${e.name} の攻撃！ ${d} ダメージ。`, d>=20?'text-red':'');
     state.run.battle.guard = false; if(state.run.battle.barrierTurns>0) state.run.battle.barrierTurns--;
-    if(state.run.vitals.hp <= 0) { state.run.defeatedCount++; const lG = Math.floor(state.run.gold*0.5); state.run.gold -= lG; state.run.battle = null; state.run.floor = 1; state.run.x = 0; state.run.y = 0; state.run.facing = 'E'; state.run.safeSteps = 3; state.run.vitals.hp = Math.floor(getMaxHp(state.user)*0.7); state.run.vitals.mp = Math.floor(getMaxMp(state.user)*0.5); revealCurrentRoom(); describeCurrentRoom(); addLog(`▶ 力尽きた。${lG}Gを失い入口へ退却...`, 'text-red'); showModal('敗走', `深層の脅威に屈した。\n\n${lG}G を失い、入口へ退却しました。`); }
+    if(state.run.vitals.hp <= 0) { state.run.defeatedCount++; const lG = Math.floor(state.run.gold*0.5); state.run.gold -= lG; state.run.battle = null; state.run.floor = 1; state.run.x = 0; state.run.y = 0; state.run.facing = 'E'; state.run.safeSteps = 3; state.run.vitals.hp = Math.floor(getMaxHp(state.user)*0.7); state.run.vitals.mp = Math.floor(getMaxMp(state.user)*0.5); revealCurrentRoom(); describeCurrentRoom(); addLog(`▶ 力尽きた。${lG}Gを失い出発地点へ退却...`, 'text-red'); showModal('敗走', `奥地の脅威に屈した。\n\n${lG}G を失い、出発地点へ退却しました。`); }
 }
 function searchRoom() {
     const c = getCurrentCell();
@@ -1236,12 +1718,12 @@ function searchRoom() {
 function descendFloor() {
     if(state.run.floor >= MAX_FLOOR) return; state.run.floor++; state.run.x = 0; state.run.y = 0; state.run.facing = 'E'; state.run.depthRecord = Math.max(state.run.depthRecord, state.run.floor); state.run.safeSteps = 2;
     if(!state.run.maps[String(state.run.floor)]) state.run.maps[String(state.run.floor)] = generateFloorMap(state.run.seed, state.run.floor);
-    revealCurrentRoom(); restoreHp(Math.floor(getMaxHp(state.user)*0.15)); restoreMp(Math.floor(getMaxMp(state.user)*0.15)); describeCurrentRoom(); addLog(`▶ B${state.run.floor}F へ降りた。`, 'text-blue');
+    revealCurrentRoom(); restoreHp(Math.floor(getMaxHp(state.user)*0.15)); restoreMp(Math.floor(getMaxMp(state.user)*0.15)); describeCurrentRoom(); addLog(`▶ エリア ${state.run.floor} へ進んだ。`, 'text-blue');
 }
 function showJournal() {
     if (!state.run) return;
     const l = state.run.journal.slice(0, 15).map(x => `・${escapeHtml(x)}`).join('\n') || '記録なし';
-    showModal('冒険記録', `踏破: B${state.run.depthRecord}F\n撃破: ${state.run.roomsCleared}\n宝箱: ${state.run.treasureCount}\n\n${l}`);
+    showModal('冒険記録', `踏破: エリア ${state.run.depthRecord}\n撃破: ${state.run.roomsCleared}\n宝箱: ${state.run.treasureCount}\n\n${l}`);
 }
 
 // ==========================================
@@ -1268,8 +1750,8 @@ function renderStatus() {
     $('status-aa').innerHTML = `<span style="color:${eq.acc.color==='#ffffff'?'#bbb':eq.acc.color}">${h}</span><br><span style="color:#fff">${bL}</span><span style="color:${eq.armor.color}">${bC}</span><span style="color:${eq.weapon.color}">${bR}</span><br><span style="color:#fff">${l}</span>`;
     
     drawRadarChart('radar-canvas', s);
-    const bg = []; if(state.run.cleared) bg.push('<span class="text-[0.65rem] px-2 py-1 border border-yellow text-yellow rounded">迷宮制覇</span>');
-    if(state.run.depthRecord>=5) bg.push('<span class="text-[0.65rem] px-2 py-1 border border-blue text-blue rounded">中層到達</span>');
+    const bg = []; if(state.run.cleared) bg.push('<span class="text-[0.65rem] px-2 py-1 border border-yellow text-yellow rounded">平原制覇</span>');
+    if(state.run.depthRecord>=5) bg.push('<span class="text-[0.65rem] px-2 py-1 border border-blue text-blue rounded">奥地到達</span>');
     if(state.run.roomsCleared>=20) bg.push('<span class="text-[0.65rem] px-2 py-1 border border-green text-green rounded">討伐者</span>');
     $('status-badges').innerHTML = bg.join('');
 }
@@ -1288,12 +1770,14 @@ function drawRadarChart(id, s) {
 }
 
 function renderSystem() {
-    $('sys-character-name').value = state.user.name; $('btn-toggle-crt').innerText = state.settings.crtEffect?'ON':'OFF';
-    $('sys-character-summary').innerText = `現在: ${state.user.name} (Lv.${state.user.stats.LV})`;
+    $('btn-toggle-crt').innerText = state.settings.crtEffect ? 'ON' : 'OFF';
+    if(state.user && state.run) {
+        $('sys-character-name').value = state.user.name;
+        $('sys-character-summary').innerHTML = `現在の冒険者: <span class="text-yellow">${escapeHtml(state.user.name)}</span> / Lv.${state.user.stats.LV} / エリア ${state.run.floor} / ${state.run.gold}G`;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
 </script>
 </body>
 </html>
-
