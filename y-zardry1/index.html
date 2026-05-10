@@ -20,6 +20,7 @@
             --col-gray: #9ca3af;
             --col-darkgray: #374151;
             --col-highlight: rgba(250, 204, 21, 0.15);
+            --col-purple: #c084fc;
         }
 
         body {
@@ -110,6 +111,7 @@
         .text-red { color: var(--col-red); }
         .text-yellow { color: var(--col-yellow); }
         .text-blue { color: var(--col-blue); }
+        .text-purple { color: var(--col-purple); }
         .text-gray { color: var(--col-gray); }
         .text-white { color: #fff; }
         .text-xs { font-size: 0.75rem; }
@@ -129,6 +131,7 @@
         .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .gap-1 { gap: 0.25rem; }
+        .gap-1\.5 { gap: 0.375rem; }
         .gap-2 { gap: 0.5rem; }
         .gap-3 { gap: 0.75rem; }
         .w-full { width: 100%; }
@@ -177,6 +180,26 @@
 
         .command-area { background-color: var(--col-window-bg); padding: 6px; padding-bottom: env(safe-area-inset-bottom, 6px); }
         .command-area button { min-height: 38px; font-size: 0.7rem; padding: 2px; }
+        
+        /* サブメニュー（スキル・魔法）用のスクロールエリア */
+        .scrollable-actions {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.375rem;
+            max-height: 120px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .scrollable-actions::-webkit-scrollbar { width: 4px; }
+        .scrollable-actions::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-radius: 2px; }
+        .scrollable-actions::-webkit-scrollbar-thumb { background: rgba(163,230,53,0.5); border-radius: 2px; }
+        
+        /* 選択中のボタンの強調 */
+        .btn-selected {
+            background-color: rgba(250, 204, 21, 0.2) !important;
+            border-color: var(--col-yellow) !important;
+            box-shadow: inset 0 0 8px rgba(250, 204, 21, 0.4);
+        }
 
         @keyframes shake { 0%, 100% { transform: translate(0, 0); } 20% { transform: translate(-4px, 2px); color: var(--col-red); } 40% { transform: translate(4px, -2px); } 60% { transform: translate(-4px, -2px); } 80% { transform: translate(4px, 2px); } }
         .anim-shake { animation: shake 0.4s; }
@@ -209,14 +232,13 @@
         <div class="text-center mt-6 p-4">
             <p class="mb-2 text-yellow text-sm" style="letter-spacing: 0.05em;">静寂の平原へ踏み入り、奥地を目指せ。</p>
             <div class="flex-col gap-3 mt-8">
-                <!-- 冒険再開ボタン -->
                 <button id="btn-continue" class="w-full text-xl hidden py-4 text-green border-green font-bold shadow-[0_0_15px_rgba(74,222,128,0.3)]">＞ 冒険を再開する</button>
                 <button id="btn-new-game" class="w-full text-lg text-yellow border-yellow py-3 mt-2">＞ 新たな冒険</button>
                 <button id="btn-open-import" class="w-full text-sm text-blue border-blue py-2 mt-2">＞ 冒険の書を読込 (Import)</button>
             </div>
         </div>
         <div class="text-center mt-auto pb-4">
-            <p class="text-gray text-xs">v4.3 Floral Plains Edition</p>
+            <p class="text-gray text-xs">v5.0 Magic & Skills Update</p>
         </div>
     </div>
 
@@ -243,7 +265,6 @@
 
     <!-- Main Game Scene -->
     <div id="scene-main" class="scene h-full flex-col relative">
-        <!-- Header (Status) -->
         <div class="header-bar flex justify-between items-center z-10">
             <div class="flex flex-col">
                 <div class="text-yellow font-bold text-sm leading-none mb-1">
@@ -267,9 +288,7 @@
             </div>
         </div>
 
-        <!-- Visual Area -->
         <div class="flex-1 relative overflow-hidden flex flex-col bg-black">
-            <!-- Explore View -->
             <div id="view-explore" class="absolute inset-0 flex flex-col p-2 transition-opacity">
                 <div class="flex justify-between items-center mb-1 px-1 z-10">
                     <div class="text-xs text-yellow font-bold">エリア <span id="loc-floor">1</span></div>
@@ -293,7 +312,6 @@
                 </div>
             </div>
 
-            <!-- Battle View -->
             <div id="view-battle" class="absolute inset-0 flex flex-col items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity bg-black/85 backdrop-blur-[2px] z-30">
                 <div class="text-xs text-red font-bold mb-4" style="animation: pulse 2s infinite;">交戦中</div>
                 <div id="enemy-visual" class="text-xl text-yellow whitespace-pre text-center mb-4" style="filter: drop-shadow(0 0 5px rgba(250,204,21,0.5));">AA</div>
@@ -307,16 +325,13 @@
             </div>
         </div>
 
-        <!-- Log Area -->
         <div class="battle-log-area overflow-y-auto z-10 flex flex-col-reverse" id="battle-log"></div>
 
-        <!-- Command Area -->
         <div class="command-area z-10">
             <div id="action-hint" class="text-[0.65rem] text-gray text-center mb-1 truncate">ヒント</div>
             <div id="dynamic-actions" class="grid grid-cols-3 gap-1.5"></div>
         </div>
 
-        <!-- Sub Menu Overlay -->
         <div id="sub-menu-overlay" class="absolute inset-0 menu-overlay flex-col p-4 opacity-0 pointer-events-none transition-opacity">
             <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
                 <h3 class="text-yellow text-sm font-bold" style="letter-spacing: 0.1em;">MENU</h3>
@@ -380,6 +395,19 @@
             <div class="py-1 flex justify-between"><span>防:</span> <span id="eq-armor" class="font-bold">布の服</span></div>
             <div class="py-1 flex justify-between"><span>飾:</span> <span id="eq-acc" class="text-gray">---</span></div>
         </div>
+        
+        <div class="window mb-4 text-xs">
+            <span class="text-yellow text-[0.65rem] border-b border-gray-800 pb-1 mb-2 block">習得済みリスト</span>
+            <div class="mb-2">
+                <span class="text-yellow">【特技】</span>
+                <div id="st-skills" class="text-gray mt-1 leading-relaxed"></div>
+            </div>
+            <div>
+                <span class="text-blue">【魔法】</span>
+                <div id="st-spells" class="text-gray mt-1 leading-relaxed"></div>
+            </div>
+        </div>
+
         <div class="flex flex-wrap gap-1 justify-center mb-4" id="status-badges"></div>
         <button id="btn-close-status" class="w-full text-sm py-2 sticky bottom-2 shadow-lg border-gray bg-black">＞ 戻る</button>
     </div>
@@ -402,7 +430,7 @@
 
         <div class="mb-4">
             <h3 class="text-yellow text-xs mb-1">キャラクター管理</h3>
-            <p class="text-[0.65rem] text-gray mb-2 text-left">見た目・能力値・装備だけを別ファイルへ書き出し、別作品の冒険者も読み込めます。</p>
+            <p class="text-[0.65rem] text-gray mb-2 text-left">見た目・能力値・装備・特技を別ファイルへ書き出し、別作品の冒険者も読み込めます。</p>
             <div id="sys-character-summary" class="text-[0.65rem] text-gray mb-2 text-left">現在の冒険者: Hero</div>
             <div class="flex gap-2 mb-2">
                 <button id="btn-export-character" class="flex-1 text-blue border-blue py-2 text-xs">キャラ出力</button>
@@ -442,7 +470,6 @@
     </div>
 </div>
 
-<!-- ファイル入力用（非表示） -->
 <input type="file" id="file-import" accept=".json" style="display: none;">
 <input type="file" id="file-import-character" accept=".json" style="display: none;">
 
@@ -450,14 +477,13 @@
 // ==========================================
 // 定数・データ定義
 // ==========================================
-const STORAGE_KEY = 'yzardry_dungeon_save_data_v4';
-const LEGACY_STORAGE_KEY = 'yzardry_dungeon_save_data_v3';
-const TASKS_STORAGE_KEY = 'yzardry_save_data_v2'; // 古いタスク版データ読み込み用
+const STORAGE_KEY = 'yzardry_dungeon_save_data_v5';
+const LEGACY_STORAGE_KEY = 'yzardry_dungeon_save_data_v4';
 
 const CHARACTER_EXPORT_TYPE = 'yzardry_character_data';
-const CHARACTER_EXPORT_VERSION = 1;
+const CHARACTER_EXPORT_VERSION = 2;
 
-const APP_VERSION = 4.3;
+const APP_VERSION = 5.0;
 const APP_MODE = 'dungeon_rpg_3d';
 const MAX_FLOOR = 10;
 const FACING_ORDER = ['N', 'E', 'S', 'W'];
@@ -510,18 +536,85 @@ const MONSTER_TABLE = [
     { name: '泥鎧の亡霊', floors: [3, 5], star: 3, hp: 36, atk: 17, def: 11, spd: 10, exp: 23, gold: 19, aa: 6, desc: '鎧の隙間から冷気が漏れる。' },
     { name: '岩肌タートル', floors: [3, 5], star: 3, hp: 44, atk: 16, def: 16, spd: 6, exp: 24, gold: 18, aa: 7, desc: '甲羅を鳴らしながら迫る。' },
     { name: '静丘の見張り兵', floors: [4, 6], star: 3, hp: 48, atk: 19, def: 15, spd: 11, exp: 28, gold: 22, aa: 8, desc: '無言のまま槍先を向ける。' },
-    { name: '雷尾リザード', floors: [4, 6], star: 4, hp: 52, atk: 22, def: 15, spd: 14, exp: 31, gold: 24, aa: 9, desc: '尾の先から火花が散る。' }
+    { name: '雷尾リザード', floors: [4, 6], star: 4, hp: 52, atk: 22, def: 15, spd: 14, exp: 31, gold: 24, aa: 9, desc: '尾の先から火花が散る。' },
+    { name: '影の暗殺者', floors: [5, 8], star: 4, hp: 55, atk: 26, def: 18, spd: 18, exp: 35, gold: 28, aa: 2, desc: '闇に溶け込み急所を狙う。' },
+    { name: '彷徨う甲冑', floors: [6, 9], star: 5, hp: 70, atk: 30, def: 28, spd: 12, exp: 42, gold: 35, aa: 6, desc: '主を失った鋼鉄の塊。' },
+    { name: '古の魔術師', floors: [7, 10], star: 5, hp: 60, atk: 35, def: 15, spd: 16, exp: 45, gold: 40, aa: 3, desc: '禁忌の呪文を唱え始める。' },
+    { name: '深淵の魔獣', floors: [8, 10], star: 6, hp: 95, atk: 40, def: 25, spd: 20, exp: 65, gold: 55, aa: 4, desc: '底知れぬ魔力を放つ。' }
 ];
 
 const BOSS_TEMPLATE = Object.freeze({
     name: '静寂の王ヴォイドメイン',
-    star: 7, hp: 220, atk: 58, def: 38, spd: 22, exp: 180, gold: 220, aa: 4, kind: 'boss',
+    star: 7, hp: 350, atk: 58, def: 38, spd: 22, exp: 180, gold: 220, aa: 4, kind: 'boss',
     desc: '全ての音を奪う存在。平原の最奥で待ち受けていた。'
 });
+
+// ==========================================
+// 魔法・スキル データ定義
+// ==========================================
+const DB_SKILLS = [
+  // 物理攻撃スキル
+  { id: 's_slash', name: 'スラッシュ', req: {STR:12}, costHp: 0, desc: '通常攻撃の1.2倍ダメージ。', effect: () => { physicalAttack(1.2, 1.0); } },
+  { id: 's_hardhit', name: 'ハードヒット', req: {STR:15}, costHp: 0, desc: '命中が少し下がるが、1.5倍ダメージ。', effect: () => { physicalAttack(1.5, 0.8); } },
+  { id: 's_doubleslash', name: '連続斬り', req: {AGI:14, DEX:12}, costHp: 0, desc: '0.8倍ダメージを2回与える。', effect: () => { physicalAttack(0.8, 1.0); if(state.run.battle && state.run.battle.enemy.hp>0) physicalAttack(0.8, 1.0); } },
+  { id: 's_helm', name: '兜割り', req: {STR:16}, costHp: 0, desc: 'ダメージを与え、数ターン敵の防御を下げる。', effect: () => { if(physicalAttack(1.0, 1.0)) applyEnemyDebuff('defDown', 3); } },
+  { id: 's_mineuchi', name: 'みね打ち', req: {DEX:15}, costHp: 0, desc: '低ダメージ。確率で敵をスタン(行動不可)。', effect: () => { if(physicalAttack(0.5, 1.0) && Math.random()<0.5) { state.run.battle.enemyStatus.stun = 1; addLog('▶ 敵はスタンした！', 'text-yellow'); } } },
+  { id: 's_shield', name: 'シバッシュ', req: {VIT:15}, costHp: 0, desc: '防御依存ダメージ＋敵の素早さ低下。', effect: () => { const dmg=calcDmg(getBattleStats(state.user).defense*1.5, state.run.battle.enemy.def); applyDamage(dmg); applyEnemyDebuff('spdDown', 3); } },
+  { id: 's_kyusho', name: '急所突き', req: {DEX:18}, costHp: 0, desc: 'クリティカル率が高い攻撃。', effect: () => { physicalAttack(1.0, 1.0, 0.4); } },
+  { id: 's_counter', name: 'カウンター', req: {AGI:18, VIT:15}, costHp: 0, desc: '防御し、物理攻撃に強力な反撃をする。', effect: () => { state.run.battle.playerBuffs.counter = 1; state.run.battle.playerBuffs.guard = 1; addLog('▶ 反撃の構えをとった！'); } },
+  { id: 's_sutemi', name: '捨て身', req: {STR:20}, costHp: 0, desc: '1ターン被ダメが倍になるが極大ダメージ。', effect: () => { physicalAttack(2.0, 1.0); state.run.battle.playerBuffs.vuln = 1; } },
+  { id: 's_vampire', name: '吸血剣', req: {DEX:16, INT:12}, costHp: 0, desc: '与えたダメージの20%HPを回復する。', effect: () => { const pre = state.run.battle.enemy.hp; physicalAttack(1.0, 1.0); const dmg = pre - state.run.battle.enemy.hp; if(dmg>0) { restoreHp(Math.max(1, Math.floor(dmg*0.2))); } } },
+  { id: 's_pierce', name: '貫通突き', req: {DEX:20}, costHp: 0, desc: '敵の防御を無視してダメージを与える。', effect: () => { const dmg=calcDmg(getBattleStats(state.user).attack, 0); applyDamage(dmg); } },
+  { id: 's_zeninage', name: '銭投げ', req: {LUK:15}, costHp: 0, desc: '100Gを消費して固定の防御無視ダメージ。', effect: () => { if(state.run.gold>=100){ state.run.gold-=100; applyDamage(150, 'text-yellow'); }else{ addLog('▶ Gが足りない！'); return false; } } },
+  { id: 's_hien', name: '飛燕剣', req: {AGI:20}, costHp: 0, desc: '最速で発動する先制攻撃。', effect: () => { physicalAttack(1.0, 1.0); } },
+  { id: 's_assassinate', name: '暗殺術', req: {DEX:22, LUK:20}, costHp: 0, desc: '低確率で敵を即死させる。ボスには無効。', effect: () => { if(state.run.battle.enemy.kind!=='boss' && Math.random()<0.2) applyDamage(9999, 'text-red'); else physicalAttack(0.5, 1.0); } },
+  { id: 's_musou', name: '無双剣', req: {STR:30, DEX:25}, costHp: 30, desc: 'HPを30消費し、究極の物理ダメージ。', effect: () => { if(spendHp(30)) physicalAttack(2.5, 1.0); else return false; } },
+  
+  // 補助スキル
+  { id: 's_focus', name: '気合だめ', req: {STR:12}, costHp: 0, desc: '次ターンの物理ダメージを2倍にする。', effect: () => { state.run.battle.playerBuffs.focus = 1; addLog('▶ 力を溜めている！'); } },
+  { id: 's_mikiri', name: '見切り', req: {AGI:15}, costHp: 0, desc: '次のターン、物理攻撃を高確率で回避する。', effect: () => { state.run.battle.playerBuffs.evade = 1; addLog('▶ 攻撃を見切る構え！'); } },
+  { id: 's_meditate', name: '瞑想', req: {INT:12, DEX:12}, costHp: 0, desc: '精神を集中し、MPを小回復する。', effect: () => { const r=Math.floor(getMaxMp(state.user)*0.15)+5; restoreMp(r); addLog(`▶ MPが ${r} 回復した！`, 'text-blue'); } },
+  { id: 's_firstaid', name: '応急手当', req: {DEX:14}, costHp: 0, desc: '戦闘中素早くHPを回復する。', effect: () => { const r=Math.floor(getMaxHp(state.user)*0.15)+10; restoreHp(r); addLog(`▶ HPが ${r} 回復した！`, 'text-green'); } },
+  { id: 's_poison', name: '毒塗り', req: {DEX:16, LUK:12}, costHp: 0, desc: '次に行う物理攻撃に猛毒を付与する。', effect: () => { state.run.battle.playerBuffs.poisonWeap = 1; addLog('▶ 武器に毒を塗った！'); } },
+  { id: 's_ironwall', name: '鉄壁の構え', req: {VIT:16}, costHp: 0, desc: '3ターンの間、受けるダメージを軽減する。', effect: () => { state.run.battle.playerBuffs.barrier = 3; addLog('▶ 鉄壁の構えをとった！'); } },
+  { id: 's_berserk', name: 'バーサーク', req: {STR:22}, costHp: 0, desc: '3ターン、攻撃力1.5倍になるが防御半減。', effect: () => { state.run.battle.playerBuffs.atkUp = 3; state.run.battle.playerBuffs.vuln = 3; addLog('▶ 狂戦士と化した！', 'text-red'); } },
+  { id: 's_feint', name: 'フェイント', req: {DEX:20}, costHp: 0, desc: '敵の回避率とガードを無効化する。', effect: () => { state.run.battle.playerBuffs.sureHit = 1; addLog('▶ フェイントをかけた！'); } },
+  { id: 's_aim', name: '狙いすます', req: {DEX:22, LUK:18}, costHp: 0, desc: '次の攻撃が必中＆必ずクリティカルになる。', effect: () => { state.run.battle.playerBuffs.sureHit = 1; state.run.battle.playerBuffs.sureCrit = 1; addLog('▶ 狙いを定めた！'); } },
+  { id: 's_limit', name: '限界突破', req: {STR:15, INT:15, DEX:15, AGI:15, VIT:15, LUK:15}, costHp: 0, desc: '3ターン全能力上昇。戦闘後HP/MP半減。', effect: () => { state.run.battle.playerBuffs.atkUp = 3; state.run.battle.playerBuffs.defUp = 3; state.run.battle.playerBuffs.spdUp = 3; state.run.battle.playerBuffs.limitBreak = 1; addLog('▶ 限界を突破した！', 'text-yellow'); } }
+];
+
+const DB_SPELLS = [
+  // 攻撃魔法
+  { id: 'm_fire', name: 'ファイア', req: {INT:12}, costMp: 4, desc: '炎属性の基本魔法ダメージ。', effect: () => { magicAttack(1.2); } },
+  { id: 'm_ice', name: 'アイス', req: {INT:14}, costMp: 5, desc: '氷属性ダメージ。敵の素早さを下げる。', effect: () => { magicAttack(1.3); applyEnemyDebuff('spdDown', 2); } },
+  { id: 'm_thunder', name: 'サンダー', req: {INT:16}, costMp: 6, desc: '雷属性ダメージ。確率で麻痺(スタン)にする。', effect: () => { magicAttack(1.4); if(Math.random()<0.4) state.run.battle.enemyStatus.stun = 1; } },
+  { id: 'm_wind', name: 'ウインド', req: {INT:12, AGI:12}, costMp: 5, desc: '風属性ダメージ。命中率が高い。', effect: () => { magicAttack(1.2, true); } },
+  { id: 'm_rock', name: 'ロック', req: {INT:15, STR:12}, costMp: 6, desc: '地属性ダメージ。高威力。', effect: () => { magicAttack(1.6); } },
+  { id: 'm_drain', name: 'ライフドレイン', req: {INT:18, LUK:12}, costMp: 8, desc: '与えたダメージの半分、自身のHPを回復。', effect: () => { const pre=state.run.battle.enemy.hp; magicAttack(1.2); const dmg=pre-state.run.battle.enemy.hp; if(dmg>0) restoreHp(Math.max(1, Math.floor(dmg*0.5))); } },
+  { id: 'm_holy', name: 'ホーリー', req: {INT:22, VIT:15}, costMp: 10, desc: '光属性の特効ダメージ。', effect: () => { magicAttack(1.8); } },
+  { id: 'm_flare', name: 'フレア', req: {INT:25}, costMp: 15, desc: '炎属性の極大ダメージ。', effect: () => { magicAttack(2.5); } },
+  { id: 'm_meteor', name: 'メテオ', req: {INT:30}, costMp: 20, desc: '超絶ダメージが降り注ぐ。', effect: () => { magicAttack(3.5); shakeEnemy(); } },
+  { id: 'm_poison', name: 'ポイズン', req: {INT:16, LUK:14}, costMp: 6, desc: '敵を猛毒状態にする。', effect: () => { state.run.battle.enemyStatus.poison = 4; addLog('▶ 敵は毒に冒された！', 'text-purple'); } },
+  { id: 'm_death', name: 'デス', req: {INT:26, LUK:25}, costMp: 18, desc: '確率で即死させる。ボス無効。', effect: () => { if(state.run.battle.enemy.kind!=='boss' && Math.random()<0.3) applyDamage(9999, 'text-red'); else addLog('▶ 効かなかった！'); } },
+  { id: 'm_ultima', name: 'アルテマ', req: {INT:40, STR:20, VIT:20}, costMp: 0, desc: '全MPを消費し、消費量に応じた絶大ダメージ。', effect: () => { const mp=state.run.vitals.mp; state.run.vitals.mp=0; magicAttack(0.5 + mp*0.1); } },
+
+  // 補助・回復魔法
+  { id: 'm_heal', name: 'ヒール', req: {INT:12}, costMp: 5, desc: 'HPを中回復する。', effect: () => { const h=Math.floor(state.user.stats.INT*1.4 + state.user.stats.LV*4 + 15); restoreHp(h); addLog(`▶ 治癒術で ${h} 回復。`, 'text-green'); } },
+  { id: 'm_hiheal', name: 'ハイヒール', req: {INT:20}, costMp: 12, desc: 'HPを大きく回復する。', effect: () => { const h=Math.floor(state.user.stats.INT*2.5 + state.user.stats.LV*8 + 40); restoreHp(h); addLog(`▶ 大治癒術で ${h} 回復。`, 'text-green'); } },
+  { id: 'm_regen', name: 'リジェネ', req: {INT:18, VIT:15}, costMp: 10, desc: '5ターンの間、徐々にHPが回復する。', effect: () => { state.run.battle.playerBuffs.regen = 5; addLog('▶ 再生の光に包まれた！', 'text-green'); } },
+  { id: 'm_protect', name: 'プロテクト', req: {INT:14, VIT:12}, costMp: 6, desc: '数ターンの間、受ける物理ダメージを軽減。', effect: () => { state.run.battle.playerBuffs.defUp = 3; addLog('▶ 防御力が上がった！', 'text-blue'); } },
+  { id: 'm_haste', name: 'ヘイスト', req: {INT:16, AGI:14}, costMp: 8, desc: '自身の素早さを上げ、先に行動しやすくする。', effect: () => { state.run.battle.playerBuffs.spdUp = 3; addLog('▶ 動きが素早くなった！', 'text-blue'); } },
+  { id: 'm_slow', name: 'スロウ', req: {INT:16, LUK:12}, costMp: 6, desc: '敵の素早さを下げる。', effect: () => { applyEnemyDebuff('spdDown', 3); addLog('▶ 敵の動きが鈍くなった！'); } },
+  { id: 'm_wepbuff', name: 'ウェポン', req: {INT:18}, costMp: 10, desc: '数ターンの間、物理攻撃に魔法ダメージを追加。', effect: () => { state.run.battle.playerBuffs.magicWeap = 3; addLog('▶ 武器に魔力を宿した！'); } },
+  { id: 'm_armbreak', name: 'ブレイク', req: {INT:18}, costMp: 8, desc: '敵の防御力を下げる。', effect: () => { applyEnemyDebuff('defDown', 3); addLog('▶ 敵の防御力を下げた！'); } },
+  { id: 'm_sleep', name: 'スリープ', req: {INT:16, LUK:15}, costMp: 5, desc: '敵を睡眠状態にする。', effect: () => { state.run.battle.enemyStatus.sleep = 2; addLog('▶ 敵は眠りに落ちた。'); } }
+];
 
 const state = {
     user: null, run: null, settings: { ...DEFAULT_SETTINGS }, currentCellNote: '', isMapOpen: false, migrationNotice: ''
 };
+let battleMenuState = 'main'; // 'main', 'skills', 'spells', 'items'
+let selectedActionId = null;
 
 // ==========================================
 // ユーティリティ
@@ -563,15 +656,12 @@ function normalizeStatValue(value, fallback, min = 0) {
     const num = Number(value);
     return Number.isFinite(num) ? Math.max(min, Math.floor(num)) : fallback;
 }
-
 function normalizeColor(color, fallback) {
     return typeof color === 'string' && /^#[0-9a-fA-F]{6}$/.test(color) ? color : fallback;
 }
-
 function normalizeSettings(settings) {
     return { crtEffect: settings?.crtEffect !== false };
 }
-
 function normalizeEquipmentSlot(slot, fallback) {
     const normalized = { name: fallback.name, color: fallback.color };
     if (!slot || typeof slot !== 'object') return normalized;
@@ -579,7 +669,6 @@ function normalizeEquipmentSlot(slot, fallback) {
     normalized.color = normalizeColor(slot.color, fallback.color);
     return normalized;
 }
-
 function normalizeEquipment(rawEquipment = {}) {
     const defaults = createDefaultEquipment();
     return {
@@ -588,7 +677,6 @@ function normalizeEquipment(rawEquipment = {}) {
         acc: normalizeEquipmentSlot(rawEquipment.acc, defaults.acc)
     };
 }
-
 function normalizeStats(rawStats = {}) {
     const stats = createDefaultStats();
     stats.LV = normalizeStatValue(rawStats.LV, stats.LV, 1);
@@ -599,24 +687,22 @@ function normalizeStats(rawStats = {}) {
     });
     return stats;
 }
-
 function normalizeGender(gender) {
     return ['male', 'female', 'other'].includes(gender) ? gender : 'other';
 }
-
 function normalizeName(name) {
     return (typeof name === 'string' ? name.trim().slice(0, 12) : 'Hero') || 'Hero';
 }
-
 function normalizeUser(rawUser = {}) {
     return {
         name: normalizeName(rawUser.name),
         gender: normalizeGender(rawUser.gender || rawUser.appearance?.gender),
         stats: normalizeStats(rawUser.stats),
-        equipment: normalizeEquipment(rawUser.equipment)
+        equipment: normalizeEquipment(rawUser.equipment),
+        skills: Array.isArray(rawUser.skills) ? rawUser.skills : [],
+        spells: Array.isArray(rawUser.spells) ? rawUser.spells : []
     };
 }
-
 function normalizeInventory(rawInventory = {}) {
     const inv = createDefaultInventory();
     Object.keys(inv).forEach((key) => {
@@ -624,7 +710,6 @@ function normalizeInventory(rawInventory = {}) {
     });
     return inv;
 }
-
 function normalizeCell(rawCell, x, y) {
     const cell = createCell(x, y);
     if (!rawCell || typeof rawCell !== 'object') return cell;
@@ -636,7 +721,6 @@ function normalizeCell(rawCell, x, y) {
     for (const dir of FACING_ORDER) cell.open[dir] = !!rawCell.open?.[dir];
     return cell;
 }
-
 function normalizeMap(rawMap, floor, seed) {
     const fallback = generateFloorMap(seed, floor);
     if (!rawMap || typeof rawMap !== 'object') return fallback;
@@ -649,7 +733,6 @@ function normalizeMap(rawMap, floor, seed) {
     }
     return { floor, size, start: { x: 0, y: 0 }, cells };
 }
-
 function normalizeBattle(rawBattle) {
     if (!rawBattle || typeof rawBattle !== 'object') return null;
     if (!rawBattle.enemy || typeof rawBattle.enemy !== 'object') return null;
@@ -669,14 +752,15 @@ function normalizeBattle(rawBattle) {
         kind: rawBattle.enemy.kind === 'boss' ? 'boss' : 'normal'
     };
     enemy.hp = clamp(enemy.hp, 0, enemy.maxHp);
+    
+    // バフ・デバフの初期化と復元
     return {
         enemy,
-        guard: !!rawBattle.guard,
-        focusTurns: normalizeStatValue(rawBattle.focusTurns, 0, 0),
-        barrierTurns: normalizeStatValue(rawBattle.barrierTurns, 0, 0)
+        playerBuffs: rawBattle.playerBuffs || {},
+        enemyBuffs: rawBattle.enemyBuffs || {},
+        enemyStatus: rawBattle.enemyStatus || {}
     };
 }
-
 function normalizeRun(rawRun, user) {
     if (!rawRun || typeof rawRun !== 'object') return createNewRun(user);
     const seed = Number.isFinite(rawRun.seed) ? rawRun.seed : Date.now();
@@ -717,29 +801,6 @@ function normalizeRun(rawRun, user) {
     revealCurrentRoom(run);
     if (run.vitals.hp <= 0) run.vitals.hp = Math.max(1, Math.floor(maxHp * 0.4));
     return run;
-}
-
-// 旧タスク版ボーナス計算
-function countLegacyCompletedTasks(calendarData) {
-    if (!calendarData || typeof calendarData !== 'object') return 0;
-    let completed = 0;
-    Object.values(calendarData).forEach((month) => {
-        if (!month || typeof month !== 'object') return;
-        Object.values(month).forEach((tasks) => {
-            if (!Array.isArray(tasks)) return;
-            completed += tasks.filter((task) => task?.status === 'completed').length;
-        });
-    });
-    return completed;
-}
-
-function createLegacyBonus(calendarData) {
-    const completed = countLegacyCompletedTasks(calendarData);
-    return {
-        gold: Math.min(300, completed * 4),
-        herbs: Math.floor(completed / 6),
-        ethers: Math.floor(completed / 12)
-    };
 }
 
 
@@ -881,15 +942,10 @@ const StorageManager = {
         try {
             let dataStr = localStorage.getItem(STORAGE_KEY);
             let migratingFromLegacy = false;
-            let migratingFromTasks = false;
 
             if (!dataStr) {
                 dataStr = localStorage.getItem(LEGACY_STORAGE_KEY);
                 if (dataStr) migratingFromLegacy = true;
-            }
-            if (!dataStr) {
-                dataStr = localStorage.getItem(TASKS_STORAGE_KEY);
-                if (dataStr) migratingFromTasks = true;
             }
 
             if (!dataStr) return false;
@@ -904,16 +960,14 @@ const StorageManager = {
                 state.run = normalizeRun(data.run, state.user);
                 state.migrationNotice = '';
                 if (migratingFromLegacy) {
-                     state.migrationNotice = '旧バージョンのセーブデータを最新形式に移行しました。';
+                     state.migrationNotice = '旧バージョンのセーブデータを最新形式(v5.0 スキル・魔法システム)に移行しました。\n新たに習得した技を確認してください。';
+                     checkLearnedSkills();
                 }
             } else {
-                const bonus = createLegacyBonus(data.calendarData);
-                state.run = createNewRun(state.user, bonus);
-                state.migrationNotice = 'タスク管理版の冒険記録を検知し、探索RPGへ魂を引き継ぎました。\n実績に応じて支給品が増加しています。\n（※以降のセーブはタスク管理版とは独立して保存されます）';
-                migratingFromTasks = true;
+                return false;
             }
 
-            if (migratingFromLegacy || migratingFromTasks) {
+            if (migratingFromLegacy) {
                 StorageManager.save(true);
             }
 
@@ -947,25 +1001,16 @@ const StorageManager = {
                 const user = normalizeUser(data.user);
                 const settings = normalizeSettings(data.settings);
                 let run = null;
-                let notice = '';
                 
                 if (data.mode && data.mode.includes('dungeon_rpg') || data.run) {
                     run = normalizeRun(data.run, user);
                 } else {
-                    run = createNewRun(user, createLegacyBonus(data.calendarData));
-                    notice = 'タスク版の記録を読み込み、3D探索RPG形式に変換しました。';
+                    throw new Error('互換性のないデータです。');
                 }
                 
-                const normalized = {
-                    version: APP_VERSION,
-                    mode: APP_MODE,
-                    user,
-                    run,
-                    settings,
-                    lastUpdate: Date.now()
-                };
+                const normalized = { version: APP_VERSION, mode: APP_MODE, user, run, settings, lastUpdate: Date.now() };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
-                alert(notice || '読み込みました！');
+                alert('読み込みました！');
                 location.reload();
             } catch (err) {
                 console.error(err);
@@ -976,7 +1021,7 @@ const StorageManager = {
         };
         reader.readAsText(file);
     },
-    reset: () => { if (confirm('記録を全て消去しますか？')) { localStorage.removeItem(STORAGE_KEY); location.reload(); } }
+    reset: () => { if (confirm('記録を全て消去しますか？')) { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(LEGACY_STORAGE_KEY); location.reload(); } }
 };
 
 const CharacterManager = {
@@ -991,7 +1036,9 @@ const CharacterManager = {
                 name: state.user.name,
                 gender: state.user.gender,
                 stats: state.user.stats,
-                equipment: state.user.equipment
+                equipment: state.user.equipment,
+                skills: state.user.skills,
+                spells: state.user.spells
             }
         };
         const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -1019,19 +1066,16 @@ const CharacterManager = {
                 if (!base) throw new Error('キャラクターデータを見つけられませんでした。');
 
                 const currentName = state.user.name;
-                if (!confirm(`現在の冒険者「${currentName}」の見た目・能力値・装備を、読み込んだキャラクターで上書きしますか？`)) return;
+                if (!confirm(`現在の冒険者「${currentName}」の情報を、読み込んだキャラクターで上書きしますか？`)) return;
                 
                 state.user.name = base.name || state.user.name;
                 state.user.gender = base.gender || base.appearance?.gender || state.user.gender;
                 
-                // statsのマージ
                 if (base.stats) {
                     ['LV', 'EXP', 'STR', 'INT', 'DEX', 'AGI', 'VIT', 'LUK'].forEach(k => {
                         if(base.stats[k] !== undefined) state.user.stats[k] = Number(base.stats[k]) || state.user.stats[k];
                     });
                 }
-                
-                // equipmentのマージ
                 if (base.equipment) {
                     ['weapon', 'armor', 'acc'].forEach(k => {
                         if(base.equipment[k]) {
@@ -1040,9 +1084,12 @@ const CharacterManager = {
                         }
                     });
                 }
+                if (base.skills) state.user.skills = Array.isArray(base.skills) ? base.skills : [];
+                if (base.spells) state.user.spells = Array.isArray(base.spells) ? base.spells : [];
 
                 state.run.vitals.hp = getMaxHp(state.user);
                 state.run.vitals.mp = getMaxMp(state.user);
+                checkLearnedSkills();
                 StorageManager.save(true);
                 renderAll();
                 renderSystem();
@@ -1079,7 +1126,6 @@ function updateCharacterName() {
     showModal('名前変更', `新たな銘が刻まれた。\n\n${oldName} → ${newName}`);
 }
 
-// 冒険の再開処理（正規化と安全な読み込みを実施）
 function continueAdventure() {
     if (!state.user || !state.run) return;
     state.run = normalizeRun(state.run, state.user);
@@ -1104,9 +1150,8 @@ function initApp() {
     }
     
     $('btn-new-game').addEventListener('click', () => switchScene('scene-creation'));
-    $('btn-continue').addEventListener('click', continueAdventure); // 修正部分
+    $('btn-continue').addEventListener('click', continueAdventure);
 
-    // ファイル入出力系のイベントリスナー
     $('btn-open-import').addEventListener('click', () => $('file-import').click());
     $('btn-import-save').addEventListener('click', () => $('file-import').click());
     $('file-import').addEventListener('change', (e) => { if (e.target.files[0]) StorageManager.importFile(e.target.files[0]); });
@@ -1119,11 +1164,11 @@ function initApp() {
     $('btn-update-name').addEventListener('click', updateCharacterName);
     $('sys-character-name').addEventListener('keypress', (e) => { if (e.key === 'Enter') updateCharacterName(); });
 
-
     $('btn-start-adventure').addEventListener('click', () => {
         if (localStorage.getItem(STORAGE_KEY) && !confirm('現在のデータを上書きしますか？')) return;
-        state.user = { name: normalizeName($('input-name').value), gender: $('input-gender').value, stats: createDefaultStats(), equipment: createDefaultEquipment() };
+        state.user = { name: normalizeName($('input-name').value), gender: $('input-gender').value, stats: createDefaultStats(), equipment: createDefaultEquipment(), skills: [], spells: [] };
         state.run = createNewRun(state.user);
+        checkLearnedSkills(); // 初期ステータスでの習得チェック
         StorageManager.save(); 
         describeCurrentRoom(); 
         switchScene('scene-main'); 
@@ -1222,7 +1267,13 @@ function renderMainView() {
         $('view-battle').classList.remove('opacity-0', 'pointer-events-none');
         const e = state.run.battle.enemy;
         $('enemy-visual').innerText = ENEMY_AAS[e.aa % ENEMY_AAS.length];
-        $('enemy-name').innerHTML = `${e.kind === 'boss' ? '[BOSS] ' : ''}${getStarHtml(e.star)}${escapeHtml(e.name)}`;
+        
+        let condition = '';
+        if (state.run.battle.enemyStatus.poison) condition += '☠️';
+        if (state.run.battle.enemyStatus.stun) condition += '💫';
+        if (state.run.battle.enemyStatus.sleep) condition += '💤';
+
+        $('enemy-name').innerHTML = `${e.kind === 'boss' ? '[BOSS] ' : ''}${getStarHtml(e.star)}${escapeHtml(e.name)} ${condition}`;
         $('enemy-subtitle').innerText = e.desc;
         const p = clamp((e.hp / e.maxHp) * 100, 0, 100);
         $('enemy-hp-bar').style.width = `${p}%`;
@@ -1250,7 +1301,6 @@ function draw3DView() {
 
     const horizonY = h * 0.45;
     
-    // 空 (夜空)
     ctx.fillStyle = '#020308';
     ctx.fillRect(0, 0, w, horizonY);
     
@@ -1264,13 +1314,11 @@ function draw3DView() {
     }
     ctx.globalAlpha = 1.0;
 
-    // 遠景の森・山
     ctx.fillStyle = '#040b06';
     ctx.beginPath(); ctx.moveTo(0, horizonY);
     for(let i=0; i<=5; i++) { ctx.lineTo(w * (i/5), horizonY - rngSky() * 30 - 10); }
     ctx.lineTo(w, horizonY); ctx.fill();
 
-    // 地面
     ctx.fillStyle = '#051006';
     ctx.fillRect(0, horizonY, w, h - horizonY);
 
@@ -1342,26 +1390,10 @@ function draw3DView() {
     }
 }
 
-// -----------------------------
-// 3D 描画補助関数群
-// -----------------------------
 function drawFrontObstacle(ctx, r, seed) {
     const rng = mulberry32(seed);
-    // ベースとなる深い茂み（壁）
-    ctx.fillStyle = '#051206';
-    ctx.fillRect(r.x, r.y, r.w, r.h);
-
-    // 草花のディテールを描画
+    ctx.fillStyle = '#051206'; ctx.fillRect(r.x, r.y, r.w, r.h);
     drawBushDetails(ctx, r.x, r.y, r.w, r.h, rng);
-
-    const randVal = rng();
-    if (randVal > 0.85) {
-        // まれに岩
-        drawRockSymbol(ctx, r.x + r.w * 0.1, r.y + r.h * 0.3, r.w * 0.8, r.h * 0.7);
-    } else if (randVal > 0.70) {
-        // まれに木（頻度を低下）
-        drawTreeSymbol(ctx, r.x + r.w * 0.2, r.y, r.w * 0.6, r.h, rng());
-    }
 }
 
 function drawSideWoods(ctx, rBack, rFront, isLeft, seed) {
@@ -1373,55 +1405,29 @@ function drawSideWoods(ctx, rBack, rFront, isLeft, seed) {
         poly.moveTo(rBack.x + rBack.w, rBack.y); poly.lineTo(rFront.x + rFront.w, rFront.y);
         poly.lineTo(rFront.x + rFront.w, rFront.y + rFront.h); poly.lineTo(rBack.x + rBack.w, rBack.y + rBack.h);
     }
-    
     ctx.fillStyle = '#051206'; ctx.fill(poly); 
-    
     const rng = mulberry32(seed);
-    const minX = Math.min(rBack.x, rFront.x);
-    const maxX = Math.max(rBack.x + rBack.w, rFront.x + rFront.w);
-    const minY = Math.min(rBack.y, rFront.y);
-    
-    ctx.save();
-    ctx.clip(poly);
-    drawBushDetails(ctx, minX, minY, maxX - minX, rFront.h + (rBack.y - rFront.y), rng);
-    
-    // 側面にもごく稀に木
-    if (rng() > 0.8) {
-        const tx = isLeft ? rBack.x * 0.5 + rFront.x * 0.5 : (rBack.x + rBack.w) * 0.5 + (rFront.x + rFront.w) * 0.5 - rBack.w * 0.5;
-        const ty = rBack.y * 0.5 + rFront.y * 0.5;
-        drawTreeSymbol(ctx, tx, ty, rBack.w * 0.5, rBack.h, rng());
-    }
-    ctx.restore();
-    
+    const minX = Math.min(rBack.x, rFront.x); const maxX = Math.max(rBack.x + rBack.w, rFront.x + rFront.w); const minY = Math.min(rBack.y, rFront.y);
+    ctx.save(); ctx.clip(poly); drawBushDetails(ctx, minX, minY, maxX - minX, rFront.h + (rBack.y - rFront.y), rng); ctx.restore();
     ctx.strokeStyle = '#0a2e13'; ctx.stroke(poly);
 }
 
 function drawBushDetails(ctx, x, y, w, h, rng) {
-    ctx.strokeStyle = '#14532d';
-    ctx.lineWidth = 1;
-    for (let i = 0; i < 20; i++) {
-        const px = x + rng() * w;
-        const py = y + h * 0.3 + rng() * h * 0.7;
-        const lh = h * 0.1 + rng() * h * 0.2;
-        ctx.beginPath();
-        ctx.moveTo(px, py);
-        ctx.lineTo(px + (rng() - 0.5) * w * 0.2, py - lh);
-        ctx.stroke();
+    ctx.strokeStyle = '#14532d'; ctx.lineWidth = 1.5;
+    for (let i = 0; i < 40; i++) {
+        const px = x + rng() * w; const py = y + h * 0.2 + rng() * h * 0.8; const lh = h * 0.15 + rng() * h * 0.25;
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + (rng() - 0.5) * w * 0.3, py - lh); ctx.stroke();
     }
     const colors = ['#fde047', '#f472b6', '#a78bfa', '#ffffff'];
-    for (let i = 0; i < 10; i++) {
-        const px = x + w * 0.1 + rng() * w * 0.8;
-        const py = y + h * 0.4 + rng() * h * 0.5;
+    for (let i = 0; i < 15; i++) {
+        const px = x + w * 0.1 + rng() * w * 0.8; const py = y + h * 0.3 + rng() * h * 0.6;
         ctx.fillStyle = colors[Math.floor(rng() * colors.length)];
-        ctx.beginPath();
-        ctx.arc(px, py, 1.5 + rng() * 2, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(px, py, 1.0 + rng() * 2, 0, Math.PI * 2); ctx.fill();
     }
 }
 
 function drawSidePath(ctx, rBack, rFront, isLeft) {
-    ctx.fillStyle = '#14110b'; // 土の色
-    ctx.beginPath();
+    ctx.fillStyle = '#14110b'; ctx.beginPath();
     if (isLeft) {
         ctx.moveTo(rFront.x, rFront.y + rFront.h); ctx.lineTo(rFront.x + rFront.w * 0.4, rFront.y + rFront.h);
         ctx.lineTo(rBack.x + rBack.w * 0.4, rBack.y + rBack.h); ctx.lineTo(rBack.x, rBack.y + rBack.h);
@@ -1433,73 +1439,33 @@ function drawSidePath(ctx, rBack, rFront, isLeft) {
 }
 
 function drawFrontPath(ctx, rBack, rFront) {
-    ctx.fillStyle = '#17130c';
-    ctx.beginPath();
+    ctx.fillStyle = '#17130c'; ctx.beginPath();
     ctx.moveTo(rBack.x + rBack.w * 0.4, rBack.y + rBack.h); ctx.lineTo(rFront.x + rFront.w * 0.4, rFront.y + rFront.h);
     ctx.lineTo(rFront.x + rFront.w * 0.6, rFront.y + rFront.h); ctx.lineTo(rBack.x + rBack.w * 0.6, rBack.y + rBack.h);
-    ctx.fill();
-    ctx.strokeStyle = '#292524'; ctx.stroke();
-}
-
-function drawTreeSymbol(ctx, x, y, w, h, seed) {
-    ctx.fillStyle = '#271c19'; ctx.fillRect(x + w * 0.45, y + h * 0.8, w * 0.1, h * 0.2);
-    ctx.fillStyle = '#064e3b'; ctx.strokeStyle = '#34d399'; ctx.lineWidth = 1;
-    const drawLeaf = (yOffset, hScale, wScale) => {
-        ctx.beginPath();
-        ctx.moveTo(x + w / 2, y + yOffset);
-        ctx.lineTo(x + w / 2 + w * wScale / 2, y + yOffset + h * hScale);
-        ctx.lineTo(x + w / 2 - w * wScale / 2, y + yOffset + h * hScale);
-        ctx.closePath(); ctx.fill();
-    };
-    drawLeaf(h * 0.4, 0.45, 1.0); drawLeaf(h * 0.2, 0.4, 0.8); drawLeaf(0, 0.35, 0.6);
-}
-
-function drawRockSymbol(ctx, x, y, w, h) {
-    ctx.fillStyle = '#374151'; ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(x + w * 0.2, y + h); ctx.lineTo(x + w * 0.1, y + h * 0.6);
-    ctx.lineTo(x + w * 0.3, y + h * 0.2); ctx.lineTo(x + w * 0.6, y + h * 0.1);
-    ctx.lineTo(x + w * 0.9, y + h * 0.5); ctx.lineTo(x + w, y + h);
-    ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x + w * 0.3, y + h * 0.2); ctx.lineTo(x + w * 0.4, y + h * 0.7); ctx.lineTo(x + w * 0.9, y + h * 0.5); ctx.stroke();
+    ctx.fill(); ctx.strokeStyle = '#292524'; ctx.stroke();
 }
 
 function draw3DObjStairs(ctx, r) {
-    // 抜け道 (アーチ状の獣道)
-    const w = r.w * 0.6; const h = r.h * 0.7;
-    const x = r.x + (r.w - w) / 2; const y = r.y + r.h - h;
-    
-    ctx.fillStyle = '#020603'; 
-    ctx.beginPath();
-    ctx.moveTo(x, y + h);
-    ctx.lineTo(x, y + h * 0.4);
-    ctx.bezierCurveTo(x, y, x + w, y, x + w, y + h * 0.4);
-    ctx.lineTo(x + w, y + h);
-    ctx.fill();
-
-    ctx.strokeStyle = '#4ade80';
-    ctx.lineWidth = 2;
+    const w = r.w * 0.6; const h = r.h * 0.7; const x = r.x + (r.w - w) / 2; const y = r.y + r.h - h;
+    ctx.fillStyle = '#020603'; ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(x, y + h * 0.4);
+    ctx.bezierCurveTo(x, y, x + w, y, x + w, y + h * 0.4); ctx.lineTo(x + w, y + h); ctx.fill();
+    ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 2;
     for (let i = 0; i < 8; i++) {
-        ctx.beginPath();
-        ctx.moveTo(x - r.w*0.05 + i * (w + r.w*0.1) / 8, y + h);
-        ctx.lineTo(x + i * w / 8 + (Math.random() - 0.5) * 10, y + h * 0.8 - Math.random() * h * 0.2);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x - r.w*0.05 + i * (w + r.w*0.1) / 8, y + h);
+        ctx.lineTo(x + i * w / 8 + (Math.random() - 0.5) * 10, y + h * 0.8 - Math.random() * h * 0.2); ctx.stroke();
     }
     ctx.lineWidth = 1;
 }
 
 function draw3DObjTreasure(ctx, r) {
-    const w = r.w * 0.35; const h = r.h * 0.25;
-    const x = r.x + (r.w - w) / 2; const y = r.y + r.h - h;
-    ctx.fillStyle = '#78350f'; ctx.fillRect(x, y, w, h);
-    ctx.strokeStyle = '#facc15'; ctx.strokeRect(x, y, w, h);
+    const w = r.w * 0.35; const h = r.h * 0.25; const x = r.x + (r.w - w) / 2; const y = r.y + r.h - h;
+    ctx.fillStyle = '#78350f'; ctx.fillRect(x, y, w, h); ctx.strokeStyle = '#facc15'; ctx.strokeRect(x, y, w, h);
     ctx.beginPath(); ctx.moveTo(x, y + h*0.2); ctx.lineTo(x + w, y + h*0.2); ctx.stroke();
     ctx.fillStyle = '#fcd34d'; ctx.beginPath(); ctx.arc(x + w/2, y + h*0.4, w*0.05, 0, Math.PI*2); ctx.fill(); ctx.stroke();
 }
 
 function draw3DObjFountain(ctx, r) {
-    const w = r.w * 0.6; const h = r.h * 0.3;
-    const x = r.x + (r.w - w) / 2; const y = r.y + r.h - h;
+    const w = r.w * 0.6; const h = r.h * 0.3; const x = r.x + (r.w - w) / 2; const y = r.y + r.h - h;
     ctx.fillStyle = '#374151'; ctx.beginPath(); ctx.ellipse(x + w/2, y + h/2, w/2, h/2, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#0ea5e9'; ctx.beginPath(); ctx.ellipse(x + w/2, y + h*0.4, w*0.4, h*0.3, 0, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#7dd3fc'; ctx.stroke();
@@ -1507,23 +1473,12 @@ function draw3DObjFountain(ctx, r) {
 }
 
 function draw3DObjBossDoor(ctx, r) {
-    // 巨大な茨のアーチゲート
-    const w = r.w * 0.8; const h = r.h * 0.9;
-    const x = r.x + (r.w - w) / 2; const y = r.y + r.h - h;
-    
-    ctx.fillStyle = '#1e1b4b';
-    ctx.beginPath();
-    ctx.moveTo(x, y + h);
-    ctx.quadraticCurveTo(x + w/2, y - h*0.2, x + w, y + h);
-    ctx.fill();
-    
-    ctx.strokeStyle = '#dc2626';
-    ctx.lineWidth = 2;
+    const w = r.w * 0.8; const h = r.h * 0.9; const x = r.x + (r.w - w) / 2; const y = r.y + r.h - h;
+    ctx.fillStyle = '#1e1b4b'; ctx.beginPath(); ctx.moveTo(x, y + h); ctx.quadraticCurveTo(x + w/2, y - h*0.2, x + w, y + h); ctx.fill();
+    ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2;
     for (let i=0; i<6; i++) {
-        ctx.beginPath();
-        ctx.moveTo(x + w * Math.random(), y + h);
-        ctx.quadraticCurveTo(x + w * Math.random(), y + h*0.5, x + w/2 + (Math.random()-0.5)*w*0.5, y + h*0.1);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x + w * Math.random(), y + h);
+        ctx.quadraticCurveTo(x + w * Math.random(), y + h*0.5, x + w/2 + (Math.random()-0.5)*w*0.5, y + h*0.1); ctx.stroke();
     }
     ctx.lineWidth = 1;
 }
@@ -1556,7 +1511,7 @@ function renderMapGrid() {
             else if (cell.kind === 'start') div.innerHTML = 'S';
             else if (cell.kind === 'treasure' && !cell.searched) div.innerHTML = 'T';
             else if (cell.kind === 'fountain' && !cell.eventResolved) div.innerHTML = 'F';
-            else if (cell.kind === 'stairs' && !state.run.cleared) div.innerHTML = 'N'; // Next
+            else if (cell.kind === 'stairs' && !state.run.cleared) div.innerHTML = 'N'; 
             else if (cell.kind === 'boss' && !state.run.cleared) div.innerHTML = 'B';
             else div.innerHTML = '·';
             grid.appendChild(div);
@@ -1564,22 +1519,61 @@ function renderMapGrid() {
     }
 }
 
+// ==========================================
+// UI コマンドエリア (階層化)
+// ==========================================
 function renderCommandArea() {
     const inv = state.run.inventory; const maxHp = getMaxHp(state.user); const maxMp = getMaxMp(state.user);
+    const area = $('dynamic-actions');
+    
     if (state.run.battle) {
-        $('action-hint').innerText = `交戦中: 敵HP ${state.run.battle.enemy.hp}/${state.run.battle.enemy.maxHp}`;
-        renderButtons([
-            { id: 'attack', label: '攻撃', c: 'text-yellow border-yellow' },
-            { id: 'missile', label: '魔弾\nMP4', d: state.run.vitals.mp < 4, c: 'text-blue' },
-            { id: 'heal', label: '治癒\nMP5', d: state.run.vitals.mp < 5 || state.run.vitals.hp >= maxHp, c: 'text-green' },
-            { id: 'guard', label: '防御' },
-            { id: 'focus', label: '心眼\nMP3', d: state.run.vitals.mp < 3 },
-            { id: 'flee', label: '逃走', d: state.run.battle.enemy.kind === 'boss' },
-            { id: 'herb', label: `薬草x${inv.herbs}`, d: inv.herbs <= 0 || state.run.vitals.hp >= maxHp, c: 'text-green border-gray-800' },
-            { id: 'ether', label: `術酒x${inv.ethers}`, d: inv.ethers <= 0 || state.run.vitals.mp >= maxMp, c: 'text-blue border-gray-800' },
-            { id: 'bomb', label: `爆薬x${inv.bombs}`, d: inv.bombs <= 0, c: 'text-red border-gray-800' }
-        ]);
+        if (battleMenuState === 'skills') {
+            const sId = selectedActionId ? selectedActionId.replace('do_skill_', '') : null;
+            const sInfo = DB_SKILLS.find(x => x.id === sId);
+            $('action-hint').innerText = sInfo ? sInfo.desc : '発動する特技を選択(もう一度押すと発動)';
+            
+            const btns = state.user.skills.map(id => {
+                const s = DB_SKILLS.find(x => x.id === id);
+                return { id: `do_skill_${id}`, label: `${s.name}${s.costHp>0?'\nHP'+s.costHp:''}`, c: 'text-yellow' };
+            });
+            if (btns.length === 0) btns.push({ id: 'dummy', label: '特技なし', d: true });
+            btns.push({ id: 'menu_main', label: '＞ 戻る', c: 'border-gray-800' });
+            renderScrollableButtons(btns);
+            
+        } else if (battleMenuState === 'spells') {
+            const sId = selectedActionId ? selectedActionId.replace('do_spell_', '') : null;
+            const sInfo = DB_SPELLS.find(x => x.id === sId);
+            $('action-hint').innerText = sInfo ? sInfo.desc : '発動する魔法を選択(もう一度押すと発動)';
+            
+            const btns = state.user.spells.map(id => {
+                const s = DB_SPELLS.find(x => x.id === id);
+                return { id: `do_spell_${id}`, label: `${s.name}\nMP${s.costMp}`, d: state.run.vitals.mp < s.costMp, c: 'text-blue' };
+            });
+            if (btns.length === 0) btns.push({ id: 'dummy', label: '魔法なし', d: true });
+            btns.push({ id: 'menu_main', label: '＞ 戻る', c: 'border-gray-800' });
+            renderScrollableButtons(btns);
+            
+        } else if (battleMenuState === 'items') {
+            $('action-hint').innerText = '使用する道具を選択';
+            renderButtons([
+                { id: 'herb', label: `薬草x${inv.herbs}`, d: inv.herbs <= 0 || state.run.vitals.hp >= maxHp, c: 'text-green border-gray-800' },
+                { id: 'ether', label: `術酒x${inv.ethers}`, d: inv.ethers <= 0 || state.run.vitals.mp >= maxMp, c: 'text-blue border-gray-800' },
+                { id: 'bomb', label: `爆薬x${inv.bombs}`, d: inv.bombs <= 0, c: 'text-red border-gray-800' },
+                { id: 'menu_main', label: '＞ 戻る', c: 'border-gray-800' }
+            ]);
+        } else {
+            $('action-hint').innerText = `交戦中: 敵HP ${state.run.battle.enemy.hp}/${state.run.battle.enemy.maxHp}`;
+            renderButtons([
+                { id: 'attack', label: '攻撃', c: 'text-yellow border-yellow' },
+                { id: 'menu_skills', label: '特技' },
+                { id: 'menu_spells', label: '魔法', c: 'text-blue' },
+                { id: 'guard', label: '防御' },
+                { id: 'menu_items', label: '道具', c: 'text-green' },
+                { id: 'flee', label: '逃走', d: state.run.battle.enemy.kind === 'boss' }
+            ]);
+        }
     } else {
+        battleMenuState = 'main'; selectedActionId = null;
         const cell = getCurrentCell();
         $('action-hint').innerText = '探索中: 周囲を警戒しつつ進め。';
         renderButtons([
@@ -1596,7 +1590,14 @@ function renderCommandArea() {
     }
 }
 
-function renderButtons(actions) { $('dynamic-actions').innerHTML = actions.map(a => `<button onclick="handleAction('${a.id}')" class="${a.c||''}" ${a.d ? 'disabled' : ''}>${a.label}</button>`).join(''); }
+function renderButtons(actions) { 
+    $('dynamic-actions').className = 'grid grid-cols-3 gap-1.5';
+    $('dynamic-actions').innerHTML = actions.map(a => `<button onclick="handleAction('${a.id}')" class="${a.c||''} ${selectedActionId===a.id?'btn-selected':''}" ${a.d ? 'disabled' : ''}>${a.label}</button>`).join(''); 
+}
+function renderScrollableButtons(actions) { 
+    $('dynamic-actions').className = 'scrollable-actions';
+    $('dynamic-actions').innerHTML = actions.map(a => `<button onclick="handleAction('${a.id}')" class="${a.c||''} ${selectedActionId===a.id?'btn-selected':''}" ${a.d ? 'disabled' : ''}>${a.label}</button>`).join(''); 
+}
 
 function renderMenu() {
     const r = state.run;
@@ -1612,16 +1613,232 @@ function renderMenu() {
 }
 
 // ==========================================
-// アクション処理
+// アクション処理 & 戦闘ロジック
 // ==========================================
 window.handleAction = (action) => {
     if (!state.run) return;
+
+    if (action === 'menu_skills') { battleMenuState = 'skills'; selectedActionId = null; renderCommandArea(); return; }
+    if (action === 'menu_spells') { battleMenuState = 'spells'; selectedActionId = null; renderCommandArea(); return; }
+    if (action === 'menu_items') { battleMenuState = 'items'; selectedActionId = null; renderCommandArea(); return; }
+    if (action === 'menu_main') { battleMenuState = 'main'; selectedActionId = null; renderCommandArea(); return; }
+
+    if (action.startsWith('do_skill_')) {
+        const id = action.replace('do_skill_', '');
+        if (selectedActionId !== action) { selectedActionId = action; renderCommandArea(); return; }
+        selectedActionId = null; executeSkill(id); return;
+    }
+    if (action.startsWith('do_spell_')) {
+        const id = action.replace('do_spell_', '');
+        if (selectedActionId !== action) { selectedActionId = action; renderCommandArea(); return; }
+        selectedActionId = null; executeSpell(id); return;
+    }
+
+    selectedActionId = null;
     const h = { turnLeft: ()=>rotate(-1), turnRight: ()=>rotate(1), forward: moveForward, search: searchRoom, rest: shortRest, descend: descendFloor,
-                attack: playerAttack, missile: castMissile, heal: castHeal, guard: guardBattle, focus: castFocus, flee: attemptFlee,
+                attack: () => { physicalAttack(1.0, 1.0); if(state.run.battle){ if(state.run.battle.enemy.hp>0) enemyTurn(); else checkEnemyDeath(); } }, 
+                guard: guardBattle, flee: attemptFlee,
                 herb: useHerb, ether: useEther, bomb: useBomb, warpWing: useWarpWing };
     if (h[action]) { h[action](); StorageManager.save(); renderAll(); }
 };
 
+// ------------------------------------------
+// 成長と習得判定
+// ------------------------------------------
+function checkLearnedSkills() {
+    if (!state.user) return;
+    let learnedAny = false;
+    const st = state.user.stats;
+    const meetsReq = (req) => { for(let k in req) { if(st[k] < req[k]) return false; } return true; };
+    
+    DB_SKILLS.forEach(s => {
+        if (!state.user.skills.includes(s.id) && meetsReq(s.req)) {
+            state.user.skills.push(s.id);
+            addLog(`💡 特技【${s.name}】を閃いた！`, 'text-yellow font-bold');
+            learnedAny = true;
+        }
+    });
+    DB_SPELLS.forEach(s => {
+        if (!state.user.spells.includes(s.id) && meetsReq(s.req)) {
+            state.user.spells.push(s.id);
+            addLog(`💡 魔法【${s.name}】を習得した！`, 'text-blue font-bold');
+            learnedAny = true;
+        }
+    });
+    return learnedAny;
+}
+
+// ------------------------------------------
+// スキル・魔法の実行エンジン
+// ------------------------------------------
+function executeSkill(id) {
+    const s = DB_SKILLS.find(x => x.id === id);
+    if (s.costHp > 0 && !spendHp(s.costHp)) return;
+    addLog(`▶ ${state.user.name} の ${s.name}！`, 'text-yellow');
+    
+    const success = s.effect();
+    if (success !== false && state.run.battle) {
+        if(state.run.battle.enemy.hp > 0) enemyTurn();
+        else checkEnemyDeath();
+    }
+    StorageManager.save(); renderAll();
+}
+
+function executeSpell(id) {
+    const s = DB_SPELLS.find(x => x.id === id);
+    if (s.costMp > 0 && !spendMp(s.costMp)) { addLog('▶ MPが足りない！'); return; }
+    addLog(`▶ ${state.user.name} は ${s.name} を唱えた！`, 'text-blue');
+    
+    const success = s.effect();
+    if (success !== false && state.run.battle) {
+        if(state.run.battle.enemy.hp > 0) enemyTurn();
+        else checkEnemyDeath();
+    }
+    StorageManager.save(); renderAll();
+}
+
+// ------------------------------------------
+// バトル・ダメージ・回復ヘルパー
+// ------------------------------------------
+function physicalAttack(dmgMult = 1.0, hitMult = 1.0, critBonus = 0) {
+    const p = getBattleStats(state.user); const e = state.run.battle.enemy; const b = state.run.battle;
+    
+    let atk = p.attack * (b.playerBuffs.atkUp ? 1.5 : 1.0) * (b.playerBuffs.focus ? 2.0 : 1.0);
+    if(b.playerBuffs.focus) b.playerBuffs.focus = 0;
+    
+    let def = e.def * (b.enemyBuffs.defDown ? 0.7 : 1.0);
+    
+    let hitRate = clamp(0.75 + (p.speed - e.spd)/120, 0.2, 0.95) * hitMult;
+    if (b.playerBuffs.sureHit) { hitRate = 1.0; b.playerBuffs.sureHit = 0; }
+    if (b.playerBuffs.sureCrit) { critBonus += 1.0; b.playerBuffs.sureCrit = 0; }
+    
+    if (Math.random() <= hitRate) {
+        let dmg = Math.max(1, Math.floor(atk * (0.8 + Math.random()*0.4) - def*0.45));
+        dmg = Math.floor(dmg * dmgMult);
+        if (b.playerBuffs.magicWeap) dmg += Math.floor(p.magic * 0.5); 
+        
+        if (Math.random() < p.crit + critBonus) { dmg = Math.floor(dmg * 1.8); addLog('▶ 会心の一撃！', 'text-yellow'); }
+        applyDamage(dmg);
+
+        if (b.playerBuffs.poisonWeap && Math.random()<0.5) { b.enemyStatus.poison = 3; addLog('▶ 敵を猛毒に冒した！', 'text-purple'); b.playerBuffs.poisonWeap = 0; }
+        if (b.enemyStatus.sleep) { b.enemyStatus.sleep = 0; addLog('▶ 敵は目を覚ました！'); }
+        return dmg;
+    } else {
+        addLog('▶ 攻撃は外れた。'); return 0;
+    }
+}
+
+function magicAttack(dmgMult = 1.0, ignoreDef = false) {
+    const p = getBattleStats(state.user); const e = state.run.battle.enemy; const b = state.run.battle;
+    let mag = p.magic; let def = ignoreDef ? 0 : e.def * 0.2; 
+    let dmg = Math.max(1, Math.floor(mag * (1.2 + Math.random()*0.6) - def));
+    dmg = Math.floor(dmg * dmgMult);
+    applyDamage(dmg, 'text-blue');
+    if (b.enemyStatus.sleep) { b.enemyStatus.sleep = 0; addLog('▶ 敵は目を覚ました！'); }
+    return dmg;
+}
+
+function calcDmg(baseAtk, baseDef) { return Math.max(1, Math.floor(baseAtk * (0.8 + Math.random()*0.4) - (baseDef||0)*0.45)); }
+
+function applyDamage(dmg, color='') {
+    const e = state.run.battle.enemy; e.hp = clamp(e.hp - dmg, 0, e.maxHp); addLog(`▶ ${dmg} ダメージ！`, color); shakeEnemy();
+}
+function applyEnemyDebuff(type, duration) { state.run.battle.enemyBuffs[type] = duration; }
+function spendHp(amount) { if (state.run.vitals.hp <= amount) { addLog('▶ HPが足りない！'); return false; } state.run.vitals.hp -= amount; return true; }
+function spendMp(cost) { if (state.run.vitals.mp < cost) return false; state.run.vitals.mp -= cost; return true; }
+function restoreHp(amount) { state.run.vitals.hp = clamp(state.run.vitals.hp + amount, 0, getMaxHp(state.user)); }
+function restoreMp(amount) { state.run.vitals.mp = clamp(state.run.vitals.mp + amount, 0, getMaxMp(state.user)); }
+
+function guardBattle() { state.run.battle.playerBuffs.guard = 1; addLog('▶ 防御の構え。'); enemyTurn(); }
+function useBomb() { state.run.inventory.bombs--; const d = Math.floor(24 + state.run.floor*6 + Math.random()*16); applyDamage(d, 'text-red'); if(state.run.battle){ if(state.run.battle.enemy.hp>0) enemyTurn(); else checkEnemyDeath(); } }
+function useHerb() { state.run.inventory.herbs--; const h = Math.floor(getMaxHp(state.user)*0.32); restoreHp(h); addLog(`▶ 薬草で ${h} 回復。`, 'text-green'); if(state.run.battle) enemyTurn(); }
+function useEther() { state.run.inventory.ethers--; const m = Math.floor(getMaxMp(state.user)*0.45); restoreMp(m); addLog(`▶ 術酒で ${m} MP回復。`, 'text-blue'); if(state.run.battle) enemyTurn(); }
+
+// ------------------------------------------
+// 敵のターンと終了処理
+// ------------------------------------------
+function enemyTurn() {
+    if(!state.run.battle) return; 
+    const e = state.run.battle.enemy; const b = state.run.battle; const p = getBattleStats(state.user);
+
+    if (b.enemyStatus.stun) { addLog(`▶ ${e.name} は怯んでいる！`); b.enemyStatus.stun--; processTurnEnd(); return; }
+    if (b.enemyStatus.sleep) { addLog(`▶ ${e.name} は眠っている。`); b.enemyStatus.sleep--; processTurnEnd(); return; }
+
+    let atk = e.atk * (b.enemyBuffs.atkDown ? 0.7 : 1.0);
+    let def = p.defense * (b.playerBuffs.defUp ? 1.5 : 1.0) * (b.playerBuffs.vuln ? 0.5 : 1.0);
+    
+    if (b.playerBuffs.evade && Math.random() < 0.8) {
+        addLog(`▶ ${e.name} の攻撃を見切った！`, 'text-blue');
+        b.playerBuffs.evade = 0;
+    } else {
+        let d = Math.random() < (e.kind==='boss'?0.35:(e.star>=5?0.22:0.1)) ? Math.floor(atk*1.25 + Math.random()*10 - def*0.35) : Math.floor(atk*(0.72+Math.random()*0.38) - def*0.42);
+        d = Math.max(1, d); 
+        if(b.playerBuffs.guard) d = Math.floor(d*0.55); 
+        if(b.playerBuffs.barrier) d = Math.floor(d*0.82);
+        
+        if (b.playerBuffs.counter) {
+            b.playerBuffs.counter = 0; addLog(`▶ 反撃！`);
+            physicalAttack(1.5, 1.0);
+            if(e.hp <= 0) { checkEnemyDeath(); return; }
+        }
+
+        state.run.vitals.hp = clamp(state.run.vitals.hp - d, 0, getMaxHp(state.user)); 
+        addLog(`▶ ${e.name} の攻撃！ ${d} ダメージ。`, d>=20?'text-red':'');
+    }
+    b.playerBuffs.guard = 0; 
+
+    if(state.run.vitals.hp <= 0) { checkEnemyDeath(); return; }
+    processTurnEnd();
+}
+
+function processTurnEnd() {
+    if(!state.run.battle) return;
+    const e = state.run.battle.enemy; const b = state.run.battle;
+
+    if (b.playerBuffs.regen) {
+        const h = Math.floor(getMaxHp(state.user)*0.1); restoreHp(h); addLog(`▶ 再生で ${h} 回復。`, 'text-green'); b.playerBuffs.regen--;
+    }
+    if (b.enemyStatus.poison) {
+        const d = Math.floor(e.maxHp * 0.05) + 5; applyDamage(d, 'text-purple'); addLog(`▶ 毒のダメージ！`); b.enemyStatus.poison--;
+    }
+
+    for(let k in b.playerBuffs) if(b.playerBuffs[k] > 0 && k !== 'limitBreak') b.playerBuffs[k]--;
+    for(let k in b.enemyBuffs) if(b.enemyBuffs[k] > 0) b.enemyBuffs[k]--;
+
+    checkEnemyDeath();
+}
+
+function checkEnemyDeath() {
+    const e = state.run.battle.enemy;
+    if (e.hp <= 0) {
+        addLog(`▶ ${e.name} を討伐！`, 'text-green'); state.run.gold += e.gold; state.run.roomsCleared++; addLog(`▶ ${e.gold}G 獲得。`, 'text-yellow');
+        
+        const xp = Math.floor(e.exp + Math.random()*(8+e.star*2)); state.user.stats.EXP += xp; addLog(`▶ ${xp}EXP 獲得！`);
+        
+        while(state.user.stats.EXP >= getRequiredExp(state.user.stats.LV)) {
+            state.user.stats.LV++; addLog(`★★★ LV${state.user.stats.LV} に上がった！ ★★★`, 'text-yellow');
+            for(let i=0; i<3; i++) state.user.stats[pick(['STR','INT','DEX','AGI','VIT','LUK'])] += Math.floor(Math.random()*3)+1;
+            state.run.vitals.hp = getMaxHp(state.user); state.run.vitals.mp = getMaxMp(state.user);
+            checkLearnedSkills(); 
+        }
+        if(Math.random() < clamp(0.14+state.run.floor*0.02+e.star*0.04, 0.15, 0.75)) dropEquipment(e.star, state.run.floor);
+        if(Math.random() < 0.52) { const i = pick(['herbs','ethers','bombs','campKits']); state.run.inventory[i]++; addLog(`🎁 アイテムを入手。`, 'text-yellow'); }
+        if(e.kind === 'boss') { getCurrentCell().eventResolved = true; state.run.cleared = true; state.run.safeSteps = 3; state.run.inventory.elixirs++; showModal('踏破達成', '静寂の王を討伐した！\n\n平原を制覇しました。'); }
+        
+        if(state.run.battle.playerBuffs.limitBreak) {
+            state.run.vitals.hp = Math.max(1, Math.floor(state.run.vitals.hp / 2));
+            state.run.vitals.mp = Math.floor(state.run.vitals.mp / 2);
+            addLog(`▶ 限界突破の反動でHP/MP半減！`, 'text-red');
+        }
+        state.run.battle = null;
+    } else if (state.run.vitals.hp <= 0) {
+        state.run.defeatedCount++; const lG = Math.floor(state.run.gold*0.5); state.run.gold -= lG; state.run.battle = null; state.run.floor = 1; state.run.x = 0; state.run.y = 0; state.run.facing = 'E'; state.run.safeSteps = 3; state.run.vitals.hp = Math.floor(getMaxHp(state.user)*0.7); state.run.vitals.mp = Math.floor(getMaxMp(state.user)*0.5); revealCurrentRoom(); describeCurrentRoom(); addLog(`▶ 力尽きた。${lG}Gを失い出発地点へ退却...`, 'text-red'); showModal('敗走', `奥地の脅威に屈した。\n\n${lG}G を失い、出発地点へ退却しました。`);
+    }
+}
+
+// ------------------------------------------
+// 探索・その他のアクション
+// ------------------------------------------
 function rotate(d) { state.run.facing = stepFacing(state.run.facing, d); }
 function moveForward() {
     if (!getCurrentCell().open[state.run.facing]) { addLog('▶ 茂みが道を塞いでいる。'); return; }
@@ -1644,71 +1861,27 @@ function shouldEncounter(c) {
 function createEnemyForFloor(f) {
     const e = pick(MONSTER_TABLE.filter(m => f >= m.floors[0] && f <= m.floors[1]) || MONSTER_TABLE);
     const star = clamp(e.star + (Math.random() < 0.22 ? 1 : 0), 1, 7); const v = 0.9 + Math.random() * 0.25;
-    return { id: generateId(), name: e.name, star, hp: Math.max(1, Math.floor((e.hp + f*4 + star*3)*v)), maxHp: Math.max(1, Math.floor((e.hp + f*4 + star*3)*v)),
-             atk: Math.floor(e.atk + f*2 + star*1.4), def: Math.floor(e.def + f*1.6 + star), spd: Math.floor(e.spd + f*1.5),
-             exp: Math.floor(e.exp + f*4 + star*5), gold: Math.floor(e.gold + f*3 + star*4), aa: e.aa, desc: e.desc, kind: 'normal' };
+    return { id: generateId(), name: e.name, star, hp: Math.max(1, Math.floor((e.hp + f*4 + star*3)*v)), maxHp: Math.max(1, Math.floor((e.hp + f*4 + star*3)*v)), atk: Math.floor(e.atk + f*2 + star*1.4), def: Math.floor(e.def + f*1.6 + star), spd: Math.floor(e.spd + f*1.5), exp: Math.floor(e.exp + f*4 + star*5), gold: Math.floor(e.gold + f*3 + star*4), aa: e.aa, desc: e.desc, kind: 'normal' };
 }
 function createBossEnemy() { return { ...BOSS_TEMPLATE, id: generateId(), hp: BOSS_TEMPLATE.hp, maxHp: BOSS_TEMPLATE.hp }; }
-function startEncounter(e) { state.run.battle = { enemy: e, guard: false, focusTurns: 0, barrierTurns: 0 }; addLog(`▶ ${e.name} が現れた！`, e.kind==='boss'?'text-red':'text-yellow'); shakeEnemy(); }
+function startEncounter(e) { state.run.battle = { enemy: e, playerBuffs: {}, enemyBuffs: {}, enemyStatus: {} }; battleMenuState = 'main'; addLog(`▶ ${e.name} が現れた！`, e.kind==='boss'?'text-red':'text-yellow'); shakeEnemy(); }
 function shakeEnemy() { const el = $('enemy-visual'); if(el){ el.classList.remove('anim-shake'); void el.offsetWidth; el.classList.add('anim-shake'); } }
-function spendMp(cost) { if (state.run.vitals.mp < cost) return false; state.run.vitals.mp -= cost; return true; }
-function restoreHp(amount) { state.run.vitals.hp = clamp(state.run.vitals.hp + amount, 0, getMaxHp(state.user)); }
-function restoreMp(amount) { state.run.vitals.mp = clamp(state.run.vitals.mp + amount, 0, getMaxMp(state.user)); }
 
-function playerAttack() {
-    const p = getBattleStats(state.user); const e = state.run.battle.enemy; const f = state.run.battle.focusTurns > 0 ? 0.12 : 0;
-    if (Math.random() <= clamp(0.72 + (p.speed - e.spd)/120 + f, 0.2, 0.95)) {
-        let dmg = Math.max(1, Math.floor(p.attack * (0.78 + Math.random()*0.45) - e.def*0.45));
-        if (Math.random() < p.crit + f) { dmg = Math.floor(dmg * 1.8); addLog('▶ 会心の一撃！', 'text-yellow'); }
-        damageEnemy(dmg, `▶ ${dmg} ダメージ！`);
-    } else addLog('▶ 外れた。');
-    if (state.run.battle) { if(state.run.battle.focusTurns>0)state.run.battle.focusTurns--; enemyTurn(); }
-}
-function castMissile() { if(spendMp(4)) { const dmg = Math.max(6, Math.floor(getBattleStats(state.user).magic*1.6 + state.user.stats.LV*2 + Math.random()*8 - state.run.battle.enemy.def*0.18)); damageEnemy(dmg, `▶ 魔弾！ ${dmg} ダメージ！`, 'text-blue'); if(state.run.battle) enemyTurn(); } }
-function castHeal() { if(spendMp(5)) { const heal = Math.floor(state.user.stats.INT*1.4 + state.user.stats.LV*4 + 12); restoreHp(heal); addLog(`▶ 治癒術で ${heal} 回復。`, 'text-green'); if(state.run.battle) enemyTurn(); } }
-function castFocus() { if(spendMp(3)) { state.run.battle.focusTurns = 3; state.run.battle.barrierTurns = Math.max(state.run.battle.barrierTurns, 1); addLog('▶ 心眼を開いた。', 'text-blue'); if(state.run.battle) enemyTurn(); } }
-function guardBattle() { state.run.battle.guard = true; state.run.battle.barrierTurns = Math.max(state.run.battle.barrierTurns, 1); addLog('▶ 防御の構え。'); enemyTurn(); }
-function useBomb() { state.run.inventory.bombs--; const d = Math.floor(24 + state.run.floor*6 + Math.random()*16); damageEnemy(d, `▶ 爆薬！ ${d} ダメージ！`, 'text-red'); if(state.run.battle) enemyTurn(); }
-function useHerb() { state.run.inventory.herbs--; const h = Math.floor(getMaxHp(state.user)*0.32); restoreHp(h); addLog(`▶ 薬草で ${h} 回復。`, 'text-green'); if(state.run.battle) enemyTurn(); }
-function useEther() { state.run.inventory.ethers--; const m = Math.floor(getMaxMp(state.user)*0.45); restoreMp(m); addLog(`▶ 術酒で ${m} MP回復。`, 'text-blue'); if(state.run.battle) enemyTurn(); }
 function useWarpWing() { state.run.inventory.warpWings--; state.run.floor = 1; state.run.x = 0; state.run.y = 0; state.run.facing = 'E'; state.run.safeSteps = 3; revealCurrentRoom(); describeCurrentRoom(); addLog('▶ 出発地点へ転移した。', 'text-blue'); }
 function shortRest() { const h = Math.floor(getMaxHp(state.user)*0.14); const m = Math.floor(getMaxMp(state.user)*0.12); restoreHp(h); restoreMp(m); addLog('▶ 息を整えた。'); if(Math.random()<0.28){ addLog('▶ 隙を狙われた！', 'text-red'); startEncounter(createEnemyForFloor(state.run.floor)); } }
 function handleCampCommand() { if(state.run.battle){ showModal('Camp', '戦闘中は不可。'); return; } if(state.run.inventory.campKits>0){ state.run.inventory.campKits--; restoreHp(getMaxHp(state.user)*0.7); restoreMp(getMaxMp(state.user)*0.7); state.run.safeSteps=2; addLog('▶ 野営を行った。', 'text-yellow'); StorageManager.save(); renderAll(); } else shortRest(); }
 function attemptFlee() { if(Math.random() < clamp(0.35 + (getBattleStats(state.user).speed - state.run.battle.enemy.spd)/100, 0.12, 0.88)){ addLog('▶ 退却成功。', 'text-blue'); state.run.battle = null; state.run.safeSteps = 1; } else { addLog('▶ 退却失敗！', 'text-red'); enemyTurn(); } }
 
-function damageEnemy(amount, text, color = '') {
-    const e = state.run.battle.enemy; e.hp = clamp(e.hp - amount, 0, e.maxHp); addLog(text, color); shakeEnemy();
-    if (e.hp <= 0) {
-        addLog(`▶ ${e.name} を討伐！`, 'text-green'); state.run.gold += e.gold; state.run.roomsCleared++; addLog(`▶ ${e.gold}G 獲得。`, 'text-yellow');
-        const xp = Math.floor(e.exp + Math.random()*(8+e.star*2)); state.user.stats.EXP += xp; addLog(`▶ ${xp}EXP 獲得！`);
-        while(state.user.stats.EXP >= getRequiredExp(state.user.stats.LV)) {
-            state.user.stats.LV++; addLog(`★★★ LV${state.user.stats.LV} に上がった！ ★★★`, 'text-yellow');
-            for(let i=0; i<3; i++) state.user.stats[pick(['STR','INT','DEX','AGI','VIT','LUK'])] += Math.floor(Math.random()*3)+1;
-            state.run.vitals.hp = getMaxHp(state.user); state.run.vitals.mp = getMaxMp(state.user);
-        }
-        if(Math.random() < clamp(0.14+state.run.floor*0.02+e.star*0.04, 0.15, 0.75)) dropEquipment(e.star, state.run.floor);
-        if(Math.random() < 0.52) { const i = pick(['herbs','ethers','bombs','campKits']); state.run.inventory[i]++; addLog(`🎁 アイテムを入手。`, 'text-yellow'); }
-        if(e.kind === 'boss') { getCurrentCell().eventResolved = true; state.run.cleared = true; state.run.safeSteps = 3; state.run.inventory.elixirs++; showModal('踏破達成', '静寂の王を討伐した！\n\n平原を制覇しました。'); }
-        state.run.battle = null;
-    }
-}
 function dropEquipment(star, floor) {
     const r = Math.random(); const isW = r<0.42; const isA = r<0.82; const list = isW ? WEAPONS : (isA ? ARMORS : ACCESSORIES); const key = isW ? 'weapon' : (isA ? 'armor' : 'acc');
     const idx = clamp(Math.floor((floor-1)*5 + star*3 + Math.random()*8), 0, list.length-1); const item = list[idx];
     if(getEquipmentRank(item.name, list) >= getEquipmentRank(state.user.equipment[key].name, list)) { state.user.equipment[key] = {name: item.name, color: item.color}; addLog(`🎁 ${item.name} を装備した！`, 'text-yellow'); }
 }
-function enemyTurn() {
-    if(!state.run.battle) return; const e = state.run.battle.enemy; const p = getBattleStats(state.user);
-    let d = Math.random() < (e.kind==='boss'?0.35:(e.star>=5?0.22:0.1)) ? Math.floor(e.atk*1.25 + Math.random()*10 - p.defense*0.35) : Math.floor(e.atk*(0.72+Math.random()*0.38) - p.defense*0.42);
-    d = Math.max(1, d); if(state.run.battle.guard) d = Math.floor(d*0.55); if(state.run.battle.barrierTurns>0) d = Math.floor(d*0.82);
-    state.run.vitals.hp = clamp(state.run.vitals.hp - d, 0, getMaxHp(state.user)); addLog(`▶ ${e.name} の攻撃！ ${d} ダメージ。`, d>=20?'text-red':'');
-    state.run.battle.guard = false; if(state.run.battle.barrierTurns>0) state.run.battle.barrierTurns--;
-    if(state.run.vitals.hp <= 0) { state.run.defeatedCount++; const lG = Math.floor(state.run.gold*0.5); state.run.gold -= lG; state.run.battle = null; state.run.floor = 1; state.run.x = 0; state.run.y = 0; state.run.facing = 'E'; state.run.safeSteps = 3; state.run.vitals.hp = Math.floor(getMaxHp(state.user)*0.7); state.run.vitals.mp = Math.floor(getMaxMp(state.user)*0.5); revealCurrentRoom(); describeCurrentRoom(); addLog(`▶ 力尽きた。${lG}Gを失い出発地点へ退却...`, 'text-red'); showModal('敗走', `奥地の脅威に屈した。\n\n${lG}G を失い、出発地点へ退却しました。`); }
-}
+
 function searchRoom() {
     const c = getCurrentCell();
     if (c.kind === 'treasure' && !c.searched) { c.searched = true; state.run.treasureCount++; if(Math.random()<0.18){ addLog('▶ 罠だ！', 'text-red'); startEncounter({...createEnemyForFloor(state.run.floor), name:'ミミック', star: clamp(state.run.floor+1, 2, 7)}); return; } const g = Math.floor(25+Math.random()*30+state.run.floor*10); state.run.gold+=g; addLog(`▶ ${g}G を得た！`, 'text-yellow'); if(Math.random()<0.6) dropEquipment(state.run.floor+1, state.run.floor); }
-    else if (c.kind === 'fountain' && !c.eventResolved) { c.eventResolved = true; if(Math.random()<0.55){ state.run.vitals.hp=getMaxHp(state.user); addLog('▶ HP全快！', 'text-green'); } else if(Math.random()<0.8){ state.run.vitals.mp=getMaxMp(state.user); addLog('▶ MP全快！', 'text-blue'); } else { const k = pick(['STR','INT','DEX','AGI','VIT','LUK']); state.user.stats[k]++; addLog(`▶ ${k} が 1 上がった。`, 'text-yellow'); } }
+    else if (c.kind === 'fountain' && !c.eventResolved) { c.eventResolved = true; if(Math.random()<0.55){ state.run.vitals.hp=getMaxHp(state.user); addLog('▶ HP全快！', 'text-green'); } else if(Math.random()<0.8){ state.run.vitals.mp=getMaxMp(state.user); addLog('▶ MP全快！', 'text-blue'); } else { const k = pick(['STR','INT','DEX','AGI','VIT','LUK']); state.user.stats[k]++; addLog(`▶ ${k} が 1 上がった。`, 'text-yellow'); checkLearnedSkills(); } }
     else if (c.kind === 'stairs') descendFloor();
     else if (c.kind === 'boss' && !state.run.cleared) startEncounter(createBossEnemy());
     else if (!c.searched && Math.random()<0.32) { c.searched = true; const g = Math.floor(12+Math.random()*20+state.run.floor*4); state.run.gold+=g; addLog(`▶ ${g}G 拾った。`, 'text-yellow'); }
@@ -1754,6 +1927,12 @@ function renderStatus() {
     if(state.run.depthRecord>=5) bg.push('<span class="text-[0.65rem] px-2 py-1 border border-blue text-blue rounded">奥地到達</span>');
     if(state.run.roomsCleared>=20) bg.push('<span class="text-[0.65rem] px-2 py-1 border border-green text-green rounded">討伐者</span>');
     $('status-badges').innerHTML = bg.join('');
+
+    // 習得済みリストの表示
+    const skillsList = state.user.skills.map(id => { const d = DB_SKILLS.find(x => x.id === id); return d ? d.name : ''; }).filter(Boolean);
+    $('st-skills').innerText = skillsList.length > 0 ? skillsList.join(' / ') : 'なし';
+    const spellsList = state.user.spells.map(id => { const d = DB_SPELLS.find(x => x.id === id); return d ? d.name : ''; }).filter(Boolean);
+    $('st-spells').innerText = spellsList.length > 0 ? spellsList.join(' / ') : 'なし';
 }
 
 function drawRadarChart(id, s) {
