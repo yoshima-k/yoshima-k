@@ -75,6 +75,7 @@
             border-left: 2px solid var(--col-border);
             border-right: 2px solid var(--col-border);
             transition: border-color 0.5s ease, background-color 0.5s ease;
+            z-index: 20; /* 追加: 他の要素に隠れないよう前面に */
         }
 
         button, input, select, textarea {
@@ -154,6 +155,8 @@
         .mb-4 { margin-bottom: 1rem; }
         .pt-2 { padding-top: 0.5rem; }
         .pt-8 { padding-top: 2rem; }
+        .pt-10 { padding-top: 2.5rem; } 
+        .pt-12 { padding-top: 3rem; }   
         .pr-2 { padding-right: 0.5rem; }
         .pb-2 { padding-bottom: 0.5rem; }
         .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
@@ -217,16 +220,24 @@
         }
 
         /* =========================================
-           4. 戦闘ビュー
+           4. 戦闘ビュー (★ここをプロフェッショナルに改修)
         ========================================= */
         #battle-pane {
-            flex: 0 0 auto;
-            min-height: 220px;
+            flex: 0 0 240px; /* flex-basisを固定し、親のレイアウト崩れを防ぐ */
+            height: 240px;   /* 明示的な高さを設定して押し出しを防止 */
             display: flex;
             gap: 15px;
             position: relative;
+            /* ※ overflow: hidden; はタイトル見切れの原因となるため削除しました */
         }
-        #battle-pane > div.battle-content { flex: 1; }
+        
+        #battle-pane > div.battle-content { 
+            flex: 1; 
+            display: flex;
+            flex-direction: column;
+            min-height: 0; /* ★重要：子要素がflexコンテナを突き破るのを防ぐ魔法のプロパティ */
+            min-width: 0;
+        }
 
         #hero-mini-status {
             position: absolute;
@@ -311,21 +322,43 @@
             color: #aaa;
         }
 
+        /* ★ログのスクロール領域をプロフェッショナルに改修 */
         #battle-log {
-            height: 160px;
-            overflow-y: auto;
+            flex: 1; /* 親の残り高さを全て使う */
+            min-height: 0; /* これがないとはみ出す */
+            overflow-y: auto; /* 溢れたらスクロールを許可 */
             font-size: 0.85rem;
             display: flex;
-            flex-direction: column-reverse;
+            flex-direction: column-reverse; /* 最新を下に表示 */
             background: rgba(0,0,0,0.5);
             padding: 5px;
             border: 1px dotted #555;
             margin-top: 10px;
+            
+            /* 世界観に合わせたカスタムスクロールバー */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
         }
+        #battle-log::-webkit-scrollbar {
+            width: 5px;
+        }
+        #battle-log::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+        }
+        #battle-log::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+        #battle-log::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
         #battle-log div {
             margin-bottom: 4px;
             padding-bottom: 4px;
             border-bottom: 1px dashed rgba(255,255,255,0.1);
+            word-break: break-all; /* 長文が横スクロールを発生させないためのガード */
         }
         #battle-log div:first-child { opacity: 1; font-weight: bold; }
         #battle-log div:nth-child(n+2) { opacity: 0.8; }
@@ -700,8 +733,9 @@ __  __               ___           _
                         </div>
                     </div>
 
+                    <!-- ★ pt-12（元々の設定）を使ってミニステータスを回避しつつ、高さを自動制御 -->
                     <div class="battle-content flex-col h-full w-full pt-12">
-                        <div id="battle-log" class="flex-1"></div>
+                        <div id="battle-log"></div>
                     </div>
                 </div>
 
@@ -957,7 +991,7 @@ const ACCESSORIES = [
 
 const ENEMY_AAS = [
 `   ___\n  /   \\\n ( o.o )\n  > ^ <`, `  /\\_/\\\n ( o.o )\n  > ^ <`, `   ___\n  /   \\\n |O   O|\n  \\_^_/`, `  \\|/\n - O -\n  /|\\`, `  ___ \n (o,o)\n /)  )\n  " "`, ` ,_._.,\n/ _ _ \\\n|(_)(_)|\n \\_  _/`, `  ()()\n  (..)\n  /\\/\\`, `    _\n   / \\\n  /  /\n  \\_\\_`, ` /\\   /\\\n  \\/-\\/ \n   (o o)\n   \\_^_/`, `  \\ /\n (o o)\n | | |\n /_|_\\`, `   ___\n  / * \\\n | o o |\n  \\_-_/`, `  [+ +]\n  /| |\\\n  \\|_|/\n   | |`, `  /---\\\n  |o o|\n  |---|\n  /   \\`, `  /\\_/\\\n ( 'x' )\n (  "  )`, `   ( )\n  (   )\n ( o o )\n  \\ - /`, `   /\\\n  /  \\\n (o  o)\n  \\__/`, `   ( )\n  / | \\\n (  |  )\n  \\/ \\/`, `  ^   ^\n /o   o\\\n \\_ V _/\n  |   |`, `  [___]\n  |o o|\n  [___]`, `   \\ /\n  (o o)\n  /(_)\\\n   / \\`, `  _   _\n | |_| |\n | o o |\n |_|-|_|`, `   /\\\n  /  \\\n  |()|\n  \\__/`, ` [___]\n [o o]\n [___]`, `  /\\_/\\\n ( õ_õ )\n > ^ <`, `   ___\n  / o \\\n  \\___/`, `  ()_()\n  \\ o /\n  /___\\`, `   ___\n  /o o\\\n  |___|\n  /   \\`, `  [+ +]\n  /| |\\\n   | |`, `  .--.\n | o o |\n |  ^  |\n  '--'`, `  \\|/\n (o o)\n  \\-/\n  / \\`,
-`  /\\_\\ \n (ಠ_ಠ)\n /_\\_\\`, `  , , \n (o,o)\n (   )\n  "-"`, `  \\  / \n (><)\n /  \\`, `  _  _ \n (o)(o)\n  \\__/\n  |__|`, `  .--.\n /_  _\\\n |()()|\n  \\__/`, `  (O_O)\n  /| |\\\n   | |`, `  /vvv\\\n  |o o|\n  \\^^^/`, `  /| |\\\n ( * * )\n  \\___/`, `  _-_ \n / o \\\n \\_o_/`, `  [+_+]\n  /| |\\\n  \\_|_/`, `  \\___/\n  (o.o)\n  /___\\`, `  /\\_/\\\n (=^.^=)\n  (")_(")`, `  _  _ \n (O)(O)\n  \\==/\n  /||\\`, `  /~~\\\n ( - -)\n  \\~~/`, `  /|/|\n ( o.o)\n  )  (\n  "  "`, `  ____ \n /o  o\\\n \\_()_/\n  /  \\`, `  [--]\n  |oo|\n  [--]`, `   /\\ \n  /  \\ \n ( oo )\n  \\__/\n   /\\`, `  /\\_/\\\n ( x_x )\n > ^ <`, `  (OoO)\n  /|_|\\\n   | |`
+`  /\\_\\ \n (ಠ_ಠ)\n /_\\_\\`, `  , , \n (o,o)\n (   )\n  "-"`, `  \\  / \n (><)\n /  \\`, `  _  _ \n (o)(o)\n  \\__/\n  |__|`, `  .--.\n /_  _\\\n |()()|\n  \\__/`, `  (O_O)\n  /| |\\\n   | |`, `  /vvv\\\n  |o o|\n  \\^^^/`, `  /| |\\\n ( * * )\n  \\___/`, `  _-_ \n / o \\\n \\_o_/`, `  [+_+]\n  /| |\\\n  \\_|_/`, `  \\___/\n  (o o)\n  /___\\`, `  /\\_/\\\n (=^.^=)\n  (")_(")`, `  _  _ \n (O)(O)\n  \\==/\n  /||\\`, `  /~~\\\n ( - -)\n  \\~~/`, `  /|/|\n ( o.o)\n  )  (\n  "  "`, `  ____ \n /o  o\\\n \\_()_/\n  /  \\`, `  [--]\n  |oo|\n  [--]`, `   /\\ \n  /  \\ \n ( oo )\n  \\__/\n   /\\`, `  /\\_/\\\n ( x_x )\n > ^ <`, `  (OoO)\n  /|_|\\\n   | |`
 ];
 
 // ==========================================
@@ -1901,13 +1935,22 @@ function shakeEnemy() {
     el.classList.add('anim-shake');
 }
 
+// ★プロフェッショナルな修正: ログ追加時のスクロール追従と堅牢化
 function addLog(text, col = '') {
     const log = document.createElement('div');
     if (col) log.className = col;
     log.innerText = text;
     const container = $('battle-log');
+    
+    // prepend を使って DOMツリーの先頭に差し込む（column-reverseなのでこれが視覚的な「一番下（最新）」になる）
     container.prepend(log);
-    if (container.children.length > 25) container.removeChild(container.lastChild);
+    
+    if (container.children.length > 25) {
+        container.removeChild(container.lastChild);
+    }
+    
+    // スクロール位置を確実に最新（一番下）に戻す
+    container.scrollTop = 0;
 }
 
 function handleDrop(star) {
@@ -2222,3 +2265,4 @@ document.addEventListener('DOMContentLoaded', initApp);
 </script>
 </body>
 </html>
+
