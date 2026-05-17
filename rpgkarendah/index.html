@@ -75,7 +75,7 @@
             border-left: 2px solid var(--col-border);
             border-right: 2px solid var(--col-border);
             transition: border-color 0.5s ease, background-color 0.5s ease;
-            z-index: 20; /* 追加: 他の要素に隠れないよう前面に */
+            z-index: 20; 
         }
 
         button, input, select, textarea {
@@ -220,22 +220,21 @@
         }
 
         /* =========================================
-           4. 戦闘ビュー (★ここをプロフェッショナルに改修)
+           4. 戦闘ビュー 
         ========================================= */
         #battle-pane {
-            flex: 0 0 240px; /* flex-basisを固定し、親のレイアウト崩れを防ぐ */
-            height: 240px;   /* 明示的な高さを設定して押し出しを防止 */
+            flex: 0 0 240px; 
+            height: 240px;   
             display: flex;
             gap: 15px;
             position: relative;
-            /* ※ overflow: hidden; はタイトル見切れの原因となるため削除しました */
         }
         
         #battle-pane > div.battle-content { 
             flex: 1; 
             display: flex;
             flex-direction: column;
-            min-height: 0; /* ★重要：子要素がflexコンテナを突き破るのを防ぐ魔法のプロパティ */
+            min-height: 0; 
             min-width: 0;
         }
 
@@ -322,20 +321,17 @@
             color: #aaa;
         }
 
-        /* ★ログのスクロール領域をプロフェッショナルに改修 */
         #battle-log {
-            flex: 1; /* 親の残り高さを全て使う */
-            min-height: 0; /* これがないとはみ出す */
-            overflow-y: auto; /* 溢れたらスクロールを許可 */
+            flex: 1; 
+            min-height: 0; 
+            overflow-y: auto; 
             font-size: 0.85rem;
             display: flex;
-            flex-direction: column-reverse; /* 最新を下に表示 */
+            flex-direction: column-reverse; 
             background: rgba(0,0,0,0.5);
             padding: 5px;
             border: 1px dotted #555;
             margin-top: 10px;
-            
-            /* 世界観に合わせたカスタムスクロールバー */
             scrollbar-width: thin;
             scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
         }
@@ -358,7 +354,7 @@
             margin-bottom: 4px;
             padding-bottom: 4px;
             border-bottom: 1px dashed rgba(255,255,255,0.1);
-            word-break: break-all; /* 長文が横スクロールを発生させないためのガード */
+            word-break: break-all; 
         }
         #battle-log div:first-child { opacity: 1; font-weight: bold; }
         #battle-log div:nth-child(n+2) { opacity: 0.8; }
@@ -679,7 +675,7 @@ __  __               ___           _
             </div>
         </div>
         <div class="window mt-4" style="font-size: 0.8rem;">
-            <p class="text-gray text-center">v2.4 Complete Edition (Character Transfer & Rename)</p>
+            <p class="text-gray text-center">v2.5 Complete Edition</p>
         </div>
     </div>
 
@@ -733,7 +729,6 @@ __  __               ___           _
                         </div>
                     </div>
 
-                    <!-- ★ pt-12（元々の設定）を使ってミニステータスを回避しつつ、高さを自動制御 -->
                     <div class="battle-content flex-col h-full w-full pt-12">
                         <div id="battle-log"></div>
                     </div>
@@ -909,12 +904,12 @@ __  __               ___           _
 
 <script>
 /**
- * Y-zardry Dungeon & Tasks - Complete Edition v2.4
+ * Y-zardry Dungeon & Tasks - Complete Edition v2.5
  */
 
 const API_KEY_ENV = "";
 const STORAGE_KEY = 'yzardry_save_data_v2';
-const APP_VERSION = 2.4;
+const APP_VERSION = 2.5;
 const CHARACTER_EXPORT_TYPE = 'yzardry_character_data';
 const CHARACTER_EXPORT_VERSION = 1;
 const VALID_GENDERS = ['male', 'female', 'other'];
@@ -1015,6 +1010,7 @@ const formatDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStar
 const getMonthStr = (dateStr) => dateStr.substring(0, 7);
 const generateId = () => Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
 const getHash = (str) => { let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash); return Math.abs(hash); };
+// getRequiredExpは「これまでの総獲得EXP（累計値）」としての仕様
 const getRequiredExp = (lv) => 10 + 5 * (lv - 1) + 2 * Math.pow(lv - 1, 2);
 const isPastDate = (dateStr) => {
     const today = new Date();
@@ -1895,8 +1891,15 @@ function updateBattlePane() {
     const s = state.user.stats;
     const eq = state.user.equipment;
     $('disp-lv').innerText = s.LV;
-    $('disp-exp').innerText = s.EXP;
-    $('disp-next').innerText = getRequiredExp(s.LV);
+
+    // ★ プロフェッショナルな修正: 現在のレベルでのEXPを表示
+    const prevExp = s.LV === 1 ? 0 : getRequiredExp(s.LV - 1);
+    const nextExp = getRequiredExp(s.LV);
+    const currentLevelExp = Math.max(0, s.EXP - prevExp);
+    const expToNextLevel = Math.max(1, nextExp - prevExp);
+    $('disp-exp').innerText = currentLevelExp;
+    $('disp-next').innerText = expToNextLevel;
+
     $('disp-h-name').innerText = state.user.name;
     $('disp-h-wpn').innerText = `⚔️${eq.weapon.name}`;
     $('disp-h-wpn').style.color = eq.weapon.color;
@@ -1935,21 +1938,16 @@ function shakeEnemy() {
     el.classList.add('anim-shake');
 }
 
-// ★プロフェッショナルな修正: ログ追加時のスクロール追従と堅牢化
 function addLog(text, col = '') {
     const log = document.createElement('div');
     if (col) log.className = col;
     log.innerText = text;
     const container = $('battle-log');
-    
-    // prepend を使って DOMツリーの先頭に差し込む（column-reverseなのでこれが視覚的な「一番下（最新）」になる）
     container.prepend(log);
     
     if (container.children.length > 25) {
         container.removeChild(container.lastChild);
     }
-    
-    // スクロール位置を確実に最新（一番下）に戻す
     container.scrollTop = 0;
 }
 
@@ -2003,25 +2001,49 @@ async function handleLevelUp(taskName, star) {
         void pane.offsetWidth;
         pane.classList.add('anim-levelup');
 
+        // ★ プロフェッショナルな修正: 成長システムのインフレ対応と燃え尽き処理
         const stats = ['STR', 'INT', 'DEX', 'AGI', 'VIT', 'LUK'];
         for (let i = 0; i < 3; i++) {
             const tgt = stats[Math.floor(Math.random() * stats.length)];
-            const val = Math.floor(Math.random() * 3) + 1;
-            state.user.stats[tgt] += val;
-            addLog(`  ${tgt} が ${val} 上がった！`, "text-green");
+            const val = Math.floor(Math.random() * 6) - 2; // -2, -1, 0, 1, 2, 3 の幅
+            
+            if (val > 0) {
+                state.user.stats[tgt] += val;
+                addLog(`  ${tgt} が ${val} 上がった！`, "text-green");
+            } else if (val < 0) {
+                const actualDrop = Math.min(Math.abs(val), state.user.stats[tgt]);
+                state.user.stats[tgt] = Math.max(0, state.user.stats[tgt] - actualDrop);
+                if (actualDrop > 0) {
+                    addLog(`  ${tgt} が ${actualDrop} 下がった…（燃え尽きた）`, "text-red");
+                } else {
+                    addLog(`  ${tgt} は下限に達している。`, "text-gray");
+                }
+            } else {
+                addLog(`  ${tgt} は変化しなかった。`, "text-gray");
+            }
         }
     }
     updateBattlePane();
 
     if (state.user.geminiApiKey) {
-        const sysInst = `あなたはRPGのシステムです。タスク名から判断し、JSON形式でステータス変動を出力せよ。成長(プラス1〜5)を1つ選ぶこと。出力例: {"STR": 2}`;
+        // ★ プロフェッショナルな修正: AIの変動判定も -2〜3 へ
+        const sysInst = `あなたはRPGのシステムです。タスク名から判断し、JSON形式でステータス変動を出力せよ。成長(-2〜3)を1つ選ぶこと。出力例: {"STR": 2}`;
         try {
             const growth = await callGeminiAPI(`タスク「${taskName}」を完了。`, sysInst, true);
             if (growth) {
                 for (const [key, val] of Object.entries(growth)) {
-                    if (typeof val === 'number' && val > 0 && state.user.stats[key] !== undefined) {
-                        state.user.stats[key] += val;
-                        addLog(`  [タスク影響] ${key} +${val}`, "text-green");
+                    if (typeof val === 'number' && val !== 0 && state.user.stats[key] !== undefined) {
+                        const safeVal = Math.max(-2, Math.min(3, val)); // 安全装置
+                        if (safeVal > 0) {
+                            state.user.stats[key] += safeVal;
+                            addLog(`  [タスク影響] ${key} +${safeVal}`, "text-green");
+                        } else if (safeVal < 0) {
+                            const actualDrop = Math.min(Math.abs(safeVal), state.user.stats[key]);
+                            state.user.stats[key] = Math.max(0, state.user.stats[key] - actualDrop);
+                            if (actualDrop > 0) {
+                                addLog(`  [タスク影響] ${key} -${actualDrop} (燃え尽きた)`, "text-red");
+                            }
+                        }
                     }
                 }
             }
@@ -2165,11 +2187,17 @@ function renderStatus() {
     const eq = state.user.equipment;
     $('st-name').innerText = state.user.name;
     $('st-lv').innerText = s.LV;
-    $('st-exp').innerText = s.EXP;
-    $('st-next').innerText = getRequiredExp(s.LV);
-    const prev = s.LV === 1 ? 0 : getRequiredExp(s.LV - 1);
-    const denom = Math.max(1, getRequiredExp(s.LV) - prev);
-    const pct = clamp(((s.EXP - prev) / denom) * 100, 0, 100);
+    
+    // ★ プロフェッショナルな修正: 現在のレベルでのEXPを表示
+    const prevExpSt = s.LV === 1 ? 0 : getRequiredExp(s.LV - 1);
+    const nextExpSt = getRequiredExp(s.LV);
+    const currentLevelExpSt = Math.max(0, s.EXP - prevExpSt);
+    const expToNextLevelSt = Math.max(1, nextExpSt - prevExpSt);
+
+    $('st-exp').innerText = currentLevelExpSt;
+    $('st-next').innerText = expToNextLevelSt;
+    
+    const pct = clamp((currentLevelExpSt / expToNextLevelSt) * 100, 0, 100);
     $('st-exp-bar').style.width = `${pct}%`;
 
     ['str', 'int', 'dex', 'agi', 'vit', 'luk'].forEach((k) => { $(`st-${k}`).innerText = s[k.toUpperCase()]; });
@@ -2265,4 +2293,3 @@ document.addEventListener('DOMContentLoaded', initApp);
 </script>
 </body>
 </html>
-
